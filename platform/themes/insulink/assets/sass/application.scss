@@ -1,0 +1,247 @@
+//bootstrap
+@import '~bootstrap/scss/bootstrap';
+@import '~bootstrap-vue/src/index.scss';
+@import 'variables';
+@import "uikit/src/scss/uikit-theme.scss";
+@import 'fonts';
+@import 'animation';
+@import 'theme';
+@import './vendor/font-awesome/scss/font-awesome.scss';
+
+#dsc__slideshow {
+    .widget {
+        .widget_body {
+            padding: 1rem 1.5rem;
+            background: rgba(243, 247, 250, .3);
+        }
+    }
+}
+
+#dsc__pageheader {
+    background-color: #8d8d8d;
+    padding: 1.5rem 0;
+
+    .breadcrumb {
+        background: none;
+        padding: 0;
+        margin-bottom: 0;
+
+        a {
+            color: #ddd;
+        }
+
+        li+li {
+            padding-left: .5rem;
+            color: #ddd;
+        }
+
+        li+li::before {
+            display: inline-block;
+            padding-right: .5rem;
+            color: #ddd;
+            content: "/";
+        }
+    }
+}
+
+.elementskit-section-title {
+    color: $primaryblue;
+    margin-bottom: 20px;
+    font-size: 28px;
+    font-weight: 500;
+    font-family: "insulink medium";
+}
+
+.elementskit-infobox:not(:last-child) {
+    margin-bottom: 20px;
+}
+
+.elementskit-infobox {
+    background-color: $primaryblue;
+    padding: 15px 40px 15px 40px;
+    border: 1px solid #f5f5f5;
+    border-radius: 5px;
+    transition: all 0.4s ease;
+    position: relative;
+    overflow: hidden;
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center center;
+
+    .contact_icon {
+        float: left;
+        position: relative;
+        margin: 0px 20px 6px 6px;
+        padding: 17px;
+        transform: rotate(0deg);
+        border-style: solid;
+        border-width: 2px 2px 2px 2px;
+        border-color: #f3f7fa;
+        border-radius: 54px 54px 54px 54px;
+
+        i {
+            font-size: 34px;
+            color: #fff;
+        }
+    }
+
+    .contact_text {
+        float: left;
+        position: relative;
+
+        span {
+            font-weight: 600;
+            display: block;
+            margin-bottom: 3px;
+            font-family: "insulink medium";
+        }
+
+        p {
+            font-family: "insulink light";
+        }
+    }
+}
+
+.altenate-title {
+    margin-bottom: 20px;
+    font-size: 28px;
+    font-weight: 500;
+    font-family: "insulink medium";
+}
+
+body {
+    font-family: "insulink regular";
+}
+
+.btn-fill-out {
+    background-color: transparent;
+    border: 1px solid #048ABF;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+}
+
+.btn-fill-out::before,
+.btn-fill-out::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    background-color: #048ABF;
+    z-index: -1;
+    transition: all 0.3s ease-in-out;
+    width: 51%;
+}
+
+.btn-fill-out::after {
+    right: 0;
+    left: auto;
+}
+
+.btn-fill-out:hover:before,
+.btn-fill-out:hover:after {
+    width: 0;
+}
+
+.btn-fill-out:hover {
+    color: #048ABF !important;
+}
+
+.btn-outline-white.btn-fill-out {
+    background: none !important;
+}
+
+.btn-outline-white.btn-fill-out:hover {
+    color: #fff !important;
+}
+
+.btn-fill-line {
+    background-color: transparent;
+    border: 1px solid #333;
+    overflow: hidden;
+    position: relative;
+    color: #fff !important;
+    transition: all 0.8s ease 0s;
+    z-index: 1;
+}
+
+.btn-fill-line:before,
+.btn-fill-line:after {
+    position: absolute;
+    content: "";
+    left: 0;
+    top: 0;
+    bottom: 0;
+    background-color: #333;
+    z-index: -1;
+    transition: all 0.3s ease-in-out;
+    width: 50%;
+}
+
+.btn-fill-line::after {
+    right: 0;
+    left: auto;
+}
+
+.btn-fill-line:hover:before,
+.btn-fill-line:hover:after {
+    width: 0;
+}
+
+.btn-fill-line:hover {
+    color: #333 !important;
+}
+
+.leads {
+    margin-bottom: 30px;
+    font-weight: 300;
+}
+
+.btn {
+    border-width: 1px;
+    cursor: pointer;
+    line-height: normal;
+    padding: 12px 35px;
+    text-transform: capitalize;
+    transition: all 0.3s ease-in-out;
+}
+
+#dsc__copyright {
+    .copyright {
+        border-top: 1px solid hsla(0, 0%, 80%, .5);
+        padding-top: .8rem;
+    }
+}
+
+.accordion>.card:not(:last-of-type) {
+    border-bottom: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.accordion>.card>.card-header {
+    border-radius: 0;
+    margin-bottom: -1px;
+}
+
+.accordion {
+    .card-header {
+        background-color: #048abf;
+        padding: 0px;
+    }
+
+    .btn-primary {
+        background: none;
+        border: 0;
+        text-align: left;
+        border-radius: 0;
+    }
+}
+
+.accordion .card-header:focus,
+.accordion .card-header:focus-visible,
+.accordion .card-header:hover {
+    background-color: #f15115;
+}

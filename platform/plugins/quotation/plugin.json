@@ -1,0 +1,9 @@
+{
+    "name": "Quotation",
+    "namespace": "Botble\\Quotation\\",
+    "provider": "Botble\\Quotation\\Providers\\QuotationServiceProvider",
+    "author": "DSC",
+    "url": "http://dsc.co.ke",
+    "version": "1.0",
+    "description": "The description for module quotation"
+}

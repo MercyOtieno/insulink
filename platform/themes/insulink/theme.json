@@ -1,0 +1,8 @@
+{
+    "name": "Insulink",
+    "namespace": "Theme\\Insulink\\",
+    "description": "This is a basic theme",
+    "author": "DSC",
+    "version": "1.0",
+    "required_plugins": []
+}
