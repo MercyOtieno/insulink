@@ -50,29 +50,7 @@ integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="ano
 {!! Theme::footer() !!}
 
 @if (theme_option('facebook_comment_enabled_in_post', 'yes') == 'yes' || theme_option('facebook_comment_enabled_in_product', 'yes') == 'yes' || (theme_option('facebook_chat_enabled', 'yes') == 'yes' && theme_option('facebook_page_id')))
-<!-- Load Facebook SDK for JavaScript -->
-<div id="fb-root"></div>
-<script defer>
-  window.fbAsyncInit = function() {
-    FB.init({
-      xfbml            : true,
-      version          : 'v9.0'
-    });
-  };
 
-  (function(d, s, id) {
-  var js, fjs = d.getElementsByTagName(s)[0];
-  if (d.getElementById(id)) return;
-  js = d.createElement(s); js.id = id;
-  js.src = 'https://connect.facebook.net/en_US/sdk/xfbml.customerchat.js';
-  fjs.parentNode.insertBefore(js, fjs);
-}(document, 'script', 'facebook-jssdk'));</script>
-
-<!-- Your Chat Plugin code -->
-<div class="fb-customerchat"
-  attribution="setup_tool"
-  page_id="273840429661312">
-</div>
 
 <!-- Go to www.addthis.com/dashboard to customize your tools -->
 <script src="https://kit.fontawesome.com/04ea62f7f6.js" crossorigin="anonymous" defer></script>
@@ -84,7 +62,7 @@ integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="ano
 @endif
 @routes
 <!--Start of Tawk.to Script-->
-<script type="text/javascript">
+<script type="text/javascript" defer>
     var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
     (function(){
     var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
