@@ -38,7 +38,7 @@
                         </div>
                         <div class="contact_text">
                             <span class="text-white">{{ __('Phone') }}</span>
-                            <p class="text-white">{{ theme_option('hotline') }}</p>
+                            <p class="text-white">{{ theme_option('hotline') }} / +254 745 488 902</p>
                         </div>
                     </div>
                 </div>

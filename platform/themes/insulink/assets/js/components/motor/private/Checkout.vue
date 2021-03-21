@@ -2128,13 +2128,16 @@ export default {
       this.$store
         .dispatch("motorPrivateCheckout", payload)
         .then((response) => {
-          this.$notify({
+          if (response.data.quotation_id) {
+            this.$notify({
             message: "benefits added successfully",
             type: "success",
             duration: 7 * 1000,
           });
           this.motorSwiper.slideTo(3);
           this.motorSwiper.update();
+          
+          }
           Swal.close();
         })
         .catch((err) => {
@@ -2144,7 +2147,6 @@ export default {
           });
         });
 
-      Swal.close();
     },
   },
   computed: {

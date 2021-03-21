@@ -38,7 +38,7 @@
                                     
                                 @else
                                     <button class="uk-button uk-button-default uk-margin-small-right" type="button"
-                                        uk-toggle="target: #modal-example">Add <svg class="inline-flex" width="24" height="24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        uk-toggle="target: #modal-example-{{$item->id}}">Add <svg class="inline-flex" width="24" height="24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                                         </svg>
                                     </button>

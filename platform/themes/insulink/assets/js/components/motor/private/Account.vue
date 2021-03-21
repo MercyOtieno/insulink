@@ -140,7 +140,7 @@
                       v-model="customer.kra_pin"
                       placeholder="Enter your KRA PIN here"
                       class="uk-input"
-                      :class="{ 'is-invalid': vehicleForm.errors.has('customer.kra_pin') }"
+                      :class="{ 'uk-form-danger': vehicleForm.errors.has('customer.kra_pin') }"
                       @input="validateKra"
                     />
                     <small id="krapinHelpBlock" class="text-muted"
@@ -295,6 +295,7 @@
                   <div class="col-md-6">
                     <input
                       class="input-file"
+                      id="logbook"
                       v-validate="'ext:jpeg,jpg,png,pdf'"
                       data-vv-as="field"
                       type="file"
@@ -348,7 +349,11 @@
             <button class="swiper-motor-button-prev w-full sm:w-auto flex-none mr-4 bg-gray-300 hover:bg-gray-700 text-white text-lg leading-6 font-semibold py-3 px-6 border border-transparent rounded-full focus:ring-2 focus:ring-offset-2 focus:ring-offset-white focus:ring-gray-900 focus:outline-none transition-colors duration-200" @click="swipePrev">Back</button>
           </div>
           <div>
-            <button class="swiper-motor-button-next w-full sm:w-auto flex-none bg-blue-900 hover:bg-blue-700 text-white text-lg  py-3 px-6 border border-transparent rounded-full focus:ring-2 focus:ring-offset-2 focus:ring-offset-white focus:ring-blue-900 focus:outline-none transition-colors duration-200" @click="collectdetails">Save Personal Details</button>
+            <button 
+            class="swiper-motor-button-next w-full sm:w-auto flex-none bg-blue-900 hover:bg-blue-700 text-white text-lg  py-3 px-6 border border-transparent rounded-full focus:ring-2 focus:ring-offset-2 focus:ring-offset-white focus:ring-blue-900 focus:outline-none transition-colors duration-200" 
+             :class="{ 'opacity-25': validateRequired }"
+                              :disabled="validateRequired"
+                              @click="collectdetails">Save Personal Details</button>
           </div>
         </div>
       </div>
@@ -364,6 +369,9 @@ export default {
   data() {
     return {
       vehicleForm: new Form(),
+      copy_id:'',
+      copy_kra_certificate:'',
+      logbook:'',
     }
   },
   watch:{
@@ -380,6 +388,22 @@ export default {
     ...mapGetters(["vehicle", "motorvehicle", "customer", "getEmailError","getKraError","getPhoneError", "vehicleveh_type"]),
     makemodel() {
       return ;
+    },
+    validateRequired(){
+      if(this.customer.name === '' ||
+this.customer.phone  === '' ||
+this.customer.email  === '' ||
+this.customer.document_number  === '' ||
+this.customer.kra_pin  === '' ||
+this.motorvehicle.registration  === '' ||
+this.motorvehicle.chassis  === '' ||
+this.motorvehicle.engine  === '' ||
+this.motorvehicle.cc  === '' ||
+this.motorvehicle.seat_capacity  === ''){
+  return true;
+} else{
+  return false;
+}
     }
   },
   methods: {
@@ -388,10 +412,10 @@ export default {
       this.copy_id = this.$refs.copy_id.files[0];
     },
     handleKRAUpload() {
-      this.customer.copy_kra_certificate = this.$refs.copy_kra.files[0];
+      this.copy_kra_certificate = this.$refs.copy_kra.files[0];
     },
     handleLogbookUpload() {
-      this.motorvehicle.logbook = this.$refs.copy_logbook.files[0];
+      this.logbook = this.$refs.copy_logbook.files[0];
     },
     collectdetails(e) {
        e.preventDefault();

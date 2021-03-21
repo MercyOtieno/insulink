@@ -28,11 +28,12 @@
       </div>
       <div class="row justify-content-center my-6" v-if="this.age === 1 || this.age === 2 || this.age === 3 || this.age === 4 || this.age === 5 ">
         <div class="col-sm-8">
-           <el-card class="box-card">
-             <div slot="header" class="clearfix">
-                <span>Cover Details</span>
-              </div>
+           <div class="card">
+             
             <div class="card-body">
+              <h4 class="card-title">
+               Cover Details
+              </h4>
               <div class="form-group">
                 <label for="" class="d-block">Annual Inpatient Cover Limit</label>
                  <el-select v-model="ip" placeholder="Select In-Patient Amount" class="d-block">
@@ -63,14 +64,15 @@
              </div>
               <div class="form-group">
                 <label for="" class="d-block">Date of Birth of the Applicant</label>
-                <el-date-picker
-                  v-model="dob"
-                  type="date"
-                  placeholder="Pick the Day you were Born">
-                </el-date-picker>
+                 <date-picker
+        v-model="dob"
+        :default-value="min"
+        :disabled-date="disabledBeforeTodayAndAfterAWeek"
+      ></date-picker>
+               
               </div>
             </div>
-           </el-card>
+           </div>
         </div>
       </div>
     </div>
@@ -95,13 +97,26 @@
 </template>
 
 <script>
+import DatePicker from 'vue2-datepicker';
+  import 'vue2-datepicker/index.css';
 import { mapState, mapGetters, mapActions } from "vuex";
 export default {
   props: ["healthSwiper", "activateNext", "activateGetQuotes"],
   data() {
+      const now = new Date()
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      // 15th two months prior
+      const minDate = new Date(today)
+      minDate.setMonth(minDate.getMonth() - 2)
+      minDate.setDate(15)
+      // 15th in two months
+      const maxDate = new Date(today)
+      maxDate.setYear(maxDate.getFullYear() - 18)
+      maxDate.setDate(15)
+
     return {
       age: 0,
-      ip:200000,
+      ip:'500000',
       pre_existing:0,
       pre_existing_details:0,
       op:0,
@@ -203,42 +218,25 @@ export default {
           value: '50000',
           label: 'Kes 50,000'
         }],
-      dob:"",
-        pickerOptions: {
-          disabledDate(time) {
-            return time.getTime() > Date.now() - 18;
-          },
-          shortcuts: [{
-            text: 'Today',
-            onClick(picker) {
-              picker.$emit('pick', new Date());
-            }
-          }, {
-            text: 'Yesterday',
-            onClick(picker) {
-              const date = new Date();
-              date.setTime(date.getTime() - 3600 * 1000 * 24);
-              picker.$emit('pick', date);
-            }
-          }, {
-            text: 'A week ago',
-            onClick(picker) {
-              const date = new Date();
-              date.setTime(date.getTime() - 3600 * 1000 * 24 * 7);
-              picker.$emit('pick', date);
-            }
-          }]
-        },
+      
+        dob: maxDate,
+        min:maxDate
     };
   },
+  components: { DatePicker },
   computed: {
     checkifdob(){
       if (this.dob ==='') {
         return true;
       }
-    }
+    },
   },
   methods: {
+    disabledBeforeTodayAndAfterAWeek(date) {
+      const today = new Date();
+
+      return date > new Date(today.setYear(today.getFullYear() - 18));
+    },
       customerselect() {
        //e.preventDefault();
       Swal.fire({

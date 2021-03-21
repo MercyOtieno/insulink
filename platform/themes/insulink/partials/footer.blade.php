@@ -41,15 +41,18 @@
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
     </svg>
 </a>
-</div>
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"
+integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+<script src="https://code.jquery.com/jquery-migrate-3.3.2.min.js"
+    integrity="sha256-Ap4KLoCf1rXb52q+i3p0k2vjBsmownyBTE1EqlRiMwA=" crossorigin="anonymous" defer></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"
+        integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous" defer></script>
 {!! Theme::footer() !!}
 
-@if (theme_option('facebook_comment_enabled_in_post', 'yes') == 'yes' ||
-theme_option('facebook_comment_enabled_in_product', 'yes') == 'yes' || (theme_option('facebook_chat_enabled', 'yes') ==
-'yes' && theme_option('facebook_page_id')))
+@if (theme_option('facebook_comment_enabled_in_post', 'yes') == 'yes' || theme_option('facebook_comment_enabled_in_product', 'yes') == 'yes' || (theme_option('facebook_chat_enabled', 'yes') == 'yes' && theme_option('facebook_page_id')))
 <!-- Load Facebook SDK for JavaScript -->
 <div id="fb-root"></div>
-<script>
+<script defer>
   window.fbAsyncInit = function() {
     FB.init({
       xfbml            : true,
@@ -72,7 +75,7 @@ theme_option('facebook_comment_enabled_in_product', 'yes') == 'yes' || (theme_op
 </div>
 
 <!-- Go to www.addthis.com/dashboard to customize your tools -->
-<script src="https://kit.fontawesome.com/04ea62f7f6.js" crossorigin="anonymous"></script>
+<script src="https://kit.fontawesome.com/04ea62f7f6.js" crossorigin="anonymous" defer></script>
 @if (theme_option('facebook_chat_enabled', 'yes') == 'yes' && theme_option('facebook_page_id'))
 <div class="fb-customerchat" attribution="install_email" page_id="{{ theme_option('facebook_page_id') }}"
     theme_color="{{ theme_option('primary_color', '#026e94') }}">

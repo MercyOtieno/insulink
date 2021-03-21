@@ -15,4 +15,9 @@ class CustomerDocument extends BaseModel
         'copy_id',
         'logbook',
     ];
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class, 'customer_id');
+    }
 }

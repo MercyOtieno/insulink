@@ -41,17 +41,7 @@
     "/themes/insulink/css/theme.css": "/themes/insulink/css/theme.css",
     "/vendor/core/common/uikit/css/uikit.min.css": "/vendor/core/common/uikit/css/uikit.min.css",
     "/themes/insulink/css/tailwind.css": "/themes/insulink/css/tailwind.css",
-    "/themes/insulink/vendor/bootstrap/css/bootstrap.min.css": "/themes/insulink/vendor/bootstrap/css/bootstrap.min.css",
-    "/themes/insulink/vendor/uikit/css/uikit.min.css": "/themes/insulink/vendor/uikit/css/uikit.min.css",
-    "/themes/insulink/vendor/bootstrap/css/bootstrap-grid.min.css": "/themes/insulink/vendor/bootstrap/css/bootstrap-grid.min.css",
-    "/themes/insulink/vendor/bootstrap/css/bootstrap-reboot.min.css": "/themes/insulink/vendor/bootstrap/css/bootstrap-reboot.min.css",
-    "/themes/insulink/js/application.js": "/themes/insulink/js/application.js",
-    "/themes/insulink/js/custom.js": "/themes/insulink/js/custom.js",
     "/themes/insulink/js/engine.js": "/themes/insulink/js/engine.js",
-    "/themes/insulink/js/jquery.js": "/themes/insulink/js/jquery.js",
-    "/themes/insulink/js/popper.js": "/themes/insulink/js/popper.js",
-    "/themes/insulink/vendor/uikit/js/uikit-icons.min.js": "/themes/insulink/vendor/uikit/js/uikit-icons.min.js",
-    "/themes/insulink/vendor/uikit/js/uikit.min.js": "/themes/insulink/vendor/uikit/js/uikit.min.js",
     "/vendor/core/common/uikit/js/uikit-icons.min.js": "/vendor/core/common/uikit/js/uikit-icons.min.js",
     "/vendor/core/common/uikit/js/uikit.min.js": "/vendor/core/common/uikit/js/uikit.min.js",
     "/vendor/core/core/acl/js/login.js": "/vendor/core/core/acl/js/login.js",
@@ -102,5 +92,6 @@
     "/vendor/core/plugins/translation/js/theme-translations.js": "/vendor/core/plugins/translation/js/theme-translations.js",
     "/vendor/core/plugins/translation/js/translation.js": "/vendor/core/plugins/translation/js/translation.js",
     "/vendor/core/core/js-validation/js/js-validation.js": "/vendor/core/core/js-validation/js/js-validation.js",
-    "/themes/insulink/js/scripts.js": "/themes/insulink/js/scripts.js"
+    "/themes/insulink/css/bundled.css": "/themes/insulink/css/bundled.css",
+    "/themes/insulink/js/bundled.js": "/themes/insulink/js/bundled.js"
 }

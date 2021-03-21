@@ -345,8 +345,8 @@
                           </div>
                         </div>
                         <hr>
-                        <div class="row justify-center mt-4">
-                          <div class="col-sm-10">
+                        <div class="row mt-4">
+                          <div class="col-sm-12">
                              <b-alert show>Cant find your Vehicle Make & model or the type of cover you want?
                                <a href="/contact" class="btn btn-primary my-3 ml-5">Talk to us now!</a>
                              </b-alert>

@@ -74,6 +74,9 @@ const state = () => ({
             kra_pin: "",
             copy_kra_certificate: null,
             policy_start_date: "",
+           
+        },
+        h_dependants:{
             dependants: [
                 {
                     name: "",
@@ -126,6 +129,7 @@ const getters = {
     gethealthquotations: state => state.productData.h_quotations,
     healthProduct: state => state.productData.h_product,
     gethealthcustomer: state => state.productData.h_customer,
+    getHealthDependants: state => state.productData.h_dependants,
     gethealthpurchased: state => state.productData.h_purchased,
     dependants: state => state.productData.dependants,
     fifthChildOption: state => state.productData.fifthChildOption,
@@ -244,12 +248,40 @@ const actions = {
         });
     },
     async CreatehealthCustomer({ commit, getters }, payload) {
-        const response = await axios.post(
-            "/purchase/customer/details/saved/health",
-            payload
-        );
-        console.log(response);
-        //commit("sethealthCustomerData", response.data);
+        console.log(payload);
+        let formdata = new FormData();
+        formdata.append("copy_id", payload.copy_id);
+        formdata.append("copy_kra_certificate", payload.copy_kra_certificate);
+        formdata.append("name", payload.name);
+        formdata.append("cellphone", payload.cellphone);
+        formdata.append("email", payload.email);
+        formdata.append("document_type", payload.document_type);
+        formdata.append("document_number", payload.document_number);
+        formdata.append("quotationId", payload.quotationId);
+        formdata.append("value_vehicle", payload.value_vehicle);
+        formdata.append("year_manufacture", payload.year_manufacture);
+        formdata.append("kra_number", payload.kra_number);
+        formdata.append("cover_type", payload.cover_type);
+        return new Promise((resolve, reject) => {
+            axios.post("/purchase/customer/details/saved/health", formdata).then(
+                
+                    response => {
+                        let healthCustomerData = getters.gethealthcustomer;
+                        healthCustomerData.document_number = payload.document_number;
+                        healthCustomerData.email = payload.email;
+                        healthCustomerData.kra_pin = payload.kra_number;
+                        healthCustomerData.name =payload.name;
+                        healthCustomerData.phone = payload.cellphone;
+                        commit("sethealthCustomerData", healthCustomerData);
+                        resolve(response);
+                        console.log(response);
+                    },
+                    error => {
+                        reject(error);
+                    }
+                )
+        });
+        
     }
 };
 //mutations
@@ -258,6 +290,7 @@ const mutations = {
     SetHealthQuote: (state, value) => (state.productData.h_quotations = value),
     SetBuyHealthPurchase: (state, data) => (state.productData.h_product = data),
     SetHealthpurchase: (state, data) => (state.productData.h_purchased = data),
+    SetHealthDependants:(state, data) => (state.productData.h_dependants = data),
     sethealthCustomerData: (state, value) => (state.productData.h_customer = value),
     SetUnderwriters: (state, value) => (state.productData.underwriters.list = value)
 };

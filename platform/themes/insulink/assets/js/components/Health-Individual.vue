@@ -21,12 +21,15 @@
         <Benefits
         :activateGetQuotes="activateGetQuotes"
           :activateNext="activateNext"
-          :healthSwiper="healthSwiper"/>
+          :healthSwiper="healthSwiper"
+          :swipePrev="swipePrev"
+          />
         <MemberDetails
           :activateGetQuotes="activateGetQuotes"
           :activateNext="activateNext"
           :healthSwiper="healthSwiper"
           :gethealthcustomerForm="gethealthcustomerForm"
+          :swipePrev="swipePrev"
         />
         <Payment
           :activateGetQuotes="activateGetQuotes"

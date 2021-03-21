@@ -50,20 +50,10 @@ return [
             //     $view->with('auth', \Auth::user());
             // });
             $theme->asset()
-                    ->usePath()->add('bootstrap', 'vendor/bootstrap/css/bootstrap.min.css')
-                    ->usePath()->add('bootstrap-grid', 'vendor/bootstrap/css/bootstrap-grid.min.css')
-                    ->usePath()->add('bootstrap-reboot', 'vendor/bootstrap/css/bootstrap-reboot.min.css')
-                    ->usePath()->add('uikit', 'vendor/uikit/css/uikit.min.css')
-                    ->usePath()->add('theme-css', 'css/application.css')
-                    ->usePath()->add('tailwind-css', 'css/tailwind.css')
-                    ->usePath()->add('theme', 'css/theme.css');
+                    ->usePath()->add('theme', 'css/bundled.css');
             $theme->asset()->container('footer')
                     ->usePath()->add('engine', 'js/engine.js')
-                    ->usePath()->add('application', 'js/application.js', ['jquery'])
-                    ->usePath()->add('popper', 'js/popper.js', ['jquery'])
-                    ->usePath()->add('uikit', 'vendor/uikit/js/uikit.min.js', ['jquery'])
-                    ->usePath()->add('uikit', 'vendor/uikit/js/uikit-icons.min.js', ['jquery']);
-            $theme->asset()->container('footer')->usePath()->add('scripts', 'js/scripts.js', ['jquery'], [], '1.0.13');
+                    ->usePath()->add('application', 'js/bundled.js', ['jquery']);
 
             if (function_exists('shortcode')) {
                 $theme->composer(['index', 'page', 'post'], function (\Botble\Shortcode\View\View $view) {
@@ -78,7 +68,7 @@ return [
 
             'default' => function ($theme)
             {
-                $theme->asset()->usePath()->add('custom', 'js/custom.js', ['jquery']);
+                //$theme->asset()->usePath()->add('custom', 'js/custom.js', ['jquery']);
             }
         ]
     ]

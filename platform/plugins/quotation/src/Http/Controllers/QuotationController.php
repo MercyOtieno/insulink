@@ -50,11 +50,23 @@ class QuotationController extends BaseController
      * @param FormBuilder $formBuilder
      * @return string
      */
-    public function create(FormBuilder $formBuilder)
+    public function cleanUp(Request $request, BaseHttpResponse $response)
     {
-        page_title()->setTitle(trans('plugins/quotation::quotation.create'));
+        $cleanup = Quotation::where('customer_id', '=', null)->get();
+        $ids = $cleanup->pluck('id');
+        if (empty($ids)) {
+            return $response
+                ->setError()
+                ->setMessage(trans('core/base::notices.no_select'));
+        }
 
-        return $formBuilder->create(QuotationForm::class)->renderForm();
+        foreach ($ids as $id) {
+            $quotation = Quotation::findOrFail($id);
+            $quotation->delete();
+            event(new DeletedContentEvent(QUOTATION_MODULE_SCREEN_NAME, $request, $quotation));
+        }
+
+        return redirect()->back();
     }
 
     /**

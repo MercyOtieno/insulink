@@ -6,6 +6,7 @@ Route::group(['namespace' => 'Botble\Quotation\Http\Controllers', 'middleware' =
 
         Route::group(['prefix' => 'quotations', 'as' => 'quotation.'], function () {
             Route::resource('', 'QuotationController')->parameters(['' => 'quotation']);
+            Route::get('/clean-up', 'QuotationController@cleanUp')->name('cleanup');
             Route::delete('items/destroy', [
                 'as'         => 'deletes',
                 'uses'       => 'QuotationController@deletes',

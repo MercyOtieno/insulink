@@ -4,17 +4,11 @@
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=5, user-scalable=1"
-        name="viewport" />
+    <meta content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=5, user-scalable=1" name="viewport" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="description" content="Insulink Kenya Ltd, the top insurer in East Africa. Your trusted insurance partner">
     <meta name="keywords" content="Best Insurer,Best Agency, Best Insurance Agency,Insurance Agency,Top Insurer,Buy,Insure,Claim,Insurance,Health Insurance,Medical Cover,Medical Insurance,Motor,Home,Travel,Pension,Retirement,Travel Cover,Benefits,Beneficiaries,Annuity,Trusted Insurer,investment,investments,life cover,life insurance,motor vehicle,investing,investor">
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"
-        integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
-    <script src="https://code.jquery.com/jquery-migrate-3.3.2.min.js"
-            integrity="sha256-Ap4KLoCf1rXb52q+i3p0k2vjBsmownyBTE1EqlRiMwA=" crossorigin="anonymous"></script>
-    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"
-                integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
+   
     {!! Theme::header() !!}
 </head>
 
@@ -40,42 +34,44 @@
         <section class="top-header d-none d-md-block">
             <div class="container">
                 <div class="row align-items-center">
-                    <div class="col-sm-2">
+                    <div class="col-sm-3">
                         <a class="navbar-brand" href="{{ url('/') }}">
                             <img src="{{asset('images/logo.png')}}" alt="">
                         </a>
                     </div>
-                    <div class="col-md-3">
-                        <div class="d-flex align-items-center justify-content-center justify-content-md-start">
-                            <div class="elements">
-                                <div class="element-icon-box">
-                                    <div class="icon text-center"><svg id="element-svg"
-                                            xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24"
-                                            height="24">
-                                            <path
-                                                d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6c0-1.1.9-2 2-2zm16 3.38V6H4v1.38l8 4 8-4zm0 2.24l-7.55 3.77a1 1 0 0 1-.9 0L4 9.62V18h16V9.62z"
-                                                class="heroicon-ui"></path>
-                                        </svg></div>
-                                    <div class="iconbox-body">
-                                        {{ theme_option('email') }}
+                    <div class="col-md-5">
+                        <div class="d-flex">
+                            <div class="justify-content-start">
+                                <div class="elements">
+                                    <div class="element-icon-box">
+                                        <div class="icon text-center"><svg id="element-svg"
+                                                xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24"
+                                                height="24">
+                                                <path
+                                                    d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6c0-1.1.9-2 2-2zm16 3.38V6H4v1.38l8 4 8-4zm0 2.24l-7.55 3.77a1 1 0 0 1-.9 0L4 9.62V18h16V9.62z"
+                                                    class="heroicon-ui"></path>
+                                            </svg></div>
+                                        <div class="iconbox-body">
+                                            {{ theme_option('email') }}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                    <div class="col-sm-3">
-                        <div class="elements">
-                            <div class="element-icon-box">
-                                <div class="icon text-center">
-                                    <svg id="element-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                                        width="24" height="24">
-                                        <path
-                                            d="M13.04 14.69l1.07-2.14a1 1 0 0 1 1.2-.5l6 2A1 1 0 0 1 22 15v5a2 2 0 0 1-2 2h-2A16 16 0 0 1 2 6V4c0-1.1.9-2 2-2h5a1 1 0 0 1 .95.68l2 6a1 1 0 0 1-.5 1.21L9.3 10.96a10.05 10.05 0 0 0 3.73 3.73zM8.28 4H4v2a14 14 0 0 0 14 14h2v-4.28l-4.5-1.5-1.12 2.26a1 1 0 0 1-1.3.46 12.04 12.04 0 0 1-6.02-6.01 1 1 0 0 1 .46-1.3l2.26-1.14L8.28 4z"
-                                            class="heroicon-ui"></path>
-                                    </svg>
-                                </div>
-                                <div class="iconbox-body">
-                                    {{ theme_option('hotline') }}
+                            <div class="justify-content-end ml-auto">
+                                <div class="elements">
+                                    <div class="element-icon-box">
+                                        <div class="icon text-center">
+                                            <svg id="element-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                                                width="24" height="24">
+                                                <path
+                                                    d="M13.04 14.69l1.07-2.14a1 1 0 0 1 1.2-.5l6 2A1 1 0 0 1 22 15v5a2 2 0 0 1-2 2h-2A16 16 0 0 1 2 6V4c0-1.1.9-2 2-2h5a1 1 0 0 1 .95.68l2 6a1 1 0 0 1-.5 1.21L9.3 10.96a10.05 10.05 0 0 0 3.73 3.73zM8.28 4H4v2a14 14 0 0 0 14 14h2v-4.28l-4.5-1.5-1.12 2.26a1 1 0 0 1-1.3.46 12.04 12.04 0 0 1-6.02-6.01 1 1 0 0 1 .46-1.3l2.26-1.14L8.28 4z"
+                                                    class="heroicon-ui"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="iconbox-body">
+                                            {{ theme_option('hotline') }}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

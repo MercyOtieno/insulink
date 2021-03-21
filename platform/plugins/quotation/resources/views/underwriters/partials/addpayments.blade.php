@@ -1,5 +1,5 @@
 <!-- This is the modal -->
-<div id="modal-example" class="uk-flex-top" uk-modal>
+<div id="modal-example-{{$item->id}}" class="uk-flex-top" uk-modal>
     <div class="uk-modal-dialog uk-modal-body">
         <h2 class="uk-modal-title">Add Payment Method</h2>
         <form method="POST" action="{{route('underwriters.payments.add', $item->id)}}">

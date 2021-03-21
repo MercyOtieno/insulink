@@ -530,7 +530,7 @@ export default {
                 type: "success",
                 duration: 5 * 1000,
               });
-              this.motorSwiper.slideNext();
+              this.motorSwiper.slideTo(2);
           this.motorSwiper.update();
           Swal.close();
             })
@@ -542,9 +542,6 @@ export default {
               this.motorSwiper.update();
               Swal.close();
             });
-      this.motorSwiper.slideNext();
-          this.motorSwiper.update();
-          Swal.close();
     },
     buyproduct3rdparty(product) {
       Swal.fire({
@@ -565,8 +562,8 @@ export default {
                 type: "success",
                 duration: 5 * 1000,
               });
-              this.motorSwiper.slideNext();
-              this.motorSwiper.update();
+              this.motorSwiper.slideTo(2);
+          this.motorSwiper.update();
               Swal.close();
             })
             .catch((err) => {
@@ -597,7 +594,7 @@ export default {
                 type: "success",
                 duration: 5 * 1000,
               });
-              this.motorSwiper.slideNext();
+              this.motorSwiper.slideTo(2);
           this.motorSwiper.update();
           Swal.close();
             })
@@ -629,7 +626,7 @@ export default {
                 type: "success",
                 duration: 5 * 1000,
               });
-              this.motorSwiper.slideNext();
+              this.motorSwiper.slideTo(2);
           this.motorSwiper.update();
           Swal.close();
             })
@@ -662,7 +659,7 @@ export default {
                 type: "success",
                 duration: 5 * 1000,
               });
-              this.motorSwiper.slideNext();
+              this.motorSwiper.slideTo(2);
           this.motorSwiper.update();
           Swal.close();
             })

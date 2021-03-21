@@ -17,7 +17,7 @@ mix.options({
     processCssUrls: false,
     clearConsole: true,
     terser: {
-        extractComments: false,
+        extractComments: true,
     },
 });
 

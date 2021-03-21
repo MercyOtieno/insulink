@@ -99,10 +99,19 @@ Quotation number <strong>{{$quote['quotation']->quotation_number}}</strong><br>
         <tr>
         <td>Customer National ID</td>
         <td>{{$quote['vehicle']->customer->document_number}}</td>
+        <td>@component('mail::button', ['url' => config('app.url').'/documents/customer/'.$quote['kyc']->copy_id])
+            view image @endcomponent</td>
         </tr>
         <tr>
         <td>KRA PIN</td>
         <td>{{$quote['vehicle']->customer->kra_number}}</td>
+        <td>@component('mail::button', ['url' => config('app.url').'/documents/customer/'.$quote['kyc']->copy_kra_certificate])
+            view image @endcomponent</td>
+        </tr>
+        <tr>
+        <td>Log Book</td>
+        <td>@component('mail::button', ['url' => config('app.url').'/documents/customer/'.$quote['kyc']->logbook])
+                view image @endcomponent</td>
         </tr>
     </tbody>
 </table>

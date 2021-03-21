@@ -4,13 +4,16 @@
       <div class="row py-12">
         <div class="col-sm-8">
           <div class="uk-card uk-card-default uk-uk-card-body">
+            <div v-if="status_msg" :class="{'alert-success':status, 'alert-danger':!status}" class="alert" role="alert">
+              {{ status_msg}}
+            </div>
             <ValidationObserver
               ref="observer"
               v-slot="{ invalid }"
               tag="form"
               @submit.prevent="collectdetails()"
             >
-              <form @submit.prevent="collectdetails">
+              <form >
                 <div class="uk-card-header">
                   <h4 class="uk-card-title">Tell us About you</h4>
                 </div>
@@ -26,7 +29,7 @@
                         id="name"
                         name="name"
                         type="text"
-                        v-model="gethealthcustomer.name"
+                        v-model="member.name"
                         v-validate="'required'"
                         placeholder="Enter your Name here"
                         class="uk-input"
@@ -47,7 +50,7 @@
                     >
                     <div class="col-md-6">
                       <vue-tel-input
-                        v-model="gethealthcustomer.phone"
+                        v-model="member.phone"
                         name="cell phone number"
                         v-validate="'required'"
                       ></vue-tel-input>
@@ -76,7 +79,7 @@
                         name="email"
                         type="email"
                         v-validate="'required|email'"
-                        v-model="gethealthcustomer.email"
+                        v-model="member.email"
                         placeholder="Enter your Email here"
                         class="uk-input"
                       />
@@ -100,7 +103,7 @@
                         aria-describedby="document_numberHelpBlock"
                         id="document_number"
                         name="ID number"
-                        v-model="gethealthcustomer.document_number"
+                        v-model="member.document_number"
                         required
                         v-validate
                         type="text"
@@ -123,14 +126,25 @@
                       >Attach Copy of ID</label
                     >
                     <div class="col-md-6">
-                      <input
+                       <b-form-file
+                          v-model="member.copy_id"
+                          :state="Boolean(member.copy_id)"
+                          ref="copy_id"
+                          @change="handleIDUpload"
+                          placeholder="Choose a file or drop it here..."
+                          drop-placeholder="Drop file here..."
+                        ></b-form-file>
+                        <div class="mt-3">
+                          Selected file: {{ member.copy_id ? member.copy_id.name : "" }}
+                        </div>
+                      <!-- <input
                         class="input-file"
                         v-validate="'ext:jpeg,jpg,png,pdf'"
                         data-vv-as="field"
                         type="file"
                         ref="copy_id"
                         v-on:change="handleIDUpload()"
-                      />
+                      /> -->
                     </div>
                   </div>
 
@@ -146,7 +160,7 @@
                         name="kra pin"
                         type="text"
                         v-validate="{ required: true, regex: /^A\d{9}[A-Z]$/i }"
-                        v-model="gethealthcustomer.kra_pin"
+                        v-model="member.kra_pin"
                         placeholder="Enter your KRA PIN here"
                         class="uk-input"
                         required=""
@@ -167,14 +181,18 @@
                       >Attach Copy of KRA PIN Certificate</label
                     >
                     <div class="col-md-6">
-                      <input
-                        class="input-file"
-                        v-validate="'ext:jpeg,jpg,png,pdf'"
-                        data-vv-as="field"
-                        type="file"
-                        ref="copy_kra"
-                        v-on:change="handleKRAUpload()"
-                      />
+                      <b-form-file
+                          v-model="member.copy_kra_certificate"
+                          :state="Boolean(member.copy_kra_certificate)"
+                          @change="handleKRAUpload"
+                          ref="copy_kra_certificate"
+                          placeholder="Choose a file or drop it here..."
+                          drop-placeholder="Drop file here..."
+                        ></b-form-file>
+                        <div class="mt-3">
+                          Selected file: {{ member.copy_kra_certificate ? member.copy_kra_certificate.name : "" }}
+                        </div>
+                      
                     </div>
                   </div>
                 </div>
@@ -261,7 +279,7 @@
                                       <input
                                         type="text"
                                         v-model="
-                                          gethealthcustomer.dependants[0].name
+                                          getHealthDependants.dependants[0].name
                                         "
                                         class="form-control"
                                         id="validationCustom02"
@@ -285,7 +303,7 @@
                                       <div class="d-block">
                                         <el-date-picker
                                           v-model="
-                                            gethealthcustomer.dependants[0].dob
+                                            getHealthDependants.dependants[0].dob
                                           "
                                           :class="[
                                             {
@@ -392,7 +410,7 @@
                                       <input
                                         type="text"
                                         v-model="
-                                          gethealthcustomer.dependants[1].name
+                                          getHealthDependants.dependants[1].name
                                         "
                                         class="form-control"
                                         id="validationCustom02"
@@ -416,7 +434,7 @@
                                       <div class="d-block">
                                         <el-date-picker
                                           v-model="
-                                            gethealthcustomer.dependants[1].dob
+                                            getHealthDependants.dependants[1].dob
                                           "
                                           :class="{
                                             'is-invalid': gethealthcustomerForm.errors.has(
@@ -517,7 +535,7 @@
                                       <input
                                         type="text"
                                         v-model="
-                                          gethealthcustomer.dependants[2].name
+                                          getHealthDependants.dependants[2].name
                                         "
                                         class="form-control"
                                         id="validationCustom02"
@@ -541,7 +559,7 @@
                                       <div class="d-block">
                                         <el-date-picker
                                           v-model="
-                                            gethealthcustomer.dependants[2].dob
+                                            getHealthDependants.dependants[2].dob
                                           "
                                           :class="{
                                             'is-invalid': gethealthcustomerForm.errors.has(
@@ -642,7 +660,7 @@
                                         class="form-control"
                                         id="validationCustom02"
                                         v-model="
-                                          gethealthcustomer.dependants[3].name
+                                          getHealthDependants.dependants[3].name
                                         "
                                         placeholder="Full Names"
                                         :class="{
@@ -664,7 +682,7 @@
                                       <div class="d-block">
                                         <el-date-picker
                                           v-model="
-                                            gethealthcustomer.dependants[3].dob
+                                            getHealthDependants.dependants[3].dob
                                           "
                                           :class="{
                                             'is-invalid': gethealthcustomerForm.errors.has(
@@ -762,7 +780,7 @@
                                       <input
                                         type="text"
                                         v-model="
-                                          gethealthcustomer.dependants[4].name
+                                          getHealthDependants.dependants[4].name
                                         "
                                         class="form-control"
                                         id="validationCustom02"
@@ -786,7 +804,7 @@
                                       <div class="d-block">
                                         <el-date-picker
                                           v-model="
-                                            gethealthcustomer.dependants[4].dob
+                                            getHealthDependants.dependants[4].dob
                                           "
                                           :class="{
                                             'is-invalid': gethealthcustomerForm.errors.has(
@@ -848,7 +866,7 @@
                                       <input
                                         type="text"
                                         v-model="
-                                          gethealthcustomer.dependants[5].name
+                                          getHealthDependants.dependants[5].name
                                         "
                                         class="form-control"
                                         id="validationCustom02"
@@ -872,7 +890,7 @@
                                       <div class="d-block">
                                         <el-date-picker
                                           v-model="
-                                            gethealthcustomer.dependants[5].dob
+                                            getHealthDependants.dependants[5].dob
                                           "
                                           :class="{
                                             'is-invalid': gethealthcustomerForm.errors.has(
@@ -901,23 +919,7 @@
                     </div>
                   </div>
                 </div>
-                <div class="uk-card-footer">
-                  <div class="row justify-content-center">
-                    <div class="col-sm-8">
-                      <div class="my-2">
-                        <el-button
-                          type="primary"
-                          native-type="submit"
-                          :disabled="checkrequirements"
-                          @click="collectdetails"
-                          class="inline-flex items-center primary justify-center px-5 py-3 border border-transparent text-base leading-6 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-500 focus:outline-none focus:shadow-outline transition duration-150 ease-in-out"
-                        >
-                          Save Details
-                        </el-button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                
               </form>
             </ValidationObserver>
           </div>
@@ -979,6 +981,22 @@
         </div>
       </div>
     </div>
+     <div class="container my-4">
+      <div>
+        <div class="jituze-step-three-pagination__navigation jituze-pagination__navigation col-12">
+          <div>
+            <button class="swiper-motor-button-prev w-full sm:w-auto flex-none mr-4 bg-gray-300 hover:bg-gray-700 text-white text-lg leading-6 font-semibold py-3 px-6 border border-transparent rounded-full focus:ring-2 focus:ring-offset-2 focus:ring-offset-white focus:ring-gray-900 focus:outline-none transition-colors duration-200" @click="swipePrev">Back</button>
+          </div>
+          <div>
+            <button 
+            class="swiper-motor-button-next w-full sm:w-auto flex-none bg-blue-900 hover:bg-blue-700 text-white text-lg  py-3 px-6 border border-transparent rounded-full focus:ring-2 focus:ring-offset-2 focus:ring-offset-white focus:ring-blue-900 focus:outline-none transition-colors duration-200" 
+             :class="{ 'opacity-25': checkrequirements }"
+                              :disabled="checkrequirements"
+                              @click="collectdetails">Save Personal Details</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -991,10 +1009,23 @@ export default {
     "activateNext",
     "activateGetQuotes",
     "gethealthcustomerForm",
+    "swipePrev"
   ],
   data() {
     return {
       minDate: new Date(),
+      status:'',
+      status_msg:'',
+      member: new Form({
+        name:"",
+        phone:"",
+        email:"",
+        document_type:"",
+        document_number:"",
+        kra_pin:"",
+        copy_id:null,
+        copy_kra_certificate:null
+      })
     };
   },
   components: {
@@ -1008,9 +1039,11 @@ export default {
       "healthProduct",
       "gethealthquotations",
       "gethealthpurchased",
+      "getHealthDependants",
       "dependants",
       "fifthChildOption",
-      "typeofHealthProduct"
+      "typeofHealthProduct",
+      "getEmailError","getKraError","getPhoneError",
     ]),
     checkifchildren() {
       if (
@@ -1023,61 +1056,114 @@ export default {
     },
     checkrequirements() {
       if (
-        this.gethealthcustomer.name === "" ||
-        this.gethealthcustomer.name === null ||
-        this.gethealthcustomer.name === 0 ||
-        this.gethealthcustomer.phone === "" ||
-        this.gethealthcustomer.email === "" ||
-        this.gethealthcustomer.document_number === "" ||
-        this.gethealthcustomer.kra_pin === ""
+        this.member.name === "" ||
+        this.member.name === null ||
+        this.member.name === 0 ||
+        this.member.phone === "" ||
+        this.member.email === "" ||
+        this.member.document_number === "" ||
+        this.member.kra_pin === ""
       ) {
         return true;
       }
     },
   },
   methods: {
-    handleIDUpload() {
-      this.copy_id = this.$refs.copy_id.files[0];
+    showNotification(message){
+      this.status_msg = message;
+      setTimeout(() => {
+        this.status_msg = '';
+      }, 3000);
+    },
+    validateForm(){
+      if(!this.member.name){
+        this.status = false;
+        this.showNotification('You forgot to enter your Names');
+        return false;
+      }
+      if(!this.member.phone){
+        this.status = false;
+        this.showNotification('You forgot to enter your Cellphone Number');
+        return false;
+      }
+      if(!this.member.email){
+        this.status = false;
+        this.showNotification('You forgot to enter your Email Address');
+        return false;
+      }
+      if(!this.member.kra_pin){
+        this.status = false;
+        this.showNotification('You forgot to enter your Valid KRA Pin Number');
+        return false;
+      }
+      if(!this.member.document_number){
+        this.status = false;
+        this.showNotification('You forgot to enter your Valid National ID Number');
+        return false;
+      }
+      if(!this.member.copy_id.length < 1){
+        this.status = false;
+        this.showNotification('You forgot to attach a copy of your Valid National ID Number');
+        return false;
+      }
+      if(!this.member.copy_kra_certificate.length < 1){
+        this.status = false;
+        this.showNotification('You forgot to attach a copy of your Valid KRA PIN Certificate');
+        return false;
+      }
+    },
+    handleIDUpload(e) {
+      this.member.copy_id = this.$refs.copy_id.files[0];
     },
     handleKRAUpload() {
-      this.gethealthcustomer.copy_kra_certificate = this.$refs.copy_kra.files[0];
+      this.member.copy_kra_certificate = this.$refs.copy_kra_certificate.files[0];
     },
     collectdetails(e) {
       e.preventDefault();
+      // if(!this.validateForm()) {
+      //   return false;
+      // }
       Swal.fire({
         title: "Please Wait..",
         text: "We are creating an Account for you, just hold on ...",
         allowOutsideClick: false,
         allowEscapeKey: false,
         allowEnterKey: false,
-        onOpen: () => {
+        didOpen: () => {
           Swal.showLoading();
         },
       });
-      let payload = new FormData();
-      payload.append("copy_id", this.$refs.copy_id.files[0]);
-      payload.append("copy_kra_certificate", this.$refs.copy_kra.files[0]);
-      payload.append("name", this.gethealthcustomer.name);
-      payload.append("cellphone", this.gethealthcustomer.phone);
-      payload.append("email", this.gethealthcustomer.email);
-      payload.append("document_type", this.gethealthcustomer.document_type);
-      payload.append("document_number", this.gethealthcustomer.document_number);
-      payload.append("quotationId", this.gethealthpurchased.quotation_id);
-      payload.append("kra_number", this.gethealthcustomer.kra_pin);
-      payload.append("principal_dob", this.health.basic.dob.toISOString().split('T')[0]);
-      payload.append("pre_existing", this.typeofHealthProduct.pre_existing);
-      payload.append("dependants", JSON.stringify(this.gethealthcustomer.dependants));
-      payload.append("cover_type", "h1");
+      let payload = {
+        copy_id : this.$refs.copy_id.files[0],
+        copy_kra_certificate : this.$refs.copy_kra_certificate.files[0],
+        name  : this.member.name,
+        cellphone :this.member.phone,
+        email :  this.member.email,
+        document_type : this.member.document_type,
+        document_number : this.member.document_number,
+        quotationId : this.gethealthpurchased.quotation_id,
+        kra_number : this.member.kra_pin,
+        principal_dob : this.health.basic.dob.toISOString().split('T')[0],
+        pre_existing : this.typeofHealthProduct.pre_existing,
+        dependants : JSON.stringify(this.getHealthDependants.dependants),
+        cover_type : "h1",
+      }
+      
       this.$store
         .dispatch("CreatehealthCustomer", payload)
-        .then((response) => {
-          this.$notify({
+        .then(response => {
+          this.status = true;
+          if(response.data.message ==='Customer Stored Successfully'){
+            this.$notify({
             message: "Your Policy Account created successfully",
             type: "success",
             duration: 7 * 1000,
           });
-          this.healthSwiper.slideTo(4);
+          this.healthSwiper.slideTo(5);
+          this.healthSwiper.update();
           Swal.close();
+          }
+          
         })
         .catch((err) => {
           console.error(err);

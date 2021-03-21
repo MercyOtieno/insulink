@@ -1,5 +1,5 @@
 <template>
-  <div class="swiper-slide step-six">
+  <div class="swiper-slide step-six termsncondition">
     <div class="container">
       <b-row class="py-12">
         <div class="col-sm-8">
@@ -85,8 +85,9 @@
                     <el-date-picker
                       v-model="form.policy_start_date"
                       type="date"
-                      required
                       placeholder="Pick a date that this policy should start"
+                      format="dd/MM/yyyy"
+                      value-format="dd-MM-yyyy"
                     >
                     </el-date-picker>
                   </div>
@@ -100,7 +101,7 @@
                       class="uk-input"
                       type="text"
                       placeholder="disabled"
-                      v-model="email"
+                      v-model="gethealthcustomer.email"
                       disabled
                     />
                   </div>
@@ -205,12 +206,12 @@ import { mapState, mapGetters, mapActions } from "vuex";
 export default {
   data() {
     return {
-      form:{
+      form: new Form({
         transactioncode: "",
         phone: "",
-        policy_start_date: new Date(),
+        policy_start_date: '',
         tnl: "",
-      }
+      })
     }
   },
   props: ["healthSwiper", "activateNext", "activateGetQuotes"],
@@ -228,6 +229,11 @@ export default {
     termscondition() {
       if (this.form.tnl === true) return true;
     },
+    getQuotation(){
+      if(this.gethealthpurchased.quotation_id){
+        return this.gethealthpurchased.quotation_id
+      }
+    }
   },
   methods: {
     termsChanged() {
@@ -287,34 +293,52 @@ export default {
           Swal.showLoading();
         },
       });
-      let payload = {
-        transaction_code: this.form.transactioncode,
-        email: this.email,
-        phone_paid: this.form.phone,
-        policy_start_date: this.form.policy_start_date,
-        quotation_id: this.gethealthpurchased.quotation_id,
-        tnl: this.form.tnl,
-      };
-      this.$store
-        .dispatch("makeHealthPayment", payload)
+      let payload = new FormData();
+      payload.append("transaction_code", this.form.transactioncode);
+      payload.append("email", this.email);
+      payload.append("phone_paid", this.form.phone);
+      payload.append("policy_start_date", this.form.policy_start_date);
+      payload.append("quotation_id", this.getQuotation);
+      payload.append("tnl", this.form.tnl);
+      console.log(payload);
+      axios.post("/purchase/payments/pay", payload)
         .then((response) => {
           this.$notify({
             message: "Payment Received successfully",
             type: "success",
             duration: 7 * 1000,
           });
-          return false;
+      this.healthSwiper.slideTo(6);
+      this.healthSwiper.update();
+      Swal.close();
         })
         .catch((err) => {
           console.error(err);
+          Toast.fire({
+            icon: "error",
+            title: "Error Submiting Payment Data",
+          });
+          this.healthSwiper.update();
+          Swal.close();
         });
-      this.healthSwiper.slideTo(5);
-      this.healthSwiper.update();
-      Swal.close();
     },
   },
 };
 </script>
 
 <style lang="scss" scoped>
+.terms-alert {
+    .swal2-popup {
+        padding-bottom: 0;
+    }
+    .swal2-content{
+        position: relative;
+        top: 100%;
+        margin-top: 281px;
+        .terms-alert__copy {
+            text-align: justify;
+        }
+    
+    }
+}
 </style>

@@ -826,6 +826,15 @@ h4,
     .swal2-popup {
         padding-bottom: 0;
     }
+    #swal2-content{
+        position: relative;
+        top: 100%;
+        margin-top: 281px;
+        .terms-alert__copy {
+            text-align: justify;
+        }
+    
+    }
 }
 .terms-alert__actions-class {
         position: sticky;
@@ -834,15 +843,6 @@ h4,
         bottom: 0;
         background: #f8f8f8;
         margin: 0;
-}
-#swal2-content{
-    position: relative;
-    top: 100%;
-    margin-top: 281px;
-    .terms-alert__copy {
-        text-align: justify;
-    }
-
 }
 .copy-large{
     font-size: 1.8rem;
@@ -872,4 +872,21 @@ h4,
     #bottom-top h3 {
         font-size: 2rem;
     }
+}
+.elementor-icon-box-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+}
+.contact-form .contact-message {
+    display: none;
+}
+.b-calendar {
+    .b-calendar-inner {
+        margin: 0 auto;
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+}
+#bottom-top {
+    margin-top: 3.5rem;
 }

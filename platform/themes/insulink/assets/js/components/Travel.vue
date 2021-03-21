@@ -136,6 +136,7 @@
                     <div class="col-sm-6">
                       <el-button
                         type="primary"
+                        class="w-100"
                         :loading="buttonLoading"
                         @click="sendTravel"
                         >Get Travel Quotes</el-button

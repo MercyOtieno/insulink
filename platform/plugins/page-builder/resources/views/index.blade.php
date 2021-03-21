@@ -13,7 +13,9 @@
     <link rel="stylesheet" href="{{ asset('vendor/core/plugins/page-builder/libraries/grapesjs/css/tooltip.css') }}">
 
     <link rel='stylesheet' href='//fonts.googleapis.com/css?family=Roboto:100%2C100italic%2C300%2C300italic%2C400%2Citalic%2C500%2C500italic%2C700%2C700italic%2C900%2C900italic|Roboto+Slab:100%2C300%2C400%2C700&#038;subset=greek-ext%2Cgreek%2Ccyrillic-ext%2Clatin-ext%2Clatin%2Cvietnamese%2Ccyrillic' type='text/css' media='all' />
-
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"
+    integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+    crossorigin="anonymous"></script>
     <style type="text/css">
         body, html {
             height      : 100%;
@@ -66,9 +68,7 @@
     {!! $page->content !!}
 </div>
 
-<script src="https://code.jquery.com/jquery-3.2.1.min.js"
-        integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
-        crossorigin="anonymous"></script>
+
 <script src="{{ asset('vendor/core/plugins/page-builder/libraries/grapesjs/js/toastr.min.js') }}"></script>
 <script src="{{ asset('vendor/core/plugins/page-builder/libraries/grapesjs/js/grapes.min.js') }}"></script>
 <script src="{{ asset('vendor/core/plugins/page-builder/libraries/grapesjs/js/grapesjs-preset-webpage.min.js') }}"></script>

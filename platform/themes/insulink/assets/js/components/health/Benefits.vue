@@ -175,6 +175,17 @@
                     <option value="20250">Kes 150,000</option>
                   </select>
                 </div>
+                <div v-if="checkbritam ===true && add_maternity === true">
+                  <label for="">Maternity Limit</label>
+                  <select name="britam_maternity" class="form-control" id="" v-model="britam_maternity">
+                    <option value="26000">Kes 80,000</option>
+                    <option value="32500">Kes 100,000</option>
+                    <option value="48750">Kes 150,000</option>
+                    <option value="65000">Kes 200,000</option>
+                    <option value="81250">Kes 250,000</option>
+                    <option value="97500">Kes 300,000</option>
+                  </select>
+                </div>
               </div>
               <div
                 class="form-group"
@@ -244,18 +255,6 @@
               <b-alert show>All Benefits are Inclusive</b-alert>
             </div>
           </div>
-          <div class="bg-gray-50 mt-3">
-            <div class="float-right">
-              <el-button
-                type="primary"
-                icon="el-icon-shopping-cart-1"
-                @click="pushhealthquotation"
-                class="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base leading-6 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-500 focus:outline-none focus:shadow-outline transition duration-150 ease-in-out"
-              >
-                Proceed to Purchase
-              </el-button>
-            </div>
-          </div>
         </div>
       </div>
       <div class="row">
@@ -273,6 +272,20 @@
         </div>
       </div>
     </div>
+     <div class="container my-4">
+      <div>
+        <div class="jituze-step-three-pagination__navigation jituze-pagination__navigation col-12">
+          <div>
+            <button class="swiper-motor-button-prev w-full sm:w-auto flex-none mr-4 bg-gray-300 hover:bg-gray-700 text-white text-lg leading-6 font-semibold py-3 px-6 border border-transparent rounded-full focus:ring-2 focus:ring-offset-2 focus:ring-offset-white focus:ring-gray-900 focus:outline-none transition-colors duration-200" @click="swipePrev">Back</button>
+          </div>
+          <div>
+            <button 
+            class="swiper-motor-button-next w-full sm:w-auto flex-none bg-blue-900 hover:bg-blue-700 text-white text-lg  py-3 px-6 border border-transparent rounded-full focus:ring-2 focus:ring-offset-2 focus:ring-offset-white focus:ring-blue-900 focus:outline-none transition-colors duration-200" 
+             @click="pushhealthquotation">Proceed to Checkout</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -284,13 +297,15 @@ export default {
     "activateNext",
     "activateGetQuotes",
     "gethealthcustomerForm",
+    "swipePrev"
   ],
   data() {
     return {
       add_maternity: "",
       add_dental: "",
       add_optical: "",
-      ga_maternity:0
+      ga_maternity:13975,
+      britam_maternity: 26000
     };
   },
   computed: {
@@ -368,6 +383,12 @@ export default {
       if (this.checkGA ===true) {
           if (this.add_maternity === true) {
           return parseInt(this.ga_maternity);
+        } else {
+          return rate;
+        }
+      } else if (this.checkbritam ===true) {
+          if (this.add_maternity === true) {
+          return parseInt(this.britam_maternity);
         } else {
           return rate;
         }

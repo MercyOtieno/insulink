@@ -39,6 +39,9 @@ class CustomerController extends Controller
                 'name' => 'required',
                 'email' => 'required|email',
                 'cellphone' => 'required',
+                'copy_id' => 'required|image|mimes:jpeg,png,jpg,gif',
+                'copy_kra_certificate' => 'required|image|mimes:jpeg,png,jpg,gif',
+                'logbook' => 'required|image|mimes:jpeg,png,jpg,gif',
                 'kra_number' => array(
                     'required',
                     'regex:/^a\d{9}[a-z]$/i'
@@ -72,23 +75,30 @@ class CustomerController extends Controller
             $docs = new CustomerDocument();
             $docs->customer_id = $customer->id;
             $docs->vehicle_book_id = $vehicle->id;
-            $files = $request->file('copy_id');
-            $destination = 'documents/customer'; // upload path
-            $copy_id = $request->quotationId . '-ID' . '.' . $files->getClientOriginalExtension();
-            $files->move($destination, $copy_id);
-            $docs->copy_id = $copy_id;
+            if ($request->has('copy_id')) {
+                $files = $request->file('copy_id');
+                $destination = 'documents/customer'; // upload path
+                $copy_id = $request->quotationId . '-ID' . '.' . $files->getClientOriginalExtension();
+                $files->move($destination, $copy_id);
+                $docs->copy_id = $copy_id;
+            }
+            
 
-            $doc = $request->file('copy_kra_certificate');
-            $destinationPath = 'documents/customer'; // upload path
-            $copy_kra_certificate = $request->quotationId . '-kra' . '.' . $doc->getClientOriginalExtension();
-            $doc->move($destinationPath, $copy_kra_certificate);
-            $docs->copy_kra_certificate = $copy_kra_certificate;
+            if ($request->has('copy_kra_certificate')) {
+                $doc = $request->file('copy_kra_certificate');
+                $destinationPath = 'documents/customer'; // upload path
+                $copy_kra_certificate = $request->quotationId . '-kra' . '.' . $doc->getClientOriginalExtension();
+                $doc->move($destinationPath, $copy_kra_certificate);
+                $docs->copy_kra_certificate = $copy_kra_certificate;
+            }
 
-            $file = $request->file('logbook');
-            $destinationPathe = 'documents/customer'; // upload path
-            $logbook = $request->quotationId . '-logbook' . '.' . $file->getClientOriginalExtension();
-            $file->move($destinationPathe, $logbook);
-            $docs->logbook = $logbook;
+            if ($request->has('logbook')) {
+                $file = $request->file('logbook');
+                $destinationPathe = 'documents/customer'; // upload path
+                $logbook = $request->quotationId . '-logbook' . '.' . $file->getClientOriginalExtension();
+                $file->move($destinationPathe, $logbook);
+                $docs->logbook = $logbook;
+            }
 
             $docs->save();
             
@@ -104,6 +114,8 @@ class CustomerController extends Controller
                 'name' => 'required',
                 'email' => 'required|email',
                 'cellphone' => 'required',
+                'copy_id' => 'required|image|mimes:jpeg,png,jpg,gif',
+                'copy_kra_certificate' => 'required|image|mimes:jpeg,png,jpg,gif',
                 'kra_number' => array(
                     'required',
                     'regex:/^a\d{9}[a-z]$/i'
@@ -125,17 +137,21 @@ class CustomerController extends Controller
             //Store documents
             $docs = new CustomerDocument();
             $docs->customer_id = $customer->id;
-            $files = $request->file('copy_id');
-            $destination = 'documents/customer'; // upload path
-            $copy_id = $request->quotationId . '-ID' . '.' . $files->getClientOriginalExtension();
-            $files->move($destination, $copy_id);
-            $docs->copy_id = $copy_id;
+            if ($request->has('copy_id')) {
+                $files = $request->file('copy_id');
+                $destination = 'documents/customer'; // upload path
+                $copy_id = $request->quotationId . '-ID' . '.' . $files->getClientOriginalExtension();
+                $files->move($destination, $copy_id);
+                $docs->copy_id = $copy_id;
+            }
 
-            $doc = $request->file('copy_kra_certificate');
-            $destinationPath = 'documents/customer'; // upload path
-            $copy_kra_certificate = $request->quotationId . '-kra' . '.' . $doc->getClientOriginalExtension();
-            $doc->move($destinationPath, $copy_kra_certificate);
-            $docs->copy_kra_certificate = $copy_kra_certificate;
+            if ($request->has('copy_kra_certificate')) {
+                $doc = $request->file('copy_kra_certificate');
+                $destinationPath = 'documents/customer'; // upload path
+                $copy_kra_certificate = $request->quotationId . '-kra' . '.' . $doc->getClientOriginalExtension();
+                $doc->move($destinationPath, $copy_kra_certificate);
+                $docs->copy_kra_certificate = $copy_kra_certificate;
+            }
 
             $docs->save();
             
@@ -145,10 +161,12 @@ class CustomerController extends Controller
     }
 
     public function storeHealth(Request $request, BaseHttpResponse $response) {
-       
+       //dd($request->copy_id);
             $this->validate($request, [
                 'name' => 'required', "regex:/^[a-zA-Z'` ]+$/i",
                 'email' => 'required', 'email', 'regex:/^([a-z0-9\+_\-]+)(\.[a-z0-9\+_\-]+)*@([a-z0-9\-]+\.)+[a-z]{2,6}$/ix',
+                'copy_id' => 'required|image|mimes:jpeg,png,jpg,gif',
+                'copy_kra_certificate' => 'required|image|mimes:jpeg,png,jpg,gif',
                 'cellphone' => 'required',
                 'kra_number' => array(
                     'required',
@@ -167,29 +185,39 @@ class CustomerController extends Controller
             if(!empty($request->dependants)){
                 $mydependats = json_decode($request->dependants, true);
                 foreach ($mydependats as $key => $value) {
-                   HealthDependant::create([
-                         'customer_id' => $customer->id,
+                  $dependants = HealthDependant::create([
+                            'customer_id' => $customer->id,
                             'dependant_name' => $value['name'],
                             'dependant_dob' => date('Y-m-d', strtotime($value['dob'])),
                             'relationship' =>$value['relationship'],
+                        
                     ]);
+                    // $checkfornull = $dependants->where('dependant_name', '=', null)->get();
+                    // dd($checkfornull);
+                    // if ($checkfornull) {
+                    //     $checkfornull->delete();
+                    // }
                 }
             }
 
             //Store documents
             $docs = new CustomerDocument();
             $docs->customer_id = $customer->id;
-            $files = $request->file('copy_id');
-            $destination = 'documents/customer'; // upload path
-            $copy_id = $request->quotationId . '-ID' . '.' . $files->getClientOriginalExtension();
-            $files->move($destination, $copy_id);
-            $docs->copy_id = $copy_id;
+            if ($request->has('copy_id')) {
+                $files = $request->file('copy_id');
+                $destination = 'documents/customer'; // upload path
+                $copy_id = $request->quotationId . '-ID' . '.' . $files->getClientOriginalExtension();
+                $files->move($destination, $copy_id);
+                $docs->copy_id = $copy_id;
+            }
 
-            $doc = $request->file('copy_kra_certificate');
-            $destinationPath = 'documents/customer'; // upload path
-            $copy_kra_certificate = $request->quotationId . '-kra' . '.' . $doc->getClientOriginalExtension();
-            $doc->move($destinationPath, $copy_kra_certificate);
-            $docs->copy_kra_certificate = $copy_kra_certificate;
+            if ($request->has('copy_kra_certificate')) {
+                $doc = $request->file('copy_kra_certificate');
+                $destinationPath = 'documents/customer'; // upload path
+                $copy_kra_certificate = $request->quotationId . '-kra' . '.' . $doc->getClientOriginalExtension();
+                $doc->move($destinationPath, $copy_kra_certificate);
+                $docs->copy_kra_certificate = $copy_kra_certificate;
+            }
 
             $docs->save();
              //Update Quotation
@@ -270,7 +298,7 @@ class CustomerController extends Controller
                 $customer->pre_existing = $dataset['pre_existing'];
                 $customer->save();
                 return $customer;
-            } elseif(in_array($dataset['cover_type'], $motorcovers)){
+            } elseif( in_array( $dataset['cover_type'], $motorcovers ) ) {
                 $customer = new Customer();
                 $customer->user_id = $userdata->id;
                 $customer->cellphone = MotorHelper::formatMobileNumber($dataset['cellphone']);

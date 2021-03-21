@@ -5,36 +5,23 @@
           <div class="w-full px-3 overflow-hidden sm:w-full md:w-3/5 lg:w-3/5 xl:w-3/5">
             <div class="py-4">
               <p>
-                Insulink Kenya Ltd is an online insurance agency licensed and
-                regulated by the IRA (Insurance Regulatory Authority) as well as
-                endorsed by AKI (Association of Kenyan Insurers) to represent
-                various underwriters and transact business online.
+                Insulink Kenya Ltd is an online insurance agency licensed and regulated by the IRA (Insurance Regulatory Authority) as well as endorsed by AKI (Association of Kenyan Insurers) to be an independent insurance agency and transact business online.
               </p>
               <p>
-                The first of its kind, to provide an online platform that
-                creates empowerment, offer convenience, efficiency and
-                credibility.
+                The first of its kind, to provide an online platform that focuses on customer centricity, empowerment, convenience, efficiency, and credibility.
               </p>
               <p>
-                Our main goal is to create awareness and help our clients
-                understand all matters insurance through our experienced team of
-                agents, and we closely work with the underwriters from your
-                favorite insurance companies, to ensure that we give you the
-                best policies that are customized to meet your expectations.
+                We work closely with some of the best underwriters in town to ensure you get the best policies that not only meet your budget but solve all your insurance needs/risks and protect your investments.
               </p>
               <p>
-                Our experienced team will advise on the best policy based on the
-                risks, your budget, the benefits and exclusions provided by
-                various insurance providers.
+                As an independent agency, we make sure that we have our clients’ best interest when working with the underwriters to ensure we get the best tailor-made policies for them.
               </p>
               <p>
-                This is your one stop shop for insurance, you can buy, compare
-                quotes, renew policies, make claims online.
+                Our experienced team will advise on the best policy based on the risks, your budget, the benefits, and exclusions provided by various insurance providers.
               </p>
               <p>
-                Once you have an account with us, you will be able to track your
-                policies, claims history, savings, investment, payments and
-                renewal policies.
+                This is your one-stop-shop for insurance, you can buy, compare quotes, renew policies, make claims online.</p>
+<p>Once you have an account with us, you will be able to track your policies, claims history, savings, investment, payments, and renewal policies.
               </p>
             </div>
           </div>
@@ -45,22 +32,23 @@
                   Our Mission
                 </h3>
                 <p>
-                  To make a vital contribution to the insurance industry by
-                  empowering the consumers. We listen to our customers and work
-                  hand in hand with the insurance providers to ensure we meet
-                  their needs.
+                  To make a vital contribution to the insurance industry by empowering the consumers. We listen to our customers and work with the insurance providers to ensure we meet their needs.
                 </p>
               </div>
-              <div class="box">
+              <div class="box mb-4">
                 <h3 style="color: #048abf" class="text-uppercase mb-4">
                   Our Vision
                 </h3>
                 <p>
-                  To set the standard of excellence among insurance agencies
-                  together with the insurance providers by being innovative and
-                  empowering the consumers. We look forward to redefining the
-                  insurance experience in the country by making sure we offer
-                  the best customer experience in the insurance industry.
+                  To set the standard of excellence among insurance agencies together with the insurance providers by being innovative and empowering the consumers.
+                </p>
+              </div>
+              <div class="box mb-4">
+                <h3 style="color: #048abf" class="text-uppercase mb-4">
+                  Our Promise
+                </h3>
+                <p>
+                  Redefining your insurance experience.
                 </p>
               </div>
             </div>
@@ -69,7 +57,7 @@
       </b-container>
     <section style="background: #f3f7fa" class="py-9">
       <b-container>
-        <h3 class="mb-4 text-uppercase">Why Us</h3>
+        <h3 class="mb-4 text-uppercase">Our Core Values</h3>
         <div class="flex -mx-4 flex-wrap overflow-hidden">
           <div class="w-full px-3 overflow-hidden sm:w-full md:w-full lg:w-full xl:w-1/2">
             <img src="/images/why-us.png" alt="" />

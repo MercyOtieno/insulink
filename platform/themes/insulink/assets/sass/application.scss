@@ -1,4 +1,4 @@
-//bootstrap
+//bootstrap css
 @import '~bootstrap/scss/bootstrap';
 @import '~bootstrap-vue/src/index.scss';
 @import 'variables';
@@ -6,7 +6,6 @@
 @import 'fonts';
 @import 'animation';
 @import 'theme';
-@import './vendor/font-awesome/scss/font-awesome.scss';
 
 #dsc__slideshow {
     .widget {

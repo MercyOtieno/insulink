@@ -16,8 +16,7 @@
                             <h4 class="elementor-icon-box-title">
                                 <span>Convenience</span>
                             </h4>
-                            <p class="elementor-icon-box-description">To give our clients an opportunity to get the best policies,
-                                compare the rates, the benefits from different insurance providers in one platform. </p>
+                            <p class="elementor-icon-box-description">To allow our clients to get the best policies, compare the rates, the benefits from different insurance providers in one platform.</p>
                         </div>
                     </div>
                 </div>
@@ -31,10 +30,9 @@
                         </div>
                         <div class="elementor-icon-box-content">
                             <h4 class="elementor-icon-box-title">
-                                <span>Customer is the King</span>
+                                <span>Credibility</span>
                             </h4>
-                            <p class="elementor-icon-box-description">We Work closely with the insurance providers to ensure
-                                credible data and information passed to you from your insurance providers. </p>
+                            <p class="elementor-icon-box-description">We work closely with insurance providers to ensure credible data and information are passed to you from your insurance providers.</p>
                         </div>
                     </div>
                 </div>
@@ -48,10 +46,9 @@
                         </div>
                         <div class="elementor-icon-box-content">
                             <h4 class="elementor-icon-box-title">
-                                <span>Credible Service</span>
+                                Customer-centric
                             </h4>
-                            <p class="elementor-icon-box-description">We have a team that is willing to go above and beyond to ensure
-                                our customers have the best experience.</p>
+                            <p class="elementor-icon-box-description">Our team of experts will always be here to offer a remarkable customer experience all through your customer life cycle as well as your insurance journey.</p>
                         </div>
                     </div>
                 </div>
