@@ -2705,7 +2705,7 @@ class QuotationController extends Controller
             Mail::to($product->email)->send(new notifyproductcustomer($product));
             $admins = User::where('super_user', 1)->get();
             foreach ($admins as $admin) {
-                Mail::to($admin->email)->bcc('jnmunala@gmail.com')->send(new NotifyProductAdmin($details));
+                Mail::to($admin->email)->bcc('info@insulink.co.ke')->send(new NotifyProductAdmin($details));
             }
         } catch (\Throwable $th) {
             //throw $th;
