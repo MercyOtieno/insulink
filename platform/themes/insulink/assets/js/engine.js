@@ -10,6 +10,9 @@ import Domestic from "./components/DomesticInsurance";
 import HealthIndividual from "./components/Health-Individual";
 import HealthCorporate from "./components/Health-Corporate";
 import Travel from "./components/Travel";
+import Paccident from "./components/PersonalGroupAccident";
+import Claims from "./components/Claims";
+import Genform from "./components/GenForm";
 import Faq from "./components/FAQ";
 import Aboutus from "./components/About";
 import Slider from "./components/Slider";
@@ -167,6 +170,9 @@ const app = new Vue({
         Domestic,
         HealthIndividual,
         HealthCorporate,
-        Travel
+        Travel,
+        Paccident,
+        Claims,
+        Genform
     }
 });

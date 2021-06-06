@@ -248,7 +248,6 @@ const actions = {
         });
     },
     async CreatehealthCustomer({ commit, getters }, payload) {
-        console.log(payload);
         let formdata = new FormData();
         formdata.append("copy_id", payload.copy_id);
         formdata.append("copy_kra_certificate", payload.copy_kra_certificate);
@@ -258,9 +257,10 @@ const actions = {
         formdata.append("document_type", payload.document_type);
         formdata.append("document_number", payload.document_number);
         formdata.append("quotationId", payload.quotationId);
-        formdata.append("value_vehicle", payload.value_vehicle);
-        formdata.append("year_manufacture", payload.year_manufacture);
+        formdata.append("principal_dob", payload.principal_dob);
+        formdata.append("pre_existing", payload.pre_existing);
         formdata.append("kra_number", payload.kra_number);
+        formdata.append("dependants", payload.dependants);
         formdata.append("cover_type", payload.cover_type);
         return new Promise((resolve, reject) => {
             axios.post("/purchase/customer/details/saved/health", formdata).then(
@@ -274,7 +274,6 @@ const actions = {
                         healthCustomerData.phone = payload.cellphone;
                         commit("sethealthCustomerData", healthCustomerData);
                         resolve(response);
-                        console.log(response);
                     },
                     error => {
                         reject(error);

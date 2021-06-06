@@ -578,7 +578,6 @@ const actions = {
 const mutations = {
     showPaginationAction: (state, value) => (state.activatePagination = value),
     hidePaginationAction: (state, value) => (state.activatePagination = value),
-    hidePaginationAction: (state, value) => (state.activatePagination = value),
     setVehicleData: (state, value) => (state.vehicleData = value),
     setCustomerData: (state, value) =>
         (state.vehicleData.purchase.customer = value),

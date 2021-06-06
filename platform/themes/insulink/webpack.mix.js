@@ -35,38 +35,38 @@ mix.sass(source + "/assets/sass/application.scss", dist + "/css")
         dist + "/js/custom.js"
     ], dist + "/js/bundled.js")
     
-    .extend(
-        "ziggy",
-        new (class {
-            register(config = {}) {
-                this.watch = config.watch ?? ["routes/**/*.php"];
-                this.path = config.path ?? "";
-                this.enabled = config.enabled ?? !Mix.inProduction();
-            }
+    // .extend(
+    //     "ziggy",
+    //     new (class {
+    //         register(config = {}) {
+    //             this.watch = config.watch ?? ["routes/**/*.php"];
+    //             this.path = config.path ?? "";
+    //             this.enabled = config.enabled ?? !Mix.inProduction();
+    //         }
 
-            boot() {
-                if (!this.enabled) return;
+    //         boot() {
+    //             if (!this.enabled) return;
 
-                const command = () =>
-                    exec(
-                        `php artisan ziggy:generate ${this.path}`,
-                        (error, stdout, stderr) => console.log(stdout)
-                    );
+    //             const command = () =>
+    //                 exec(
+    //                     `php artisan ziggy:generate ${this.path}`,
+    //                     (error, stdout, stderr) => console.log(stdout)
+    //                 );
 
-                command();
+    //             command();
 
-                if (Mix.isWatching() && this.watch) {
-                    require("chokidar")
-                        .watch(this.watch)
-                        .on("change", path => {
-                            console.log(`${path} changed...`);
-                            command();
-                        });
-                }
-            }
-        })()
-    )
-    .ziggy()
+    //             if (Mix.isWatching() && this.watch) {
+    //                 require("chokidar")
+    //                     .watch(this.watch)
+    //                     .on("change", path => {
+    //                         console.log(`${path} changed...`);
+    //                         command();
+    //                     });
+    //             }
+    //         }
+    //     })()
+    // )
+    // .ziggy()
     .copyDirectory(dist + "/js", source + "/public/js")
     .copyDirectory(dist + "/vendor", source + "/public/vendor")
     .copyDirectory(dist + "/css", source + "/public/css");

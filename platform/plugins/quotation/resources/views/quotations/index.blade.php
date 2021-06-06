@@ -35,7 +35,6 @@
                         <th>ACTIONS</th>
                     </thead>
                     <tbody>
-                       
                         @foreach ($quotations as $item)
                         <tr>
                             <td>{{$item->quotation_number}}</td>

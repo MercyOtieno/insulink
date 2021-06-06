@@ -82,8 +82,7 @@ class PaymentController extends Controller
             ];
         //dd($fleet['vehicle']);
             try {
-                Notification::route('mail', 'info@insulink.co.ke')
-                                ->notify(new MotorPrivateQuote($fleet));
+                Notification::send(new MotorPrivateQuote($fleet));
             } catch(\Exception $e) {
                 echo 'Error - '. $e;
             }
@@ -101,8 +100,7 @@ class PaymentController extends Controller
             ];
             //dd($quotation['quotation']->customer->document_number);
             try {
-                Notification::route('mail', 'info@insulink.co.ke')
-                                ->notify(new HealthQuotation($quotation));
+                Notification::send(new HealthQuotation($quotation));
             } catch(\Exception $e) {
                 echo 'Error - '. $e;
             }

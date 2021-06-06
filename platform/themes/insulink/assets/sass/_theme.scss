@@ -804,6 +804,28 @@ h4,
 .health-individual, .motor-slides {
     overflow: visible !important;
 }
+.bg-claims {
+    background: url('/images/claims-banner.jpeg');
+    background-size: cover;
+    padding: 8rem 0 !important;
+    background-attachment: fixed;
+    p {
+        font-size: 1.1rem;
+        line-height: 1.5rem;
+        /* text-shadow: #000 3px 0 10px; */
+        font-weight: 200;
+        max-width: 500px;
+        background: #048ABF;
+        padding: 30px;
+        margin-top: 60px;
+    }
+    h2 {
+        font-size: 3.5rem;
+        line-height: normal;
+        text-shadow: #000 1px 0 10px;
+        font-weight: 900;
+    }
+}
 .bg-travel {
     background: url('/images/travel-banner.jpeg');
     background-size: cover;
@@ -830,6 +852,8 @@ h4,
         position: relative;
         top: 100%;
         margin-top: 281px;
+        border: 1px solid #ddd;
+    padding: 1.2rem;
         .terms-alert__copy {
             text-align: justify;
         }
@@ -889,4 +913,19 @@ h4,
 }
 #bottom-top {
     margin-top: 3.5rem;
+}
+.bullet {
+    position: relative;
+    padding-left: 25px !important;
+    line-height: 32px !important;
+    list-style: none;
+    li:before {
+        font-family: 'FontAwesome';
+        display: block;
+        position: absolute;
+        left: 0;
+        font-size: 15px;
+        color: #F15115;
+        content: "\f05d";
+    }
 }

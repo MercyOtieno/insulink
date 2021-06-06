@@ -3544,9 +3544,10 @@ a {
     display: inline-block;
 }
 .swal2-popup {
-    width: 50em !important;
+    width: 60em !important;
     overflow-y: scroll;
     max-height: 600px;
+    padding-top: 320px !important;
 }
 .home p {
     margin: 0 !important;

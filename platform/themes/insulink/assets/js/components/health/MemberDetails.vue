@@ -4,8 +4,13 @@
       <div class="row py-12">
         <div class="col-sm-8">
           <div class="uk-card uk-card-default uk-uk-card-body">
-            <div v-if="status_msg" :class="{'alert-success':status, 'alert-danger':!status}" class="alert" role="alert">
-              {{ status_msg}}
+            <div
+              v-if="status_msg"
+              :class="{ 'alert-success': status, 'alert-danger': !status }"
+              class="alert"
+              role="alert"
+            >
+              {{ status_msg }}
             </div>
             <ValidationObserver
               ref="observer"
@@ -13,7 +18,7 @@
               tag="form"
               @submit.prevent="collectdetails()"
             >
-              <form >
+              <form>
                 <div class="uk-card-header">
                   <h4 class="uk-card-title">Tell us About you</h4>
                 </div>
@@ -126,17 +131,18 @@
                       >Attach Copy of ID</label
                     >
                     <div class="col-md-6">
-                       <b-form-file
-                          v-model="member.copy_id"
-                          :state="Boolean(member.copy_id)"
-                          ref="copy_id"
-                          @change="handleIDUpload"
-                          placeholder="Choose a file or drop it here..."
-                          drop-placeholder="Drop file here..."
-                        ></b-form-file>
-                        <div class="mt-3">
-                          Selected file: {{ member.copy_id ? member.copy_id.name : "" }}
-                        </div>
+                      <b-form-file
+                        v-model="member.copy_id"
+                        :state="Boolean(member.copy_id)"
+                        ref="copy_id"
+                        @change="handleIDUpload"
+                        placeholder="Choose a file or drop it here..."
+                        drop-placeholder="Drop file here..."
+                      ></b-form-file>
+                      <div class="mt-3">
+                        Selected file:
+                        {{ member.copy_id ? member.copy_id.name : "" }}
+                      </div>
                       <!-- <input
                         class="input-file"
                         v-validate="'ext:jpeg,jpg,png,pdf'"
@@ -182,17 +188,21 @@
                     >
                     <div class="col-md-6">
                       <b-form-file
-                          v-model="member.copy_kra_certificate"
-                          :state="Boolean(member.copy_kra_certificate)"
-                          @change="handleKRAUpload"
-                          ref="copy_kra_certificate"
-                          placeholder="Choose a file or drop it here..."
-                          drop-placeholder="Drop file here..."
-                        ></b-form-file>
-                        <div class="mt-3">
-                          Selected file: {{ member.copy_kra_certificate ? member.copy_kra_certificate.name : "" }}
-                        </div>
-                      
+                        v-model="member.copy_kra_certificate"
+                        :state="Boolean(member.copy_kra_certificate)"
+                        @change="handleKRAUpload"
+                        ref="copy_kra_certificate"
+                        placeholder="Choose a file or drop it here..."
+                        drop-placeholder="Drop file here..."
+                      ></b-form-file>
+                      <div class="mt-3">
+                        Selected file:
+                        {{
+                          member.copy_kra_certificate
+                            ? member.copy_kra_certificate.name
+                            : ""
+                        }}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -303,7 +313,8 @@
                                       <div class="d-block">
                                         <el-date-picker
                                           v-model="
-                                            getHealthDependants.dependants[0].dob
+                                            getHealthDependants.dependants[0]
+                                              .dob
                                           "
                                           :class="[
                                             {
@@ -434,7 +445,8 @@
                                       <div class="d-block">
                                         <el-date-picker
                                           v-model="
-                                            getHealthDependants.dependants[1].dob
+                                            getHealthDependants.dependants[1]
+                                              .dob
                                           "
                                           :class="{
                                             'is-invalid': gethealthcustomerForm.errors.has(
@@ -559,7 +571,8 @@
                                       <div class="d-block">
                                         <el-date-picker
                                           v-model="
-                                            getHealthDependants.dependants[2].dob
+                                            getHealthDependants.dependants[2]
+                                              .dob
                                           "
                                           :class="{
                                             'is-invalid': gethealthcustomerForm.errors.has(
@@ -682,7 +695,8 @@
                                       <div class="d-block">
                                         <el-date-picker
                                           v-model="
-                                            getHealthDependants.dependants[3].dob
+                                            getHealthDependants.dependants[3]
+                                              .dob
                                           "
                                           :class="{
                                             'is-invalid': gethealthcustomerForm.errors.has(
@@ -804,7 +818,8 @@
                                       <div class="d-block">
                                         <el-date-picker
                                           v-model="
-                                            getHealthDependants.dependants[4].dob
+                                            getHealthDependants.dependants[4]
+                                              .dob
                                           "
                                           :class="{
                                             'is-invalid': gethealthcustomerForm.errors.has(
@@ -890,7 +905,8 @@
                                       <div class="d-block">
                                         <el-date-picker
                                           v-model="
-                                            getHealthDependants.dependants[5].dob
+                                            getHealthDependants.dependants[5]
+                                              .dob
                                           "
                                           :class="{
                                             'is-invalid': gethealthcustomerForm.errors.has(
@@ -919,7 +935,6 @@
                     </div>
                   </div>
                 </div>
-                
               </form>
             </ValidationObserver>
           </div>
@@ -973,7 +988,8 @@
               <div class="uk-card-footer">
                 Total Kes
                 <strong>{{
-                  health.h_purchased.premiumwithorwithoutbenefits | formatCurrency
+                  health.h_purchased.premiumwithorwithoutbenefits
+                    | formatCurrency
                 }}</strong>
               </div>
             </div>
@@ -981,18 +997,28 @@
         </div>
       </div>
     </div>
-     <div class="container my-4">
+    <div class="container my-4">
       <div>
-        <div class="jituze-step-three-pagination__navigation jituze-pagination__navigation col-12">
+        <div
+          class="jituze-step-three-pagination__navigation jituze-pagination__navigation col-12"
+        >
           <div>
-            <button class="swiper-motor-button-prev w-full sm:w-auto flex-none mr-4 bg-gray-300 hover:bg-gray-700 text-white text-lg leading-6 font-semibold py-3 px-6 border border-transparent rounded-full focus:ring-2 focus:ring-offset-2 focus:ring-offset-white focus:ring-gray-900 focus:outline-none transition-colors duration-200" @click="swipePrev">Back</button>
+            <button
+              class="swiper-motor-button-prev w-full sm:w-auto flex-none mr-4 bg-gray-300 hover:bg-gray-700 text-white text-lg leading-6 font-semibold py-3 px-6 border border-transparent rounded-full focus:ring-2 focus:ring-offset-2 focus:ring-offset-white focus:ring-gray-900 focus:outline-none transition-colors duration-200"
+              @click="swipePrev"
+            >
+              Back
+            </button>
           </div>
           <div>
-            <button 
-            class="swiper-motor-button-next w-full sm:w-auto flex-none bg-blue-900 hover:bg-blue-700 text-white text-lg  py-3 px-6 border border-transparent rounded-full focus:ring-2 focus:ring-offset-2 focus:ring-offset-white focus:ring-blue-900 focus:outline-none transition-colors duration-200" 
-             :class="{ 'opacity-25': checkrequirements }"
-                              :disabled="checkrequirements"
-                              @click="collectdetails">Save Personal Details</button>
+            <button
+              class="swiper-motor-button-next w-full sm:w-auto flex-none bg-blue-900 hover:bg-blue-700 text-white text-lg py-3 px-6 border border-transparent rounded-full focus:ring-2 focus:ring-offset-2 focus:ring-offset-white focus:ring-blue-900 focus:outline-none transition-colors duration-200"
+              :class="{ 'opacity-25': checkrequirements }"
+              :disabled="checkrequirements"
+              @click="collectdetails"
+            >
+              Save Personal Details
+            </button>
           </div>
         </div>
       </div>
@@ -1009,23 +1035,23 @@ export default {
     "activateNext",
     "activateGetQuotes",
     "gethealthcustomerForm",
-    "swipePrev"
+    "swipePrev",
   ],
   data() {
     return {
       minDate: new Date(),
-      status:'',
-      status_msg:'',
+      status: "",
+      status_msg: "",
       member: new Form({
-        name:"",
-        phone:"",
-        email:"",
-        document_type:"",
-        document_number:"",
-        kra_pin:"",
-        copy_id:null,
-        copy_kra_certificate:null
-      })
+        name: "",
+        phone: "",
+        email: "",
+        document_type: "",
+        document_number: "",
+        kra_pin: "",
+        copy_id: null,
+        copy_kra_certificate: null,
+      }),
     };
   },
   components: {
@@ -1043,7 +1069,9 @@ export default {
       "dependants",
       "fifthChildOption",
       "typeofHealthProduct",
-      "getEmailError","getKraError","getPhoneError",
+      "getEmailError",
+      "getKraError",
+      "getPhoneError",
     ]),
     checkifchildren() {
       if (
@@ -1069,46 +1097,52 @@ export default {
     },
   },
   methods: {
-    showNotification(message){
+    showNotification(message) {
       this.status_msg = message;
       setTimeout(() => {
-        this.status_msg = '';
+        this.status_msg = "";
       }, 3000);
     },
-    validateForm(){
-      if(!this.member.name){
+    validateForm() {
+      if (!this.member.name) {
         this.status = false;
-        this.showNotification('You forgot to enter your Names');
+        this.showNotification("You forgot to enter your Names");
         return false;
       }
-      if(!this.member.phone){
+      if (!this.member.phone) {
         this.status = false;
-        this.showNotification('You forgot to enter your Cellphone Number');
+        this.showNotification("You forgot to enter your Cellphone Number");
         return false;
       }
-      if(!this.member.email){
+      if (!this.member.email) {
         this.status = false;
-        this.showNotification('You forgot to enter your Email Address');
+        this.showNotification("You forgot to enter your Email Address");
         return false;
       }
-      if(!this.member.kra_pin){
+      if (!this.member.kra_pin) {
         this.status = false;
-        this.showNotification('You forgot to enter your Valid KRA Pin Number');
+        this.showNotification("You forgot to enter your Valid KRA Pin Number");
         return false;
       }
-      if(!this.member.document_number){
+      if (!this.member.document_number) {
         this.status = false;
-        this.showNotification('You forgot to enter your Valid National ID Number');
+        this.showNotification(
+          "You forgot to enter your Valid National ID Number"
+        );
         return false;
       }
-      if(!this.member.copy_id.length < 1){
+      if (!this.member.copy_id.length < 1) {
         this.status = false;
-        this.showNotification('You forgot to attach a copy of your Valid National ID Number');
+        this.showNotification(
+          "You forgot to attach a copy of your Valid National ID Number"
+        );
         return false;
       }
-      if(!this.member.copy_kra_certificate.length < 1){
+      if (!this.member.copy_kra_certificate.length < 1) {
         this.status = false;
-        this.showNotification('You forgot to attach a copy of your Valid KRA PIN Certificate');
+        this.showNotification(
+          "You forgot to attach a copy of your Valid KRA PIN Certificate"
+        );
         return false;
       }
     },
@@ -1134,36 +1168,35 @@ export default {
         },
       });
       let payload = {
-        copy_id : this.$refs.copy_id.files[0],
-        copy_kra_certificate : this.$refs.copy_kra_certificate.files[0],
-        name  : this.member.name,
-        cellphone :this.member.phone,
-        email :  this.member.email,
-        document_type : this.member.document_type,
-        document_number : this.member.document_number,
-        quotationId : this.gethealthpurchased.quotation_id,
-        kra_number : this.member.kra_pin,
-        principal_dob : this.health.basic.dob.toISOString().split('T')[0],
-        pre_existing : this.typeofHealthProduct.pre_existing,
-        dependants : JSON.stringify(this.getHealthDependants.dependants),
-        cover_type : "h1",
-      }
-      
+        copy_id: this.$refs.copy_id.files[0],
+        copy_kra_certificate: this.$refs.copy_kra_certificate.files[0],
+        name: this.member.name,
+        cellphone: this.member.phone,
+        email: this.member.email,
+        document_type: this.member.document_type,
+        document_number: this.member.document_number,
+        quotationId: this.gethealthpurchased.quotation_id,
+        kra_number: this.member.kra_pin,
+        principal_dob: this.health.basic.dob.toISOString().split("T")[0],
+        pre_existing: this.typeofHealthProduct.pre_existing,
+        dependants: JSON.stringify(this.getHealthDependants.dependants),
+        cover_type: "h1",
+      };
+
       this.$store
         .dispatch("CreatehealthCustomer", payload)
-        .then(response => {
+        .then((response) => {
           this.status = true;
-          if(response.data.message ==='Customer Stored Successfully'){
+          if (response.data.status === 200) {
             this.$notify({
-            message: "Your Policy Account created successfully",
-            type: "success",
-            duration: 7 * 1000,
-          });
-          this.healthSwiper.slideTo(5);
-          this.healthSwiper.update();
-          Swal.close();
+              message: "Your Policy Account created successfully",
+              type: "success",
+              duration: 7 * 1000,
+            });
+            this.healthSwiper.slideTo(5);
+            this.healthSwiper.update();
+            Swal.close();
           }
-          
         })
         .catch((err) => {
           console.error(err);

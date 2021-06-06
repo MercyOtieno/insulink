@@ -41,7 +41,7 @@ class HealthQuotation extends Notification
     public function toMail($notifiable)
     {
         $quote = $this->quotation;
-        return (new MailMessage())->cc($quote['quotation']->products->underwriters->email)->bcc("dsccreatives@gmail.com")->markdown('emails.health', ['quote' => $quote])
+        return (new MailMessage())->cc('info@insulink.co.ke')->cc($quote['quotation']->products->underwriters->email)->bcc("dsccreatives@gmail.com")->markdown('emails.health', ['quote' => $quote])
                 ->subject('New Health ('.trans('plugins/quotation::general.'.$quote['quotation']->cover_type).') Quotation');
     }
 

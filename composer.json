@@ -8,7 +8,7 @@
     "license": "MIT",
     "type": "project",
     "require": {
-        "php": "^7.3|^8.0",
+        "php": "^7.4",
         "ext-curl": "*",
         "ext-json": "*",
         "ext-zip": "*",
@@ -33,7 +33,6 @@
         "league/flysystem-aws-s3-v3": "^1.0",
         "mehradsadeghi/laravel-filter-querystring": "^1.1",
         "monarobase/country-list": "^3.2",
-        "renatomarinho/laravel-page-speed": "^2.0",
         "sendgrid/sendgrid": "^7.9",
         "symfony/translation": "^5.2",
         "tucker-eric/eloquentfilter": "^2.4"
@@ -66,14 +65,13 @@
     },
     "extra": {
         "laravel": {
-            "dont-discover": [
-            ]
+            "dont-discover": []
         },
         "merge-plugin": {
             "include": [
                 "./platform/plugins/*/composer.json",
-            	"./platform/themes/*/composer.json"
-	    ],
+                "./platform/themes/*/composer.json"
+            ],
             "recurse": false,
             "replace": false,
             "ignore-duplicates": false,

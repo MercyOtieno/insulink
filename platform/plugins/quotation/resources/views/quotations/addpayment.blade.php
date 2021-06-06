@@ -23,7 +23,7 @@
                 </div>
                 <div class="form-group">
                     <label for="">Mpesa Confirmation code</label>
-                    <input type="text" class="form-control" name="transaction_code">
+                    <input type="text" class="form-control" name="transaction_code" value="">
                 </div>
                 <div class="form-group">
                     <label for="">Change Policy Start Date</label>

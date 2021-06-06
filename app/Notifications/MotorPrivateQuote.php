@@ -41,7 +41,7 @@ class MotorPrivateQuote extends Notification
     public function toMail($notifiable)
     {
         $quote = $this->fleet;
-        return (new MailMessage())->cc($quote['quotation']->products->underwriters->email)->bcc("dsccreatives@gmail.com")->markdown('mail.quotes.privatecommercial', ['quote' => $quote])
+        return (new MailMessage())->cc('info@insulink.co.ke')->cc($quote['quotation']->products->underwriters->email)->bcc("dsccreatives@gmail.com")->markdown('mail.quotes.privatecommercial', ['quote' => $quote])
                 ->subject('New Motor ('.trans('plugins/quotation::general.'.$quote['quotation']->cover_type).') Quotation Purchase | '. $quote['vehicle']->registration);
     }
 

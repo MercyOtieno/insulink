@@ -10,6 +10,7 @@
 
       <div class="row justify-content-center my-6">
         <div class="col-sm-8">
+          <b-alert variant="info" v-if="checkifdob===true">to start choose your Age Bracket below</b-alert>
           <el-card class="box-card">
             <div class="form-group">
               <label for="">Select your Age Bracket below </label>
@@ -226,8 +227,10 @@ export default {
   components: { DatePicker },
   computed: {
     checkifdob(){
-      if (this.dob ==='') {
+      if (this.age ===0) {
         return true;
+      }else {
+        return false;
       }
     },
   },

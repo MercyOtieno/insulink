@@ -1,6 +1,7 @@
 <?php
 namespace Theme\Insulink\Dsc\Helpers;
 
+use App\Models\Lead;
 use Theme\Insulink\Http\Models\Quotation;
 
 class MotorHelper
@@ -19,6 +20,27 @@ class MotorHelper
             $checkquote = Quotation::where('quotation_number', $newquotation)->first();
             if (!empty($checkquote)) {
                 $current_quotation_number = substr($lastQuotation->quotation_number, 4) + 1;
+                return 'INS/' . str_pad($current_quotation_number, 7, '0', STR_PAD_LEFT);
+            }
+            else {
+                return $newquotation;
+            }
+        }
+        else {
+            return 'INS/0000001';
+        }
+    }
+
+    public static function getLeadNumber() {
+
+        $lastQuotation = Lead::orderBy('id', 'desc')->first();
+
+        if ($lastQuotation) {
+            $current_quotation_number = substr($lastQuotation->lead_no, 4) + 1;
+            $newquotation = 'INS/' . str_pad($current_quotation_number, 7, '0', STR_PAD_LEFT);
+            $checkquote = Lead::where('lead_no', $newquotation)->first();
+            if (!empty($checkquote)) {
+                $current_quotation_number = substr($lastQuotation->lead_no, 4) + 1;
                 return 'INS/' . str_pad($current_quotation_number, 7, '0', STR_PAD_LEFT);
             }
             else {

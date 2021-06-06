@@ -12,9 +12,11 @@ Route::group(['namespace' => 'Theme\Insulink\Http\Controllers', 'middleware' => 
             return Country::all();
         });
         Route::post('ajax/travel-quote/request', 'QuotationController@travelQuote');
+        Route::post('ajax/products-quote/request', 'QuotationController@otherProducts');
         Route::get('ajax/vehiclemakes', 'InsulinkController@getVehicleMakes');
         Route::get('ajax/vehiclemodels/{make}', 'InsulinkController@getVehicleModels');
         Route::get('ajax/underwriters', 'InsulinkController@getUnderwriters');
+        Route::get('general/underwriters', 'InsulinkController@listallUndwerwriters');
         /**
          * Generate Motor Private Quotations
          */

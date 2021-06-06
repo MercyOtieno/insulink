@@ -23,7 +23,7 @@ class Customer extends Authenticatable
      * @var string
      */
     protected $table = 'customers';
-
+    protected $dates = ['principal_dob'];
     /**
      * @var array
      */

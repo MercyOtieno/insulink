@@ -1,4 +1,15 @@
 <?php return array (
+  'barryvdh/laravel-debugbar' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'Barryvdh\\Debugbar\\ServiceProvider',
+    ),
+    'aliases' => 
+    array (
+      'Debugbar' => 'Barryvdh\\Debugbar\\Facade',
+    ),
+  ),
   'barryvdh/laravel-dompdf' => 
   array (
     'providers' => 
@@ -8,6 +19,13 @@
     'aliases' => 
     array (
       'PDF' => 'Barryvdh\\DomPDF\\Facade',
+    ),
+  ),
+  'barryvdh/laravel-ide-helper' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'Barryvdh\\LaravelIdeHelper\\IdeHelperServiceProvider',
     ),
   ),
   'blade-ui-kit/blade-ui-kit' => 
@@ -33,6 +51,20 @@
     'aliases' => 
     array (
       'Assets' => 'Botble\\Assets\\Facades\\AssetsFacade',
+    ),
+  ),
+  'botble/dev-tool' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'Botble\\DevTool\\Providers\\DevToolServiceProvider',
+    ),
+  ),
+  'botble/git-commit-checker' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'Botble\\GitCommitChecker\\Providers\\GitCommitCheckerServiceProvider',
     ),
   ),
   'botble/menu' => 
@@ -91,6 +123,13 @@
       'MailVariable' => 'Botble\\Base\\Facades\\MailVariableFacade',
       'Breadcrumbs' => 'Botble\\Base\\Facades\\BreadcrumbsFacade',
       'JsValidator' => 'Botble\\JsValidation\\Facades\\JsValidatorFacade',
+    ),
+  ),
+  'botble/plugin-generator' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'Botble\\PluginGenerator\\Providers\\PluginGeneratorServiceProvider',
     ),
   ),
   'botble/plugin-management' => 
@@ -159,6 +198,13 @@
       'SiteMapManager' => 'Botble\\Theme\\Facades\\SiteMapManagerFacade',
     ),
   ),
+  'botble/theme-generator' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'Botble\\ThemeGenerator\\Providers\\ThemeGeneratorServiceProvider',
+    ),
+  ),
   'botble/widget' => 
   array (
     'providers' => 
@@ -169,6 +215,24 @@
     array (
       'Widget' => 'Botble\\Widget\\Facades\\WidgetFacade',
       'WidgetGroup' => 'Botble\\Widget\\Facades\\WidgetGroupFacade',
+    ),
+  ),
+  'botble/widget-generator' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'Botble\\WidgetGenerator\\Providers\\WidgetGeneratorServiceProvider',
+    ),
+  ),
+  'facade/ignition' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'Facade\\Ignition\\IgnitionServiceProvider',
+    ),
+    'aliases' => 
+    array (
+      'Flare' => 'Facade\\Ignition\\Facades\\Flare',
     ),
   ),
   'fideloper/proxy' => 
@@ -239,6 +303,13 @@
       0 => 'Laravel\\Passport\\PassportServiceProvider',
     ),
   ),
+  'laravel/tinker' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'Laravel\\Tinker\\TinkerServiceProvider',
+    ),
+  ),
   'laravel/ui' => 
   array (
     'providers' => 
@@ -303,13 +374,6 @@
     'providers' => 
     array (
       0 => 'NunoMaduro\\Collision\\Adapters\\Laravel\\CollisionServiceProvider',
-    ),
-  ),
-  'renatomarinho/laravel-page-speed' => 
-  array (
-    'providers' => 
-    array (
-      0 => 'RenatoMarinho\\LaravelPageSpeed\\ServiceProvider',
     ),
   ),
   'tightenco/ziggy' => 

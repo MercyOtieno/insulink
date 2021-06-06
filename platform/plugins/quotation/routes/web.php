@@ -14,6 +14,7 @@ Route::group(['namespace' => 'Botble\Quotation\Http\Controllers', 'middleware' =
             ]);
         });
         Route::get('quotations/show/{quotation}', 'QuotationController@show')->name('quotation.show');
+        Route::post('quotations/updating/{id}', 'QuotationController@updateQuotation')->name('quotationed.update');
         Route::post('quotations/payment/update/{id}/', 'QuotationController@addPayment')->name('quotation.payment.update');
         // Add below this line: Route::group(['prefix' => BaseHelper::getAdminPrefix(), 'middleware' => 'auth'], function () {
         Route::group(['prefix' => 'customers', 'as' => 'customer.'], function () {

@@ -216,6 +216,15 @@ add_shortcode('domestic', 'Home Insurance', 'Home Insurance', function() {
 add_shortcode('travel', 'Travel Insurance', 'Travel Insurance', function() {
     return Theme::partial('short-codes.travel');
 });
+add_shortcode('personalaccident', 'Personal Accident Insurance', 'Personal Accident Insurance', function() {
+    return Theme::partial('short-codes.pa');
+});
+add_shortcode('claims', 'File a Claim Form', 'File a Claim Form', function() {
+    return Theme::partial('short-codes.claims');
+});
+add_shortcode('genforrm', 'Generic Form', 'Generic Form', function() {
+    return Theme::partial('short-codes.requestform');
+});
 add_shortcode('ira', 'IRA License', 'IRA License', function() {
     return Theme::partial('short-codes.ira');
 });

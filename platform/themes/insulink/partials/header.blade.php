@@ -5,14 +5,25 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=5, user-scalable=1" name="viewport" />
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-5ZMSM78');</script>
+    <!-- End Google Tag Manager -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="description" content="Insulink Kenya Ltd, the top insurer in East Africa. Your trusted insurance partner">
-    <meta name="keywords" content="Best Insurer,Best Agency, Best Insurance Agency,Insurance Agency,Top Insurer,Buy,Insure,Claim,Insurance,Health Insurance,Medical Cover,Medical Insurance,Motor,Home,Travel,Pension,Retirement,Travel Cover,Benefits,Beneficiaries,Annuity,Trusted Insurer,investment,investments,life cover,life insurance,motor vehicle,investing,investor">
+    <meta name="keywords" content="Best Insurer,Best Agency, Best Insurance Agency in Kenya, Nairobi,Insurance Agency,Top Insurer,Buy,Insure,Claim,Insurance,Health Insurance,Medical Cover,Medical Insurance,Motor,Home,Travel,Pension,Retirement,Travel Cover,Benefits,Beneficiaries,Annuity,Trusted Insurer,investment,investments,life cover,life insurance,motor vehicle,investing,investor">
    
     {!! Theme::header() !!}
 </head>
 
 <body>
+    <!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5ZMSM78"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
     <div id="engine">
     @if (theme_option('preloader_enabled', 'no') == 'yes')
     <!-- LOADER -->

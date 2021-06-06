@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Notification;
 use Theme\Insulink\Http\Models\Vehiclemodel;
 use Botble\Base\Http\Responses\BaseHttpResponse;
 use Botble\Theme\Http\Controllers\PublicController;
+use Theme\Insulink\Http\Models\Underwriter;
 use Validator;
 
 class InsulinkController extends PublicController
@@ -77,6 +78,15 @@ class InsulinkController extends PublicController
         return $underwriters;
     }
     
+    public function listallUndwerwriters(){
+        return DB::table('products')
+                ->join('underwriters', 'underwriters.id', '=', 'products.underwriter_id')
+                ->select('underwriters.id', 'underwriters.company', 'underwriters.status')
+                ->where('products.category', 'general')
+                ->where('underwriters.status','active')
+                ->groupBy('underwriters.id')
+                ->get();
+    }
     
 
 }

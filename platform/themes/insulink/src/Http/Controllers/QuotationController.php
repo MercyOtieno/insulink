@@ -4,18 +4,22 @@ namespace Theme\Insulink\Http\Controllers;
 
 use Mail;
 use Carbon\Carbon;
+use App\Models\Lead;
 use App\Models\Travel;
 use Botble\Theme\Theme;
 use Botble\ACL\Models\User;
 use Illuminate\Support\Str;
 use App\Mail\CorporateOrder;
 use Illuminate\Http\Request;
+use App\Mail\NotifyProductAdmin;
 use App\Notifications\TravelQuote;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use App\Mail\notifyproductcustomer;
 use App\Notifications\NewQuotation;
 use App\Http\Controllers\Controller;
 use App\ModelFilters\HealthRateFilter;
+use Botble\Base\Supports\EmailHandler;
 use Theme\Insulink\Http\Models\Product;
 use Theme\Insulink\Http\Models\Quotation;
 use Theme\Insulink\Http\Models\Commercial;
@@ -23,10 +27,12 @@ use Theme\Insulink\Http\Models\HealthRate;
 use App\Notifications\MotorCommercialQuote;
 use Theme\Insulink\Dsc\Helpers\MotorHelper;
 use Theme\Insulink\Http\Models\Underwriter;
+use Theme\Insulink\Http\Models\VehicleBook;
 use Theme\Insulink\Http\Models\Vehiclemake;
 use Botble\Quotation\Models\CorporateHealth;
 use Illuminate\Support\Facades\Notification;
 use Theme\Insulink\Http\Models\Privaterates;
+use Theme\Insulink\Http\Models\Vehiclemodel;
 use Theme\Insulink\Http\Models\Domesticrates;
 use Theme\Insulink\Http\Models\Commercialfleet;
 use Theme\Insulink\Http\Models\Thirdpartyrates;
@@ -37,20 +43,19 @@ use Theme\Insulink\Dsc\Calculators\MotorCalculator;
 use Theme\Insulink\Dsc\Calculators\HealthCalculator;
 use Theme\Insulink\Dsc\Calculators\DomesticCalculator;
 use Theme\Insulink\Http\Models\CommercialGeneralcartage;
-use Theme\Insulink\Http\Models\VehicleBook;
-use Theme\Insulink\Http\Models\Vehiclemodel;
 
 class QuotationController extends Controller
 {
 
-    public function PurchaseMotorPrivate($product) {
+    public function PurchaseMotorPrivate($product)
+    {
         $checkproduct = Product::with('underwriters', 'motorprivaterates')->where('id', $product)->where('status', 'active')->first();
-       return response()->json([
-           'productPurchase' => $checkproduct,
-           'paybill' => Underwriter::with('paymentmethod')->where('id', $checkproduct->underwriter_id)->first()
-       ]);
+        return response()->json([
+            'productPurchase' => $checkproduct,
+            'paybill' => Underwriter::with('paymentmethod')->where('id', $checkproduct->underwriter_id)->first()
+        ]);
     }
-        /**
+    /**
      * Purchasethirdparty
      *
      * @param  mixed $product
@@ -61,16 +66,17 @@ class QuotationController extends Controller
      * @param  mixed $cover_type
      * @return void
      */
-    public function Purchasethirdparty($product) {
+    public function Purchasethirdparty($product)
+    {
 
         $checkproduct = Product::with('underwriters', 'thirdparty')->where('id', $product)->where('status', 'active')->first();
-        
+
         return response()->json([
             'productPurchase' => $checkproduct,
             'paybill' => Underwriter::with('paymentmethod')->where('id', $checkproduct->underwriter_id)->first()
         ]);
     }
-        
+
     /**
      * Purchasecommercialonline
      *
@@ -82,7 +88,8 @@ class QuotationController extends Controller
      * @param  mixed $cover_type
      * @return void
      */
-    public function Purchasecommercialonline($product) {
+    public function Purchasecommercialonline($product)
+    {
 
         $checkproduct = Product::with('underwriters', 'commercialonline')->where('id', $product)->where('status', 'active')->first();
         return response()->json([
@@ -90,7 +97,7 @@ class QuotationController extends Controller
             'paybill' => Underwriter::with('paymentmethod')->where('id', $checkproduct->underwriter_id)->first()
         ]);
     }
-    
+
     /**
      * Purchasecommercialowngoods
      *
@@ -102,7 +109,8 @@ class QuotationController extends Controller
      * @param  mixed $cover_type
      * @return void
      */
-    public function Purchasecommercialowngoods($product) {
+    public function Purchasecommercialowngoods($product)
+    {
 
         $checkproduct = Product::with('underwriters', 'commercialowngoods')->where('id', $product)->where('status', 'active')->first();
         return response()->json([
@@ -110,7 +118,7 @@ class QuotationController extends Controller
             'paybill' => Underwriter::with('paymentmethod')->where('id', $checkproduct->underwriter_id)->first()
         ]);
     }
-    
+
     /**
      * Purchasecommercialcartage
      *
@@ -122,7 +130,8 @@ class QuotationController extends Controller
      * @param  mixed $cover_type
      * @return void
      */
-    public function Purchasecommercialcartage($product) {
+    public function Purchasecommercialcartage($product)
+    {
 
         $checkproduct = Product::with('underwriters', 'generalcartages')->where('id', $product)->where('status', 'active')->first();
         return response()->json([
@@ -130,39 +139,42 @@ class QuotationController extends Controller
             'paybill' => Underwriter::with('paymentmethod')->where('id', $checkproduct->underwriter_id)->first()
         ]);
     }
-    public function PurchaseDomestic($product){
-       $checkproduct = Product::with('underwriters', 'domestic')->where('id', $product)->where('status', 'active')->first();
-       return response()->json([
-           'productPurchase' => $checkproduct,
-           'paybill' => Underwriter::with('paymentmethod')->where('id', $checkproduct->underwriter_id)->first()
-       ]);
+    public function PurchaseDomestic($product)
+    {
+        $checkproduct = Product::with('underwriters', 'domestic')->where('id', $product)->where('status', 'active')->first();
+        return response()->json([
+            'productPurchase' => $checkproduct,
+            'paybill' => Underwriter::with('paymentmethod')->where('id', $checkproduct->underwriter_id)->first()
+        ]);
     }
 
-    public function PurchaseHealth($product){
-       $checkproduct = Product::with('underwriters', 'healthrates')->where('id', $product)->where('status', 'active')->first();
-       return response()->json([
-           'productPurchase' => $checkproduct,
-           'paybill' => Underwriter::with('paymentmethod')->where('id', $checkproduct->underwriter_id)->first()
-       ]);
+    public function PurchaseHealth($product)
+    {
+        $checkproduct = Product::with('underwriters', 'healthrates')->where('id', $product)->where('status', 'active')->first();
+        return response()->json([
+            'productPurchase' => $checkproduct,
+            'paybill' => Underwriter::with('paymentmethod')->where('id', $checkproduct->underwriter_id)->first()
+        ]);
     }
     /**
      * Calculate
      * @param MotorCalculator $motorPremium
      * @param $productresults
      */
-    public function getMotorRates(MotorCalculator $motorPremium, $type, $cover_type, $v_value, $v_make, $v_model, $v_manufacture) {
-        
+    public function getMotorRates(MotorCalculator $motorPremium, $type, $cover_type, $v_value, $v_make, $v_model, $v_manufacture)
+    {
+
         $products = Product::with('underwriters', 'motorprivaterates', 'thirdparty', 'commercialonline', 'commercialowngoods', 'generalcartages')->where('cover_type', $cover_type)->where('status', 'active')->first();
-        
+
         $vehicle = Vehiclemake::where('id', $v_make)->pluck('name');
         $vehicletype = Vehiclemodel::with('makes')->where('make_id', $v_make)->where('id', $v_model)->first();
         $rates = $this->checkrates($products)->get();
-        
+
         $rateused = 0;
         //get number of years
-        $numberofyears = date("Y") -$v_manufacture;
+        $numberofyears = date("Y") - $v_manufacture;
 
-        if ($cover_type =='c7') {
+        if ($cover_type == 'c7') {
             foreach ($rates as $rate) {
                 $rateused = $rate->amount;
                 $computedrate = [
@@ -178,7 +190,7 @@ class QuotationController extends Controller
                     'passenger_legal_liability' => $rate->passenger_legal_liability,
                 ];
                 $resultArray[] = $computedrate;
-        }
+            }
             return response()->json([
                 'products' => $resultArray,
                 'value_vehicle' => $v_value,
@@ -188,18 +200,18 @@ class QuotationController extends Controller
                 'cover_type' => $cover_type,
                 'vehicletype' => $vehicletype,
             ]);
-        } elseif ($cover_type =='c3') {
+        } elseif ($cover_type == 'c3') {
             foreach ($rates as $rate) {
                 switch ($rate->product_id) {
                     case 29:
                         switch ($numberofyears) {
-                            //Year of manufacture is less than 10 years
-                            
+                                //Year of manufacture is less than 10 years
+
                             case $numberofyears <= 10:
                                 $rateused = $rate->amount_10years;
-                                
+
                                 break;
-                            //Year of manufacture is less than 10 years
+                                //Year of manufacture is less than 10 years
                             case $numberofyears > 11 && ($numberofyears < 15):
                                 $rateused = $rate->amount_above10years;
                                 break;
@@ -208,26 +220,25 @@ class QuotationController extends Controller
                     default:
                         if ($numberofyears <= 10) {
                             $rateused = $rate->amount_10years;
-                        }
-                        else {
+                        } else {
                             $rateused = $rate->amount_above10years;
                         }
                         break;
                 }
-            $computedrate = [
-                'basicpremium' => $motorPremium->calculate($rateused, $v_value),
-                'rateused' => $rateused,
-                'productID' => $rate->product_id,
-                'product_name' => $rate->products->name,
-                'underwriter' => $rate->products->underwriters->company,
-                'image' => $rate->products->underwriters->logo,
-                'medical' => $rate->medical,
-                'tppd' => $rate->tppd,
-                'vehicletype' => $vehicletype,
-                'passenger_legal_liability' => $rate->passenger_legal_liability,
-            ];
-            $resultArray[] = $computedrate;
-        }
+                $computedrate = [
+                    'basicpremium' => $motorPremium->calculate($rateused, $v_value),
+                    'rateused' => $rateused,
+                    'productID' => $rate->product_id,
+                    'product_name' => $rate->products->name,
+                    'underwriter' => $rate->products->underwriters->company,
+                    'image' => $rate->products->underwriters->logo,
+                    'medical' => $rate->medical,
+                    'tppd' => $rate->tppd,
+                    'vehicletype' => $vehicletype,
+                    'passenger_legal_liability' => $rate->passenger_legal_liability,
+                ];
+                $resultArray[] = $computedrate;
+            }
             return response()->json([
                 'products' => $resultArray,
                 'value_vehicle' => $v_value,
@@ -237,18 +248,18 @@ class QuotationController extends Controller
                 'cover_type' => $cover_type,
                 'vehicletype' => $vehicletype,
             ]);
-        } elseif ($cover_type =='c12') {
+        } elseif ($cover_type == 'c12') {
             foreach ($rates as $rate) {
                 switch ($rate->product_id) {
                     case 35:
                         switch ($numberofyears) {
-                            //Year of manufacture is less than 10 years
-                            
+                                //Year of manufacture is less than 10 years
+
                             case $numberofyears <= 10:
                                 $rateused = $rate->amount_10years;
-                                
+
                                 break;
-                            //Year of manufacture is less than 10 years
+                                //Year of manufacture is less than 10 years
                             case $numberofyears > 11 && ($numberofyears < 15):
                                 $rateused = $rate->amount_above10years;
                                 break;
@@ -257,26 +268,25 @@ class QuotationController extends Controller
                     default:
                         if ($numberofyears <= 10) {
                             $rateused = $rate->amount_10years;
-                        }
-                        else {
+                        } else {
                             $rateused = $rate->amount_above10years;
                         }
                         break;
                 }
-            $computedrate = [
-                'basicpremium' => $motorPremium->calculate($rateused, $v_value),
-                'rateused' => $rateused,
-                'productID' => $rate->product_id,
-                'product_name' => $rate->products->name,
-                'underwriter' => $rate->products->underwriters->company,
-                'image' => $rate->products->underwriters->logo,
-                'medical' => $rate->medical,
-                'tppd' => $rate->tppd,
-                'vehicletype' => $vehicletype,
-                'passenger_legal_liability' => $rate->passenger_legal_liability,
-            ];
-            $resultArray[] = $computedrate;
-        }
+                $computedrate = [
+                    'basicpremium' => $motorPremium->calculate($rateused, $v_value),
+                    'rateused' => $rateused,
+                    'productID' => $rate->product_id,
+                    'product_name' => $rate->products->name,
+                    'underwriter' => $rate->products->underwriters->company,
+                    'image' => $rate->products->underwriters->logo,
+                    'medical' => $rate->medical,
+                    'tppd' => $rate->tppd,
+                    'vehicletype' => $vehicletype,
+                    'passenger_legal_liability' => $rate->passenger_legal_liability,
+                ];
+                $resultArray[] = $computedrate;
+            }
             return response()->json([
                 'products' => $resultArray,
                 'value_vehicle' => $v_value,
@@ -286,18 +296,18 @@ class QuotationController extends Controller
                 'cover_type' => $cover_type,
                 'vehicletype' => $vehicletype,
             ]);
-        } elseif ( $cover_type =='c1') {
+        } elseif ($cover_type == 'c1') {
             foreach ($rates as $rate) {
                 switch ($rate->product_id) {
                     case 22:
                         switch ($numberofyears) {
-                            //Year of manufacture is less than 10 years
-                            
+                                //Year of manufacture is less than 10 years
+
                             case $numberofyears <= 10:
                                 $rateused = $rate->amount_10years;
-                                
+
                                 break;
-                            //Year of manufacture is less than 10 years
+                                //Year of manufacture is less than 10 years
                             case $numberofyears > 11 && ($numberofyears < 15):
                                 $rateused = $rate->amount_above10years;
                                 break;
@@ -306,26 +316,25 @@ class QuotationController extends Controller
                     default:
                         if ($numberofyears <= 10) {
                             $rateused = $rate->amount_10years;
-                        }
-                        else {
+                        } else {
                             $rateused = $rate->amount_above10years;
                         }
                         break;
                 }
-            $computedrate = [
-                'basicpremium' => $motorPremium->calculate($rateused, $v_value),
-                'rateused' => $rateused,
-                'productID' => $rate->product_id,
-                'product_name' => $rate->products->name,
-                'underwriter' => $rate->products->underwriters->company,
-                'image' => $rate->products->underwriters->logo,
-                'medical' => $rate->medical,
-                'tppd' => $rate->tppd,
-                'vehicletype' => $vehicletype,
-                'passenger_legal_liability' => $rate->passenger_legal_liability,
-            ];
-            $resultArray[] = $computedrate;
-        }
+                $computedrate = [
+                    'basicpremium' => $motorPremium->calculate($rateused, $v_value),
+                    'rateused' => $rateused,
+                    'productID' => $rate->product_id,
+                    'product_name' => $rate->products->name,
+                    'underwriter' => $rate->products->underwriters->company,
+                    'image' => $rate->products->underwriters->logo,
+                    'medical' => $rate->medical,
+                    'tppd' => $rate->tppd,
+                    'vehicletype' => $vehicletype,
+                    'passenger_legal_liability' => $rate->passenger_legal_liability,
+                ];
+                $resultArray[] = $computedrate;
+            }
             return response()->json([
                 'products' => $resultArray,
                 'value_vehicle' => $v_value,
@@ -341,11 +350,11 @@ class QuotationController extends Controller
                     case 13:
                         if ($this->isriskCIC($v_make)) {
                             switch ($v_value) {
-                                //value is greater > than 1.5 Million
+                                    //value is greater > than 1.5 Million
                                 case $v_value > 1500000:
                                     $rateused = $rate->rate_value_above;
                                     break;
-                                //value is less < than 1.5 Million
+                                    //value is less < than 1.5 Million
                                 case $v_value < 1500000:
                                     $rateused = $rate->rate_value_below;
                                     break;
@@ -353,23 +362,21 @@ class QuotationController extends Controller
                         }
                         if ($this->isnotriskCIC($v_make)) {
                             switch ($v_value) {
-                                //value is greater > than 1.5 Million
+                                    //value is greater > than 1.5 Million
                                 case $v_value > 1500000:
                                     $rateused = 3.5;
                                     break;
-                                //value is less < than 1.5 Million
+                                    //value is less < than 1.5 Million
                                 case $v_value < 1500000:
                                     $rateused = 5.0;
                                     break;
                             }
-    
                         }
                         break;
                     default:
                         if ($v_value > 1000000) {
                             $rateused = $rate->rate_value_below;
-                        }
-                        else {
+                        } else {
                             $rateused = $rate->rate_value_above;
                         }
                         break;
@@ -390,8 +397,8 @@ class QuotationController extends Controller
                     'per_person' => $rate->per_person,
                     'vehicletype' => $vehicletype,
                 ];
-    
-    
+
+
                 $resultArray[] = $computedrate;
             }
             return response()->json([
@@ -412,8 +419,9 @@ class QuotationController extends Controller
      * @param  mixed $products
      * @return void
      */
-    public function checkrates($products){
-        $ids = $products->pluck('id');      
+    public function checkrates($products)
+    {
+        $ids = $products->pluck('id');
         if ($products->cover_type == 'c7') {
             return $rates = Thirdpartyrates::with('products')->whereIn('product_id', $ids)->first();
         }
@@ -434,58 +442,58 @@ class QuotationController extends Controller
         }
         $rates = Privaterates::with('products')->whereIn('product_id', $ids)->first();
         return $rates;
-
     }
 
-     /**
+    /**
      * check Motor Rates
      *
      * @param  mixed $products
      * @return void
      */
-    public function checkhealthrates($agebracket, $ip, $cover_details){
+    public function checkhealthrates($agebracket, $ip, $cover_details)
+    {
         $cleanageb = str_replace("-", ",", $agebracket);
-        $currentagebracket = preg_split("/[,]/",$cleanageb);
+        $currentagebracket = preg_split("/[,]/", $cleanageb);
         //dd($currentagebracket);
-        if($cover_details =='me-spouse') {
+        if ($cover_details == 'me-spouse') {
             return DB::table('healthrates')
-                    ->join('products', 'products.id', '=', 'healthrates.product_id')
-                    ->join('underwriters', 'underwriters.id', '=', 'products.underwriter_id')
-                    ->join('paymentmethods', 'underwriters.id', '=', 'paymentmethods.underwriter_id')
-                    ->select('healthrates.*', 'products.*', 'underwriters.*', 'paymentmethods.*')
-                    ->where('healthrates.age_limits_min', '>=', $currentagebracket[0])
-                    ->where('healthrates.age_limits_max', '<=', $currentagebracket[1])
-                    ->where('healthrates.ip', '=', $ip)
-                    ->where('healthrates.is_individual', '=', "1")
-                    ->get();
-        } else{
+                ->join('products', 'products.id', '=', 'healthrates.product_id')
+                ->join('underwriters', 'underwriters.id', '=', 'products.underwriter_id')
+                ->join('paymentmethods', 'underwriters.id', '=', 'paymentmethods.underwriter_id')
+                ->select('healthrates.*', 'products.*', 'underwriters.*', 'paymentmethods.*')
+                ->where('healthrates.age_limits_min', '>=', $currentagebracket[0])
+                ->where('healthrates.age_limits_max', '<=', $currentagebracket[1])
+                ->where('healthrates.ip', '=', $ip)
+                ->where('healthrates.is_individual', '=', "1")
+                ->get();
+        } else {
             return DB::table('healthrates')
-                    ->join('products', 'products.id', '=', 'healthrates.product_id')
-                    ->join('underwriters', 'underwriters.id', '=', 'products.underwriter_id')
-                    ->join('paymentmethods', 'underwriters.id', '=', 'paymentmethods.underwriter_id')
-                    ->select('healthrates.*', 'products.*', 'underwriters.*', 'paymentmethods.*')
-                    ->where('healthrates.age_limits_min', '>=', $currentagebracket[0])
-                    ->where('healthrates.age_limits_max', '<=', $currentagebracket[1])
-                    ->where('healthrates.ip', '=', $ip)
-                    ->where('healthrates.is_family', '=', "1")
-                    ->get();
+                ->join('products', 'products.id', '=', 'healthrates.product_id')
+                ->join('underwriters', 'underwriters.id', '=', 'products.underwriter_id')
+                ->join('paymentmethods', 'underwriters.id', '=', 'paymentmethods.underwriter_id')
+                ->select('healthrates.*', 'products.*', 'underwriters.*', 'paymentmethods.*')
+                ->where('healthrates.age_limits_min', '>=', $currentagebracket[0])
+                ->where('healthrates.age_limits_max', '<=', $currentagebracket[1])
+                ->where('healthrates.ip', '=', $ip)
+                ->where('healthrates.is_family', '=', "1")
+                ->get();
         }
-        
     }
 
-    public function checkage($age){
-        if ($age ==1) {
+    public function checkage($age)
+    {
+        if ($age == 1) {
             $agecheck = '18-30';
-        } elseif ($age ==2) {
+        } elseif ($age == 2) {
             $agecheck = '31-40';
-        } elseif ($age ==3) {
+        } elseif ($age == 3) {
             $agecheck = '41-50';
-        } elseif ($age ==4) {
+        } elseif ($age == 4) {
             $agecheck = '51-60';
-        } elseif ($age ==5) {
+        } elseif ($age == 5) {
             $agecheck = '61-70';
         } else {
-            $agecheck = '71-above'; 
+            $agecheck = '71-above';
         }
         return $agecheck;
     }
@@ -495,7 +503,8 @@ class QuotationController extends Controller
      * @param  mixed $v_make
      * @return void
      */
-    private function isriskCIC($v_make) {
+    private function isriskCIC($v_make)
+    {
         $highrisk = new Collection(['26', '1', 2, 3, 4, 6, 7, 9, 10, 12, 13, 15, 16, 17, 18, 19, 20, 21, 23, 24, 25, 27, 28, '42', '64', '70', '33', '36', '54', '56', '32', '14', '28', '5', '11', '22', '51', '67']);
         return $highrisk->contains($v_make);
     }
@@ -506,13 +515,15 @@ class QuotationController extends Controller
      * @param  mixed $v_make
      * @return void
      */
-    private function isnotriskCIC($v_make) {
+    private function isnotriskCIC($v_make)
+    {
         $lowrisk = new Collection(['48', '8', '30', '49', '65', '44', '69']);
         return $lowrisk->contains($v_make);
     }
 
-    public function OrderMotor(Request $request) {
-        
+    public function OrderMotor(Request $request)
+    {
+
         //Quote
         $quotation = new Quotation();
         $quotation->quotation_number = MotorHelper::getQuotationNumber();
@@ -527,10 +538,10 @@ class QuotationController extends Controller
         $quotation->quotation_type = MotorHelper::C1;
         $quotation->status = 'not paid';
         $quotation->save();
-    //     $user = User::whereHas('roles',function ($query){
-    //        $query->where('roles.id','=',1);
-    //    })->first();
-    //     $user->notify(new NewQuotation($quotation));
+        //     $user = User::whereHas('roles',function ($query){
+        //        $query->where('roles.id','=',1);
+        //    })->first();
+        //     $user->notify(new NewQuotation($quotation));
 
         return response()->json([
             'quotation_number' => $quotation->quotation_number,
@@ -538,18 +549,19 @@ class QuotationController extends Controller
         ]);
     }
 
-    public function getDomesticRates(DomesticCalculator $domesticratesgen, $content_value ,$cover_type ,$product_type ,$furniture, $phones_laptops ,$personal_accident ,$occupiers_liabity,$owners_liabity, $building_value,$what_to_insure,$wiba_servants_indoor,$wiba_servants_outdoor){
+    public function getDomesticRates(DomesticCalculator $domesticratesgen, $content_value, $cover_type, $product_type, $furniture, $phones_laptops, $personal_accident, $occupiers_liabity, $owners_liabity, $building_value, $what_to_insure, $wiba_servants_indoor, $wiba_servants_outdoor)
+    {
         $products = Product::with('underwriters', 'domestic')->where('cover_type', $cover_type)->where('status', 'active')->first();
         $rates = $this->checkrates($products)->get();
-        
+
         $rateused = 0;
         if ($product_type == Domesticrates::LANDLORD) {
-                    foreach ($rates as $rate) {
+            foreach ($rates as $rate) {
                 $rateused = $rate;
-                
-                
+
+
                 $computedrate = [
-                    'basicpremium' => $domesticratesgen->calculateLandlord($rateused, $building_value, $personal_accident ,$owners_liabity),
+                    'basicpremium' => $domesticratesgen->calculateLandlord($rateused, $building_value, $personal_accident, $owners_liabity),
                     'rateused' => $rateused,
                     'productID' => $rate->product_id,
                     'product_name' => $rate->products->name,
@@ -557,17 +569,17 @@ class QuotationController extends Controller
                     'image' => $rate->products->underwriters->logo,
                 ];
                 $resultArray[] = $computedrate;
-        }
-        return response()->json([
-            'products' => $resultArray,
-        ]);
+            }
+            return response()->json([
+                'products' => $resultArray,
+            ]);
         } elseif ($product_type == Domesticrates::HOMEOWNER) {
-                foreach ($rates as $rate) {
+            foreach ($rates as $rate) {
                 $rateused = $rate;
                 $portables = $phones_laptops;
                 $value_content = $content_value +  $furniture;
                 $computedrate = [
-                    'basicpremium' => $domesticratesgen->calculateHomeowner($rateused, $value_content, $building_value, $portables, $what_to_insure,$wiba_servants_indoor,$wiba_servants_outdoor,$personal_accident ,$owners_liabity),
+                    'basicpremium' => $domesticratesgen->calculateHomeowner($rateused, $value_content, $building_value, $portables, $what_to_insure, $wiba_servants_indoor, $wiba_servants_outdoor, $personal_accident, $owners_liabity),
                     'rateused' => $rateused,
                     'productID' => $rate->product_id,
                     'product_name' => $rate->products->name,
@@ -575,17 +587,17 @@ class QuotationController extends Controller
                     'image' => $rate->products->underwriters->logo,
                 ];
                 $resultArray[] = $computedrate;
-        }
-        return response()->json([
-            'products' => $resultArray,
-        ]);
+            }
+            return response()->json([
+                'products' => $resultArray,
+            ]);
         } else {
-               foreach ($rates as $rate) {
+            foreach ($rates as $rate) {
                 $rateused = $rate->items_rate;
                 $productID = $rate->product_id;
                 $portables = $phones_laptops;
                 $value_content = $content_value +  $furniture;
-                
+
                 $computedrate = [
                     'basicpremium' => $domesticratesgen->calculateTenant($rateused, $value_content, $portables, $productID),
                     'rateused' => $rateused,
@@ -595,25 +607,25 @@ class QuotationController extends Controller
                     'image' => $rate->products->underwriters->logo,
                 ];
                 $resultArray[] = $computedrate;
-                }
-                return response()->json([
-                    'products' => $resultArray,
-                    'cover_type' => $cover_type
-                ]);    
+            }
+            return response()->json([
+                'products' => $resultArray,
+                'cover_type' => $cover_type
+            ]);
         }
-        
     }
 
-    public function getHealthRates(HealthCalculator $healthratesgen, $ip ,$no_children ,$preexisting ,$dob, $age, $cover_type, $cover_details) {
-        
+    public function getHealthRates(HealthCalculator $healthratesgen, $ip, $no_children, $preexisting, $dob, $age, $cover_type, $cover_details)
+    {
+
         $products = Product::with('underwriters', 'healthrates')->where('cover_type', $cover_type)->where('status', 'active')->get();
         $agebracket = $this->checkage($age);
         $rates = $this->checkhealthrates($agebracket, $ip, $cover_details);
         $currentage = date("Y") - Carbon::createFromTimestamp($dob)->format('Y');
-        $checkJubilee = array(49,50,51, 52, 53);
-        
+        $checkJubilee = array(49, 50, 51, 52, 53);
+
         $rateused = 0;
-       
+
         switch ($cover_details) {
             case 'family':
                 foreach ($rates as $rate) {
@@ -1002,7 +1014,7 @@ class QuotationController extends Controller
                                         $rateused = $rate->m4 + ($rate->op * 5);
                                         break;
                                     case '4':
-                                         $rateused = $rate->m5 + ($rate->op * 6);
+                                        $rateused = $rate->m5 + ($rate->op * 6);
                                         break;
                                     case '5':
                                         $rateused = $rate->m5 + $rate->extra_dependant + ($rate->op * 7);
@@ -1028,7 +1040,7 @@ class QuotationController extends Controller
                                         $rateused = $rate->m4 + ($rate->op * 5);
                                         break;
                                     case '4':
-                                         $rateused = $rate->m5 + ($rate->op * 6);
+                                        $rateused = $rate->m5 + ($rate->op * 6);
                                         break;
                                     case '5':
                                         $rateused = $rate->m5 + $rate->extra_dependant + ($rate->op * 7);
@@ -1054,7 +1066,7 @@ class QuotationController extends Controller
                                         $rateused = $rate->m4 + ($rate->op * 5);
                                         break;
                                     case '4':
-                                         $rateused = $rate->m5 + ($rate->op * 6);
+                                        $rateused = $rate->m5 + ($rate->op * 6);
                                         break;
                                     case '5':
                                         $rateused = $rate->m5 + $rate->extra_dependant + ($rate->op * 7);
@@ -1080,7 +1092,7 @@ class QuotationController extends Controller
                                         $rateused = $rate->m4 + ($rate->op * 5);
                                         break;
                                     case '4':
-                                         $rateused = $rate->m5 + ($rate->op * 6);
+                                        $rateused = $rate->m5 + ($rate->op * 6);
                                         break;
                                     case '5':
                                         $rateused = $rate->m5 + $rate->extra_dependant + ($rate->op * 7);
@@ -1106,7 +1118,7 @@ class QuotationController extends Controller
                                         $rateused = $rate->m4 + ($rate->op * 5);
                                         break;
                                     case '4':
-                                         $rateused = $rate->m5 + ($rate->op * 6);
+                                        $rateused = $rate->m5 + ($rate->op * 6);
                                         break;
                                     case '5':
                                         $rateused = $rate->m5 + $rate->extra_dependant + ($rate->op * 7);
@@ -1132,7 +1144,7 @@ class QuotationController extends Controller
                                         $rateused = $rate->m4 + ($rate->op * 5);
                                         break;
                                     case '4':
-                                         $rateused = $rate->m5 + ($rate->op * 6);
+                                        $rateused = $rate->m5 + ($rate->op * 6);
                                         break;
                                     case '5':
                                         $rateused = $rate->m5 + $rate->extra_dependant + ($rate->op * 7);
@@ -1158,7 +1170,7 @@ class QuotationController extends Controller
                                         $rateused = $rate->m4 + ($rate->op * 5);
                                         break;
                                     case '4':
-                                         $rateused = $rate->m5 + ($rate->op * 6);
+                                        $rateused = $rate->m5 + ($rate->op * 6);
                                         break;
                                     case '5':
                                         $rateused = $rate->m5 + $rate->extra_dependant + ($rate->op * 7);
@@ -1184,7 +1196,7 @@ class QuotationController extends Controller
                                         $rateused = $rate->m4 + ($rate->op * 5);
                                         break;
                                     case '4':
-                                         $rateused = $rate->m5 + ($rate->op * 6);
+                                        $rateused = $rate->m5 + ($rate->op * 6);
                                         break;
                                     case '5':
                                         $rateused = $rate->m5 + $rate->extra_dependant + ($rate->op * 7);
@@ -1210,7 +1222,7 @@ class QuotationController extends Controller
                                         $rateused = $rate->m4 + ($rate->op * 5);
                                         break;
                                     case '4':
-                                         $rateused = $rate->m5 + ($rate->op * 6);
+                                        $rateused = $rate->m5 + ($rate->op * 6);
                                         break;
                                     case '5':
                                         $rateused = $rate->m5 + $rate->extra_dependant + ($rate->op * 7);
@@ -1236,7 +1248,7 @@ class QuotationController extends Controller
                                         $rateused = $rate->m4 + ($rate->op * 5);
                                         break;
                                     case '4':
-                                         $rateused = $rate->m5 + ($rate->op * 6);
+                                        $rateused = $rate->m5 + ($rate->op * 6);
                                         break;
                                     case '5':
                                         $rateused = $rate->m5 + $rate->extra_dependant + ($rate->op * 7);
@@ -1262,7 +1274,7 @@ class QuotationController extends Controller
                                         $rateused = $rate->m4 + ($rate->op * 5);
                                         break;
                                     case '4':
-                                         $rateused = $rate->m5 + ($rate->op * 6);
+                                        $rateused = $rate->m5 + ($rate->op * 6);
                                         break;
                                     case '5':
                                         $rateused = $rate->m5 + $rate->extra_dependant + ($rate->op * 7);
@@ -1288,7 +1300,7 @@ class QuotationController extends Controller
                                         $rateused = $rate->m4 + ($rate->op * 5);
                                         break;
                                     case '4':
-                                         $rateused = $rate->m5 + ($rate->op * 6);
+                                        $rateused = $rate->m5 + ($rate->op * 6);
                                         break;
                                     case '5':
                                         $rateused = $rate->m5 + $rate->extra_dependant + ($rate->op * 7);
@@ -1314,7 +1326,7 @@ class QuotationController extends Controller
                                         $rateused = $rate->m4 + ($rate->op * 5);
                                         break;
                                     case '4':
-                                         $rateused = $rate->m5 + ($rate->op * 6);
+                                        $rateused = $rate->m5 + ($rate->op * 6);
                                         break;
                                     case '5':
                                         $rateused = $rate->m5 + $rate->extra_dependant + ($rate->op * 7);
@@ -1340,7 +1352,7 @@ class QuotationController extends Controller
                                         $rateused = $rate->m4 + ($rate->op * 5);
                                         break;
                                     case '4':
-                                         $rateused = $rate->m5 + ($rate->op * 6);
+                                        $rateused = $rate->m5 + ($rate->op * 6);
                                         break;
                                     case '5':
                                         $rateused = $rate->m5 + $rate->extra_dependant + ($rate->op * 7);
@@ -1366,7 +1378,7 @@ class QuotationController extends Controller
                                         $rateused = $rate->m4 + ($rate->op * 5);
                                         break;
                                     case '4':
-                                         $rateused = $rate->m5 + ($rate->op * 6);
+                                        $rateused = $rate->m5 + ($rate->op * 6);
                                         break;
                                     case '5':
                                         $rateused = $rate->m5 + $rate->extra_dependant + ($rate->op * 7);
@@ -1392,7 +1404,7 @@ class QuotationController extends Controller
                                         $rateused = $rate->m4 + ($rate->op * 5);
                                         break;
                                     case '4':
-                                         $rateused = $rate->m5 + ($rate->op * 6);
+                                        $rateused = $rate->m5 + ($rate->op * 6);
                                         break;
                                     case '5':
                                         $rateused = $rate->m5 + $rate->extra_dependant + ($rate->op * 7);
@@ -1409,7 +1421,7 @@ class QuotationController extends Controller
                         }
                     }
                     $computedrate = [
-                        'basicpremium' => $healthratesgen->calculate($rateused, $ip ,$no_children ,$preexisting ,$dob, $age, $cover_type, $currentage, $cover_details),
+                        'basicpremium' => $healthratesgen->calculate($rateused, $ip, $no_children, $preexisting, $dob, $age, $cover_type, $currentage, $cover_details),
                         'rateused' => $rateused,
                         'productID' => $rate->product_id,
                         'product_name' => $rate->name,
@@ -1430,7 +1442,7 @@ class QuotationController extends Controller
                         'category' => $rate->category,
                         'cover' => $cover_details,
                         'cover_type' => $cover_type,
-                        'age_bracket' => $rate->age_limits_min.'-'.$rate->age_limits_max,
+                        'age_bracket' => $rate->age_limits_min . '-' . $rate->age_limits_max,
                         'rate' => $rate
                     ];
                     $resultArray[] = $computedrate;
@@ -1442,7 +1454,7 @@ class QuotationController extends Controller
 
             case 'me-spouse-children':
                 foreach ($rates as $rate) {
-                    
+
                     if (in_array($rate->product_id, $checkJubilee, TRUE)) {
                         switch ($ip) {
                             case '200000':
@@ -1765,7 +1777,7 @@ class QuotationController extends Controller
                                     default:
                                         $rateused = $rate->child + $rate->m +  ($rate->op * 2);
                                         break;
-                                } 
+                                }
                                 break;
                             case '60000000':
                                 switch ($no_children) {
@@ -1791,7 +1803,7 @@ class QuotationController extends Controller
                                 }
                                 break;
                             default:
-                            switch ($no_children) {
+                                switch ($no_children) {
                                     case '2':
                                         $rateused = ($rate->child * 2) + $rate->m +  ($rate->op * 3);
                                         break;
@@ -1828,7 +1840,7 @@ class QuotationController extends Controller
                                         $rateused = $rate->m4 +  ($rate->op * 5);
                                         break;
                                     case '5':
-                                         $rateused = $rate->m5 +  ($rate->op * 6);
+                                        $rateused = $rate->m5 +  ($rate->op * 6);
                                         break;
                                     case '6':
                                         $rateused = $rate->m5 + $rate->extra_dependant +  ($rate->op * 7);
@@ -1851,7 +1863,7 @@ class QuotationController extends Controller
                                         $rateused = $rate->m4 +  ($rate->op * 5);
                                         break;
                                     case '5':
-                                         $rateused = $rate->m5 +  ($rate->op * 6);
+                                        $rateused = $rate->m5 +  ($rate->op * 6);
                                         break;
                                     case '6':
                                         $rateused = $rate->m5 + $rate->extra_dependant +  ($rate->op * 7);
@@ -1874,7 +1886,7 @@ class QuotationController extends Controller
                                         $rateused = $rate->m4 +  ($rate->op * 5);
                                         break;
                                     case '5':
-                                         $rateused = $rate->m5 +  ($rate->op * 6);
+                                        $rateused = $rate->m5 +  ($rate->op * 6);
                                         break;
                                     case '6':
                                         $rateused = $rate->m5 + $rate->extra_dependant +  ($rate->op * 7);
@@ -1897,7 +1909,7 @@ class QuotationController extends Controller
                                         $rateused = $rate->m4 +  ($rate->op * 5);
                                         break;
                                     case '5':
-                                         $rateused = $rate->m5 +  ($rate->op * 6);
+                                        $rateused = $rate->m5 +  ($rate->op * 6);
                                         break;
                                     case '6':
                                         $rateused = $rate->m5 + $rate->extra_dependant +  ($rate->op * 7);
@@ -1920,7 +1932,7 @@ class QuotationController extends Controller
                                         $rateused = $rate->m4 +  ($rate->op * 5);
                                         break;
                                     case '5':
-                                         $rateused = $rate->m5 +  ($rate->op * 6);
+                                        $rateused = $rate->m5 +  ($rate->op * 6);
                                         break;
                                     case '6':
                                         $rateused = $rate->m5 + $rate->extra_dependant +  ($rate->op * 7);
@@ -1943,7 +1955,7 @@ class QuotationController extends Controller
                                         $rateused = $rate->m4 +  ($rate->op * 5);
                                         break;
                                     case '5':
-                                         $rateused = $rate->m5 +  ($rate->op * 6);
+                                        $rateused = $rate->m5 +  ($rate->op * 6);
                                         break;
                                     case '6':
                                         $rateused = $rate->m5 + $rate->extra_dependant +  ($rate->op * 7);
@@ -1966,7 +1978,7 @@ class QuotationController extends Controller
                                         $rateused = $rate->m4 +  ($rate->op * 5);
                                         break;
                                     case '5':
-                                         $rateused = $rate->m5 +  ($rate->op * 6);
+                                        $rateused = $rate->m5 +  ($rate->op * 6);
                                         break;
                                     case '6':
                                         $rateused = $rate->m5 + $rate->extra_dependant +  ($rate->op * 7);
@@ -1989,7 +2001,7 @@ class QuotationController extends Controller
                                         $rateused = $rate->m4 +  ($rate->op * 5);
                                         break;
                                     case '5':
-                                         $rateused = $rate->m5 +  ($rate->op * 6);
+                                        $rateused = $rate->m5 +  ($rate->op * 6);
                                         break;
                                     case '6':
                                         $rateused = $rate->m5 + $rate->extra_dependant +  ($rate->op * 7);
@@ -2012,7 +2024,7 @@ class QuotationController extends Controller
                                         $rateused = $rate->m4 +  ($rate->op * 5);
                                         break;
                                     case '5':
-                                         $rateused = $rate->m5 +  ($rate->op * 6);
+                                        $rateused = $rate->m5 +  ($rate->op * 6);
                                         break;
                                     case '6':
                                         $rateused = $rate->m5 + $rate->extra_dependant +  ($rate->op * 7);
@@ -2035,7 +2047,7 @@ class QuotationController extends Controller
                                         $rateused = $rate->m4 +  ($rate->op * 5);
                                         break;
                                     case '5':
-                                         $rateused = $rate->m5 +  ($rate->op * 6);
+                                        $rateused = $rate->m5 +  ($rate->op * 6);
                                         break;
                                     case '6':
                                         $rateused = $rate->m5 + $rate->extra_dependant +  ($rate->op * 7);
@@ -2058,7 +2070,7 @@ class QuotationController extends Controller
                                         $rateused = $rate->m4 +  ($rate->op * 5);
                                         break;
                                     case '5':
-                                         $rateused = $rate->m5 +  ($rate->op * 6);
+                                        $rateused = $rate->m5 +  ($rate->op * 6);
                                         break;
                                     case '6':
                                         $rateused = $rate->m5 + $rate->extra_dependant +  ($rate->op * 7);
@@ -2081,7 +2093,7 @@ class QuotationController extends Controller
                                         $rateused = $rate->m4 +  ($rate->op * 5);
                                         break;
                                     case '5':
-                                         $rateused = $rate->m5 +  ($rate->op * 6);
+                                        $rateused = $rate->m5 +  ($rate->op * 6);
                                         break;
                                     case '6':
                                         $rateused = $rate->m5 + $rate->extra_dependant +  ($rate->op * 7);
@@ -2104,7 +2116,7 @@ class QuotationController extends Controller
                                         $rateused = $rate->m4 +  ($rate->op * 5);
                                         break;
                                     case '5':
-                                         $rateused = $rate->m5 +  ($rate->op * 6);
+                                        $rateused = $rate->m5 +  ($rate->op * 6);
                                         break;
                                     case '6':
                                         $rateused = $rate->m5 + $rate->extra_dependant +  ($rate->op * 7);
@@ -2127,7 +2139,7 @@ class QuotationController extends Controller
                                         $rateused = $rate->m4 +  ($rate->op * 5);
                                         break;
                                     case '5':
-                                         $rateused = $rate->m5 +  ($rate->op * 6);
+                                        $rateused = $rate->m5 +  ($rate->op * 6);
                                         break;
                                     case '6':
                                         $rateused = $rate->m5 + $rate->extra_dependant +  ($rate->op * 7);
@@ -2150,7 +2162,7 @@ class QuotationController extends Controller
                                         $rateused = $rate->m4 +  ($rate->op * 5);
                                         break;
                                     case '5':
-                                         $rateused = $rate->m5 +  ($rate->op * 6);
+                                        $rateused = $rate->m5 +  ($rate->op * 6);
                                         break;
                                     case '6':
                                         $rateused = $rate->m5 + $rate->extra_dependant +  ($rate->op * 7);
@@ -2173,7 +2185,7 @@ class QuotationController extends Controller
                                         $rateused = $rate->m4 +  ($rate->op * 5);
                                         break;
                                     case '5':
-                                         $rateused = $rate->m5 +  ($rate->op * 6);
+                                        $rateused = $rate->m5 +  ($rate->op * 6);
                                         break;
                                     case '6':
                                         $rateused = $rate->m5 + $rate->extra_dependant +  ($rate->op * 7);
@@ -2187,7 +2199,7 @@ class QuotationController extends Controller
                         }
                     }
                     $computedrate = [
-                        'basicpremium' => $healthratesgen->calculate($rateused, $ip ,$no_children ,$preexisting ,$dob, $age, $cover_type, $currentage, $cover_details),
+                        'basicpremium' => $healthratesgen->calculate($rateused, $ip, $no_children, $preexisting, $dob, $age, $cover_type, $currentage, $cover_details),
                         'rateused' => $rateused,
                         'productID' => $rate->product_id,
                         'product_name' => $rate->name,
@@ -2208,7 +2220,7 @@ class QuotationController extends Controller
                         'category' => $rate->category,
                         'cover' => $cover_details,
                         'cover_type' => $cover_type,
-                        'age_bracket' => $rate->age_limits_min.'-'.$rate->age_limits_max,
+                        'age_bracket' => $rate->age_limits_min . '-' . $rate->age_limits_max,
                         'rate' => $rate
                     ];
                     $resultArray[] = $computedrate;
@@ -2324,7 +2336,7 @@ class QuotationController extends Controller
                         }
                     }
                     $computedrate = [
-                        'basicpremium' => $healthratesgen->calculate($rateused, $ip ,$no_children ,$preexisting ,$dob, $age, $cover_type,$rate, $cover_details),
+                        'basicpremium' => $healthratesgen->calculate($rateused, $ip, $no_children, $preexisting, $dob, $age, $cover_type, $rate, $cover_details),
                         'rateused' => $rateused,
                         'productID' => $rate->product_id,
                         'product_name' => $rate->name,
@@ -2345,7 +2357,7 @@ class QuotationController extends Controller
                         'category' => $rate->category,
                         'cover' => $cover_details,
                         'cover_type' => $cover_type,
-                        'age_bracket' => $rate->age_limits_min.'-'.$rate->age_limits_max,
+                        'age_bracket' => $rate->age_limits_min . '-' . $rate->age_limits_max,
                         'rate' => $rate
                     ];
                     $resultArray[] = $computedrate;
@@ -2461,7 +2473,7 @@ class QuotationController extends Controller
                         }
                     }
                     $computedrate = [
-                        'basicpremium' => $healthratesgen->calculate($rateused, $ip ,$no_children ,$preexisting ,$dob, $age, $cover_type, $currentage, $cover_details),
+                        'basicpremium' => $healthratesgen->calculate($rateused, $ip, $no_children, $preexisting, $dob, $age, $cover_type, $currentage, $cover_details),
                         'rateused' => $rateused,
                         'productID' => $rate->product_id,
                         'product_name' => $rate->name,
@@ -2482,7 +2494,7 @@ class QuotationController extends Controller
                         'category' => $rate->category,
                         'cover' => $cover_details,
                         'cover_type' => $cover_type,
-                        'age_bracket' => $rate->age_limits_min.'-'.$rate->age_limits_max,
+                        'age_bracket' => $rate->age_limits_min . '-' . $rate->age_limits_max,
                         'rate' => $rate
                     ];
                     $resultArray[] = $computedrate;
@@ -2492,17 +2504,16 @@ class QuotationController extends Controller
                 ]);
                 break;
         }
-       
-
     }
-        
+
     /**
      * OrderDomestic
      *
      * @param  mixed $request
      * @return void
      */
-    public function OrderDomestic(Request $request) {
+    public function OrderDomestic(Request $request)
+    {
         //Quote
         $quotation = new Quotation();
         $quotation->quotation_number = MotorHelper::getQuotationNumber();
@@ -2525,14 +2536,14 @@ class QuotationController extends Controller
         $quotation->quotation_type = MotorHelper::C1;
         $quotation->status = 'not paid';
         $quotation->save();
-    //     $user = User::whereHas('roles',function ($query){
-    //        $query->where('roles.id','=',1);
-    //    })->first();
-    //     $user->notify(new NewQuotation($quotation));
+        //     $user = User::whereHas('roles',function ($query){
+        //        $query->where('roles.id','=',1);
+        //    })->first();
+        //     $user->notify(new NewQuotation($quotation));
         return response()->json([
             'quotation_number' => $quotation->quotation_number,
             'quotation_id' => $quotation->id,
-            'status' =>200
+            'status' => 200
         ]);
     }
 
@@ -2542,7 +2553,8 @@ class QuotationController extends Controller
      * @param  mixed $request
      * @return void
      */
-    public function OrderHealth(Request $request) {
+    public function OrderHealth(Request $request)
+    {
         //Quote
         $quotation = new Quotation();
         $quotation->quotation_number = MotorHelper::getQuotationNumber();
@@ -2560,75 +2572,79 @@ class QuotationController extends Controller
         $quotation->children = $request->children;
         $quotation->cover_details =  $request->cover_details;
         $quotation->dob = $request->dob;
-        $quotation->age =  Carbon::now()->format('Y') - Str::substr($request->dob, 0,4);;
+        $quotation->age =  Carbon::now()->format('Y') - Str::substr($request->dob, 0, 4);;
         $quotation->cover_type = $request->cover_type;
         $quotation->quotation_type = MotorHelper::C2;
         $quotation->status = 'not paid';
         $quotation->save();
-    //     $user = User::whereHas('roles',function ($query){
-    //        $query->where('roles.id','=',1);
-    //    })->first();
-    //     $user->notify(new NewQuotation($quotation));
+        //     $user = User::whereHas('roles',function ($query){
+        //        $query->where('roles.id','=',1);
+        //    })->first();
+        //     $user->notify(new NewQuotation($quotation));
         return response()->json([
             'quotation_number' => $quotation->quotation_number,
             'quotation_id' => $quotation->id,
-            'status' =>200
+            'status' => 200
         ]);
     }
 
-    public function healthcorporatepurchase(Request $request) {
-         $this->validate($request, [
-                'company' => 'required',
-                'contact_person' => 'required',
-                'telephone' => 'required',
-                'no_employees' => 'required',
-                'ip' => 'required',
-                'op' => 'required',
-                'underwriter_id' => 'required',
-                'email' => 'required|email',
-            ]);
+    public function healthcorporatepurchase(Request $request)
+    {
+        $this->validate($request, [
+            'company' => 'required',
+            'contact_person' => 'required',
+            'telephone' => 'required',
+            'no_employees' => 'required',
+            'ip' => 'required',
+            'op' => 'required',
+            'underwriter_id' => 'required',
+            'email' => 'required|email',
+        ]);
         $corp = new CorporateHealth();
         $corp->company = $request->company;
-         $corp->contact_person = $request->contact_person;
-         $corp->telephone = MotorHelper::formatMobileNumber($request->telephone);
-         $corp->no_employees = $request->no_employees;
-         $corp->ip = $request->ip;
-         $corp->op = $request->op;
-         $corp->underwriter_id = $request->underwriter_id;
-         $corp->email = $request->email;
-         $corp->status = CorporateHealth::REQUESTED;
-         $corp->save();
-         $emailContent = [
-                'first_name' => $corp->company,
-                'email' => $corp->email
-            ];
+        $corp->contact_person = $request->contact_person;
+        $corp->telephone = MotorHelper::formatMobileNumber($request->telephone);
+        $corp->no_employees = $request->no_employees;
+        $corp->ip = $request->ip;
+        $corp->op = $request->op;
+        $corp->underwriter_id = $request->underwriter_id;
+        $corp->email = $request->email;
+        $corp->status = CorporateHealth::REQUESTED;
+        $corp->save();
+        $emailContent = [
+            'first_name' => $corp->company,
+            'email' => $corp->email
+        ];
         $this->sendCorporateWelcomeEmail($emailContent);
         return response()->json([
             'message' => 'we have sent you an email, kindly check for more information'
         ]);
     }
-    
-    public function getadmins() {
-        $user = User::whereHas('roles',function ($query){
-            $query->where('roles.id','=',1);
+
+    public function getadmins()
+    {
+        $user = User::whereHas('roles', function ($query) {
+            $query->where('roles.id', '=', 1);
         })->first();
-        $admins = $user->roles->where('id',1)->first();
+        $admins = $user->roles->where('id', 1)->first();
         return $user;
     }
 
     protected function sendCorporateWelcomeEmail($emailContent)
     {
-      try {
-                Mail::to($emailContent['email'])
-                    ->send(new CorporateOrder($emailContent));
-                        echo 'Mail sent Successfully';
-            } catch(\Exception $e) {
-                echo 'Error - '. $e;
-            }
-      
+        try {
+            Mail::to($emailContent['email'])
+            ->bcc('boaz@dsc.co.ke')
+            ->bcc('dsccreatives@gmail.com')
+                ->send(new CorporateOrder($emailContent));
+            echo 'Mail sent Successfully';
+        } catch (\Exception $e) {
+            echo 'Error - ' . $e;
+        }
     }
 
-    public function travelQuote(Request $request) {
+    public function travelQuote(Request $request)
+    {
         $this->validate($request, [
             'travel_duration' => 'required',
             'names'  => 'required',
@@ -2652,18 +2668,53 @@ class QuotationController extends Controller
         $travel->status = Travel::PENDINGQUOTES;
         $travel->save();
         try {
-                Notification::route('mail', 'info@insulink.co.ke')
-                        ->notify(new TravelQuote($travel));
-                        echo 'Mail sent Successfully';
-            } catch(\Exception $e) {
-                echo 'Error - '. $e;
-            }
+            Notification::route('mail', 'info@insulink.co.ke')
+                ->notify(new TravelQuote($travel));
+            echo 'Mail sent Successfully';
+        } catch (\Exception $e) {
+            echo 'Error - ' . $e;
+        }
         return response()->json([
             'message' => 'Request sent! We will respond to your email soon',
-            'status' =>200
+            'status' => 200
         ]);
+    }
 
-
+    public function otherProducts(Request $request)
+    {
+        $this->validate($request, [
+            'names'  => 'required',
+            'cellphone' => 'required|numeric|min:10',
+            'email' => 'required|email',
+        ]);
+        $cleanup = str_replace('-', ' ', $request->product);
+        $product = new Lead();
+        $product->lead_no = MotorHelper::getLeadNumber();
+        $product->cellphone = MotorHelper::formatMobileNumber($request->cellphone);
+        $product->email = $request->email;
+        $product->names = $request->names;
+        $product->underwriter_id = $request->underwriter;
+        $product->product = ucwords(str_replace('/', '', $cleanup));
+        $product->status = 'New';
+        $product->save();
+        $details = [
+            'products' => $product,
+            'underwriter' => Underwriter::where('id', $product->underwriter_id)->first()
+        ];
+        try {
+            Mail::to($product->email)->send(new notifyproductcustomer($product));
+            $admins = User::where('super_user', 1)->get();
+            foreach ($admins as $admin) {
+                Mail::to($admin->email)->bcc('jnmunala@gmail.com')->send(new NotifyProductAdmin($details));
+            }
+        } catch (\Throwable $th) {
+            //throw $th;
+            echo 'Error - ' . $th;
+        }
+        return response()->json([
+            'message' => 'Request sent! We will respond to your email soon',
+            'status' => 200
+        ]);
     }
 
     /**
@@ -2672,8 +2723,9 @@ class QuotationController extends Controller
      * @param  mixed $request
      * @return void
      */
-    public function sendfleetform(Request $request) {
-        
+    public function sendfleetform(Request $request)
+    {
+
         $this->validate($request, [
             'name' => 'required',
             'email' => 'required|email',
@@ -2691,13 +2743,13 @@ class QuotationController extends Controller
         $fleet->status_backoffice = 'request received';
         $fleet->save();
         try {
-                Notification::route('mail', 'info@insulink.co.ke')
-                                ->route('mail', 'boaz@dsc.co.ke')
-                                ->notify(new MotorCommercialQuote($fleet));
-                                echo 'Mail sent Successfully';
-            } catch(\Exception $e) {
-                echo 'Error - '. $e;
-            }
+            Notification::route('mail', 'info@insulink.co.ke')
+                ->route('mail', 'boaz@dsc.co.ke')
+                ->notify(new MotorCommercialQuote($fleet));
+            echo 'Mail sent Successfully';
+        } catch (\Exception $e) {
+            echo 'Error - ' . $e;
+        }
         return response()->json(['message' => 'We have received your Quote Request, we shall get back to you soon via email, thanks']);
     }
 }
