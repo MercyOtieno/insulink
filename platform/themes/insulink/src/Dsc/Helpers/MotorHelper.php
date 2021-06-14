@@ -1,6 +1,7 @@
 <?php
 namespace Theme\Insulink\Dsc\Helpers;
 
+use App\Models\Claim;
 use App\Models\Lead;
 use Theme\Insulink\Http\Models\Quotation;
 
@@ -48,6 +49,25 @@ class MotorHelper
             }
         }
         else {
+            return 'INS/0000001';
+        }
+    }
+
+    public static function getClaimNumber() {
+
+        $lastClaim = Claim::orderBy('id', 'desc')->first();
+
+        if ($lastClaim) {
+            $current_lastClaim_number = substr($lastClaim->claim_number, 4) + 1;
+            $newlastClaim = 'INS/' . str_pad($current_lastClaim_number, 7, '0', STR_PAD_LEFT);
+            $checkquote = Claim::where('claim_number', $newlastClaim)->first();
+            if (!empty($checkquote)) {
+                $current_lastClaim_number = substr($lastClaim->claim_number, 4) + 1;
+                return 'INS/' . str_pad($current_lastClaim_number, 7, '0', STR_PAD_LEFT);
+            } else {
+                return $newlastClaim;
+            }
+        } else {
             return 'INS/0000001';
         }
     }

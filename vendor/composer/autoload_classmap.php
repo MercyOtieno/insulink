@@ -34,6 +34,7 @@ return array(
     'App\\Mail\\WelcomeMail' => $baseDir . '/app/Mail/WelcomeMail.php',
     'App\\Mail\\notifyproductcustomer' => $baseDir . '/app/Mail/notifyproductcustomer.php',
     'App\\ModelFilters\\HealthRateFilter' => $baseDir . '/app/ModelFilters/HealthRateFilter.php',
+    'App\\Models\\Claim' => $baseDir . '/app/Models/Claim.php',
     'App\\Models\\Country' => $baseDir . '/app/Models/Country.php',
     'App\\Models\\Lead' => $baseDir . '/app/Models/Lead.php',
     'App\\Models\\Travel' => $baseDir . '/app/Models/Travel.php',

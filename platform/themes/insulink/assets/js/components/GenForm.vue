@@ -1,34 +1,10 @@
 <template>
   <div>
-    <section class="bg-claims py-3">
-      <div class="container">
-        <div class="row">
-          <div class="col-sm-9">
-            <p class="text-white text-shadow mb-4">
-              By completing this form, you will have provided Insulink Kenya Ltd with your Personal Information. Insulink Kenya Ltd will only use this information for lawful business purposes and is committed to protecting the integrity and confidentiality. Access will be granted to other third parties involved (assessors, underwriters, as well as the garages) to ensure your insurance claim settled in due time. You have the right to access and correct personal data that may or may not be correct or complete.
-            </p>
-            <a href="#claim-form" class="btn my-3 btn-secondary"
-              >Get Started</a
-            >
-          </div>
-          <div class="col-sm-3">
-            
-          </div>
-        </div>
-      </div>
-    </section>
-    <section id="claim-form" class="bg-gray-200">
+    <section id="claim-form" class="bg-gray-200 py-3">
       <div class="container py-12">
         <div class="row">
           <div class="col-sm-4">
-            <h4>Insurance tips</h4>
-            <ul class="bullet">
-              <li>Report the incident to the police and get police Abstract within 24hrs</li>
-            <li>Never accept liability</li>
-           <li>Call us on 0741170907 or 0745488902</li>
-           <li>Take the vehicle to a recommended garage</li>
-           <li>Attach the original police abstract, logbook as well as the driving license.</li>
-            </ul>
+            <p>Please Fill this form to get a quote</p>
           </div>
           <div class="col-sm-8">
             <el-card class="box-card">
@@ -88,29 +64,35 @@
 </template>
 <script>
 export default {
+  props: ["content"],
   data() {
     return {
-      underwriters:{},
+      underwriters: {},
       cellphone: "",
       email: "",
-      names:"",
-      policy:"",
-      underwriter:"",
+      names: "",
+      policy: "",
+      underwriter: "",
       purpose: "",
       countries: {},
       buttonLoading: false,
       loading: false,
       pickerOptions: {
-          disabledDate(time) {
-            const date = new Date();
-            return time.getTime() < date.setTime(date.getTime() - 3600 * 1000 * 24);
-          },
-      }
+        disabledDate(time) {
+          const date = new Date();
+          return (
+            time.getTime() < date.setTime(date.getTime() - 3600 * 1000 * 24)
+          );
+        },
+      },
     };
   },
   created() {
     this.getcountries();
     this.getunderwriters();
+  },
+  mounted() {
+    console.log(this.content);
   },
   methods: {
     getcountries() {
@@ -143,43 +125,57 @@ export default {
       this.buttonLoading = true;
       let payload = {
         product: this.currentUrl,
-        underwriter:this.underwriter,
+        underwriter: this.underwriter,
         cellphone: this.cellphone,
         email: this.email,
-        names:this.names
+        names: this.names,
       };
       this.$recaptcha("travelquote").then((token) => {
-          if (token) {
-            axios
-                .post("/ajax/products-quote/request", payload)
-                .then((response) => {
-                  Toast.fire({
-                    icon: "success",
-                    title: "Request sent! We will respond to your email soon",
-                  });
-                  this.buttonLoading = false;
-                  //window.location.href = "/";
-                })
-                
-                .catch((err) => {
-                  Toast.fire({
-                    icon: "error",
-                    title: err,
-                  });
-                });
-          } else {
-            Toast.fire({
-                    icon: "warning",
-                    title: "there was a problem, try again later",
+        if (token) {
+          axios
+            .post("/ajax/products-quote/request", payload)
+            .then((response) => {
+              Toast.fire({
+                icon: "success",
+                title: "Request sent! We will respond to your email soon",
+              });
+              this.buttonLoading = false;
+              //window.location.href = "/";
+            })
+
+            .catch((err) => {
+              Toast.fire({
+                icon: "error",
+                title: err,
+              });
             });
-          }
-      })
+        } else {
+          Toast.fire({
+            icon: "warning",
+            title: "there was a problem, try again later",
+          });
+        }
+      });
     },
   },
-  computed:{
+  computed: {
     currentUrl() {
       return window.location.pathname;
     },
-  }
+  },
 };
 </script>
+<style lang="scss" scoped>
+.bg-products {
+  p {
+    font-size: 1.1rem;
+    line-height: 1.5rem;
+    /* text-shadow: #000 3px 0 10px; */
+    font-weight: 200;
+    max-width: 800px;
+    background: #048abf;
+    padding: 30px;
+    margin-top: 60px;
+  }
+}
+</style>

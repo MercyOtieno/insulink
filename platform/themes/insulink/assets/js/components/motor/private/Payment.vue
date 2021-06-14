@@ -310,4 +310,28 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.terms-alert {
+    .swal2-popup {
+        padding-bottom: 0;
+    }
+    #swal2-content{
+        position: relative;
+        top: 100%;
+        margin-top: 281px;
+        border: 1px solid #ddd;
+    padding: 1.2rem;
+        .terms-alert__copy {
+            text-align: justify;
+        }
+    
+    }
+}
+.terms-alert__actions-class {
+        position: sticky;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: #f8f8f8;
+        margin: 0;
+}
 </style>

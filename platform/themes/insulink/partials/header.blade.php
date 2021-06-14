@@ -17,6 +17,7 @@
     <meta name="keywords" content="Best Insurer,Best Agency, Best Insurance Agency in Kenya, Nairobi,Insurance Agency,Top Insurer,Buy,Insure,Claim,Insurance,Health Insurance,Medical Cover,Medical Insurance,Motor,Home,Travel,Pension,Retirement,Travel Cover,Benefits,Beneficiaries,Annuity,Trusted Insurer,investment,investments,life cover,life insurance,motor vehicle,investing,investor">
    
     {!! Theme::header() !!}
+    
 </head>
 
 <body>

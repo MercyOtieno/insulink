@@ -16,6 +16,7 @@ Route::group(['namespace' => 'Theme\Insulink\Http\Controllers', 'middleware' => 
         Route::get('ajax/vehiclemakes', 'InsulinkController@getVehicleMakes');
         Route::get('ajax/vehiclemodels/{make}', 'InsulinkController@getVehicleModels');
         Route::get('ajax/underwriters', 'InsulinkController@getUnderwriters');
+        Route::post('ajax/file-claimes/request', 'HomeController@fileClaim');
         Route::get('general/underwriters', 'InsulinkController@listallUndwerwriters');
         /**
          * Generate Motor Private Quotations

@@ -241,7 +241,7 @@ final class Versions
   'symfony/filesystem' => 'v5.3.0@348116319d7fb7d1faa781d26a48922428013eb2',
   'symfony/polyfill-php81' => 'v1.23.0@e66119f3de95efc359483f810c4c3e6436279436',
   'theseer/tokenizer' => '1.2.0@75a63c33a8577608444246075ea0af0d052e452a',
-  'laravel/laravel' => 'dev-main@5822b7706e88f967ff6701e4b7bf4b8a5ece71e9',
+  'laravel/laravel' => 'dev-main@d5169514f985e1906c6c23bdb6e2a301846fda98',
 );
 
     private function __construct()
