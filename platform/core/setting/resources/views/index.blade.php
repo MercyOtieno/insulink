@@ -1,12 +1,12 @@
 @extends('core/base::layouts.master')
 @section('content')
-    <div id="main-settings">
+    {{-- <div id="main-settings">
         <license-component
             verify-url="{{ route('settings.license.verify') }}"
             activate-license-url="{{ route('settings.license.activate') }}"
             deactivate-license-url="{{ route('settings.license.deactivate') }}"
         ></license-component>
-    </div>
+    </div> --}}
     {!! Form::open(['route' => ['settings.edit']]) !!}
         <div class="max-width-1200">
             <div class="flexbox-annotated-section">
