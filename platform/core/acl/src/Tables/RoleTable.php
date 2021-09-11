@@ -3,7 +3,6 @@
 namespace Botble\ACL\Tables;
 
 use BaseHelper;
-use Botble\ACL\Models\Role;
 use Html;
 use Illuminate\Support\Facades\Auth;
 use Botble\ACL\Repositories\Interfaces\RoleInterface;
@@ -43,10 +42,10 @@ class RoleTable extends TableAbstract
         RoleInterface $roleRepository,
         UserInterface $userRepository
     ) {
+        parent::__construct($table, $urlGenerator);
+
         $this->repository = $roleRepository;
         $this->userRepository = $userRepository;
-        $this->setOption('id', 'table-roles');
-        parent::__construct($table, $urlGenerator);
 
         if (!Auth::user()->hasAnyPermission(['roles.edit', 'roles.destroy'])) {
             $this->hasOperations = false;
@@ -76,15 +75,13 @@ class RoleTable extends TableAbstract
                 return BaseHelper::formatDate($item->created_at);
             })
             ->editColumn('created_by', function ($item) {
-                return $item->author->getFullName();
-            });
-
-        return apply_filters(BASE_FILTER_GET_LIST_DATA, $data, $this->repository->getModel())
+                return $item->author->name;
+            })
             ->addColumn('operations', function ($item) {
                 return $this->getOperations('roles.edit', 'roles.destroy', $item);
-            })
-            ->escapeColumns([])
-            ->make(true);
+            });
+
+        return $this->toJson($data);
     }
 
     /**
@@ -92,20 +89,17 @@ class RoleTable extends TableAbstract
      */
     public function query()
     {
-        $model = $this->repository->getModel();
-        $select = [
-            'roles.id',
-            'roles.name',
-            'roles.description',
-            'roles.created_at',
-            'roles.created_by',
-        ];
-
-        $query = $model
+        $query = $this->repository->getModel()
             ->with('author')
-            ->select($select);
+            ->select([
+                'id',
+                'name',
+                'description',
+                'created_at',
+                'created_by',
+            ]);
 
-        return $this->applyScopes(apply_filters(BASE_FILTER_TABLE_QUERY, $query, $model, $select));
+        return $this->applyScopes($query);
     }
 
     /**
@@ -115,26 +109,21 @@ class RoleTable extends TableAbstract
     {
         return [
             'id'          => [
-                'name'  => 'roles.id',
                 'title' => trans('core/base::tables.id'),
                 'width' => '20px',
             ],
             'name'        => [
-                'name'  => 'roles.name',
                 'title' => trans('core/base::tables.name'),
             ],
             'description' => [
-                'name'  => 'roles.description',
                 'title' => trans('core/base::tables.description'),
                 'class' => 'text-left',
             ],
             'created_at'  => [
-                'name'  => 'roles.created_at',
                 'title' => trans('core/base::tables.created_at'),
                 'width' => '100px',
             ],
             'created_by'  => [
-                'name'  => 'roles.created_by',
                 'title' => trans('core/acl::permissions.created_by'),
                 'width' => '100px',
             ],
@@ -146,9 +135,7 @@ class RoleTable extends TableAbstract
      */
     public function buttons()
     {
-        $buttons = $this->addCreateButton(route('roles.create'), 'roles.create');
-
-        return apply_filters(BASE_FILTER_TABLE_BUTTONS, $buttons, Role::class);
+        return $this->addCreateButton(route('roles.create'), 'roles.create');
     }
 
     /**
@@ -165,7 +152,7 @@ class RoleTable extends TableAbstract
     public function getBulkChanges(): array
     {
         return [
-            'roles.name' => [
+            'name' => [
                 'title'    => trans('core/base::tables.name'),
                 'type'     => 'text',
                 'validate' => 'required|max:120',

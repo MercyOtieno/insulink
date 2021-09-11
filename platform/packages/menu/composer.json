@@ -1,6 +1,6 @@
 {
     "name": "botble/menu",
-    "description": "Menu package for Botble CMS application",
+    "description": "Menu package",
     "type": "package",
     "autoload": {
         "psr-4": {

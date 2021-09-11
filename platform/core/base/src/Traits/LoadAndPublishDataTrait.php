@@ -2,7 +2,9 @@
 
 namespace Botble\Base\Traits;
 
+use Exception;
 use Illuminate\Support\ServiceProvider;
+use ReflectionClass;
 
 /**
  * @mixin ServiceProvider
@@ -26,6 +28,7 @@ trait LoadAndPublishDataTrait
     public function setNamespace(string $namespace): self
     {
         $this->namespace = ltrim(rtrim($namespace, '/'), '/');
+
         return $this;
     }
 
@@ -55,10 +58,17 @@ trait LoadAndPublishDataTrait
      * Get path of the give file name in the given module
      * @param string $file
      * @return string
+     * @throws Exception
      */
     protected function getConfigFilePath($file): string
     {
-        return $this->getBasePath() . $this->getDashedNamespace() . '/config/' . $file . '.php';
+        $file = $this->getBasePath() . $this->getDashedNamespace() . '/config/' . $file . '.php';
+
+        if (!file_exists($file) && str_contains($file, plugin_path())) {
+            $this->throwInvalidPluginError();
+        }
+
+        return $file;
     }
 
     /**
@@ -76,6 +86,7 @@ trait LoadAndPublishDataTrait
     public function setBasePath($path): self
     {
         $this->basePath = $path;
+
         return $this;
     }
 
@@ -105,6 +116,7 @@ trait LoadAndPublishDataTrait
         if (!is_array($fileNames)) {
             $fileNames = [$fileNames];
         }
+
         foreach ($fileNames as $fileName) {
             $this->loadRoutesFrom($this->getRouteFilePath($fileName));
         }
@@ -118,7 +130,13 @@ trait LoadAndPublishDataTrait
      */
     protected function getRouteFilePath($file): string
     {
-        return $this->getBasePath() . $this->getDashedNamespace() . '/routes/' . $file . '.php';
+        $file = $this->getBasePath() . $this->getDashedNamespace() . '/routes/' . $file . '.php';
+
+        if (!file_exists($file) && str_contains($file, plugin_path())) {
+            $this->throwInvalidPluginError();
+        }
+
+        return $file;
     }
 
     /**
@@ -128,8 +146,10 @@ trait LoadAndPublishDataTrait
     {
         $this->loadViewsFrom($this->getViewsPath(), $this->getDashedNamespace());
         if ($this->app->runningInConsole()) {
-            $this->publishes([$this->getViewsPath() => resource_path('views/vendor/' . $this->getDashedNamespace())],
-                'cms-views');
+            $this->publishes(
+                [$this->getViewsPath() => resource_path('views/vendor/' . $this->getDashedNamespace())],
+                'cms-views'
+            );
         }
 
         return $this;
@@ -169,6 +189,7 @@ trait LoadAndPublishDataTrait
     public function loadMigrations(): self
     {
         $this->loadMigrationsFrom($this->getMigrationsPath());
+
         return $this;
     }
 
@@ -202,5 +223,23 @@ trait LoadAndPublishDataTrait
     protected function getAssetsPath(): string
     {
         return $this->getBasePath() . $this->getDashedNamespace() . '/public/';
+    }
+
+    /**
+     * @throws Exception
+     */
+    protected function throwInvalidPluginError()
+    {
+        $reflection = new ReflectionClass($this);
+
+        $from = str_replace('/src/Providers', '', dirname($reflection->getFilename()));
+        $from = str_replace(base_path(), '', $from);
+
+        $to = $this->getBasePath() . $this->getDashedNamespace();
+        $to = str_replace(base_path(), '', $to);
+
+        if ($from != $to) {
+            throw new Exception(sprintf('Plugin folder is invalid. Need to rename folder %s to %s', $from, $to));
+        }
     }
 }

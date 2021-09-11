@@ -3,14 +3,16 @@
 namespace Botble\PluginManagement\Services;
 
 use Botble\Base\Supports\Helper;
+use Botble\PluginManagement\Events\ActivatedPluginEvent;
 use Botble\Setting\Supports\SettingStore;
 use Composer\Autoload\ClassLoader;
-use DB;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Arr;
-use Schema;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Schema;
 
 class PluginService
 {
@@ -59,7 +61,15 @@ class PluginService
         if (empty($content)) {
             return [
                 'error'   => true,
-                'message' => __('Invalid plugin.json!'),
+                'message' => trans('packages/plugin-management::plugin.invalid_json'),
+            ];
+        }
+
+        if (!Arr::get($content, 'ready', 1)) {
+            return [
+                'error'   => true,
+                'message' => trans('packages/plugin-management::plugin.plugin_is_not_ready',
+                    ['name' => Str::studly($plugin)]),
             ];
         }
 
@@ -72,7 +82,7 @@ class PluginService
 
                     return [
                         'error'   => true,
-                        'message' => __('Please activate plugin(s) first: :plugins',
+                        'message' => trans('packages/plugin-management::plugin.missing_required_plugins',
                             ['plugins' => implode(',', $content['require'])]),
                     ];
                 }
@@ -83,15 +93,21 @@ class PluginService
                 $loader->setPsr4($content['namespace'], plugin_path($plugin . '/src'));
                 $loader->register(true);
 
+                $published = $this->publishAssets($plugin);
+
+                if ($published['error']) {
+                    return $published;
+                }
+
                 if (class_exists($content['namespace'] . 'Plugin')) {
                     call_user_func([$content['namespace'] . 'Plugin', 'activate']);
                 }
 
-                $this->publishAssets($plugin);
-
                 if ($this->files->isDirectory(plugin_path($plugin . '/database/migrations'))) {
                     $this->app->make('migrator')->run(plugin_path($plugin . '/database/migrations'));
                 }
+
+                $this->app->register($content['provider']);
             }
 
             $this->settingStore
@@ -104,15 +120,17 @@ class PluginService
 
             Helper::clearCache();
 
+            event(new ActivatedPluginEvent($plugin));
+
             return [
                 'error'   => false,
-                'message' => __('Activate plugin successfully!'),
+                'message' => trans('packages/plugin-management::plugin.activate_success'),
             ];
         }
 
         return [
             'error'   => true,
-            'message' => __('This plugin is activated already!'),
+            'message' => trans('packages/plugin-management::plugin.activated_already'),
         ];
     }
 
@@ -127,20 +145,20 @@ class PluginService
         if (!$this->files->isDirectory($location)) {
             return [
                 'error'   => true,
-                'message' => __('This plugin is not exists.'),
+                'message' => trans('packages/plugin-management::plugin.plugin_not_exist'),
             ];
         }
 
         if (!$this->files->exists($location . '/plugin.json')) {
             return [
                 'error'   => true,
-                'message' => __('Missing file plugin.json!'),
+                'message' => trans('packages/plugin-management::plugin.missing_json_file'),
             ];
         }
 
         return [
             'error'   => false,
-            'message' => __('Plugin is valid!'),
+            'message' => trans('packages/plugin-management::plugin.plugin_invalid'),
         ];
     }
 
@@ -156,14 +174,27 @@ class PluginService
             return $validate;
         }
 
+        $pluginPath = public_path('vendor/core/plugins');
+
+        if (!$this->files->isDirectory($pluginPath)) {
+            $this->files->makeDirectory($pluginPath, 0755, true);
+        }
+
+        if (!$this->files->isWritable($pluginPath)) {
+            return [
+                'error'   => true,
+                'message' => trans('packages/plugin-management::plugin.folder_is_not_writeable',
+                    ['name' => $pluginPath]),
+            ];
+        }
+
         if ($this->files->isDirectory(plugin_path($plugin . '/public'))) {
-            $this->files->copyDirectory(plugin_path($plugin . '/public'),
-                public_path('vendor/core/plugins/' . $plugin));
+            $this->files->copyDirectory(plugin_path($plugin . '/public'), $pluginPath . '/' . $plugin);
         }
 
         return [
             'error'   => false,
-            'message' => __('Publish assets for plugin :name successfully!', ['name' => $plugin]),
+            'message' => trans('packages/plugin-management::plugin.published_assets_success', ['name' => $plugin]),
         ];
     }
 
@@ -225,7 +256,7 @@ class PluginService
 
         return [
             'error'   => false,
-            'message' => __('Plugin is removed!'),
+            'message' => trans('packages/plugin-management::plugin.plugin_removed'),
         ];
     }
 
@@ -246,7 +277,7 @@ class PluginService
         if (empty($content)) {
             return [
                 'error'   => true,
-                'message' => __('Invalid plugin.json!'),
+                'message' => trans('packages/plugin-management::plugin.invalid_json'),
             ];
         }
 
@@ -276,13 +307,13 @@ class PluginService
 
             return [
                 'error'   => false,
-                'message' => __('Deactivate plugin successfully!'),
+                'message' => trans('packages/plugin-management::plugin.deactivated_success'),
             ];
         }
 
         return [
             'error'   => true,
-            'message' => __('This plugin is deactivated already!'),
+            'message' => trans('packages/plugin-management::plugin.deactivated_already'),
         ];
     }
 }

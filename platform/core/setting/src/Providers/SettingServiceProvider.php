@@ -12,7 +12,7 @@ use Botble\Setting\Repositories\Interfaces\SettingInterface;
 use Botble\Setting\Supports\SettingsManager;
 use Botble\Setting\Supports\SettingStore;
 use EmailHandler;
-use Event;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Foundation\AliasLoader;
 use Illuminate\Foundation\Application;
 use Illuminate\Routing\Events\RouteMatched;
@@ -38,7 +38,7 @@ class SettingServiceProvider extends ServiceProvider
             return new SettingsManager($app);
         });
 
-        $this->app->bind(SettingStore::class, function (Application $app) {
+        $this->app->singleton(SettingStore::class, function (Application $app) {
             return $app->make(SettingsManager::class)->driver();
         });
 
@@ -102,7 +102,7 @@ class SettingServiceProvider extends ServiceProvider
                     'permissions' => ['settings.media'],
                 ]);
 
-            EmailHandler::addTemplateSettings('base', config('core.setting.email'), 'core');
+            EmailHandler::addTemplateSettings('base', config('core.setting.email', []), 'core');
         });
     }
 
@@ -116,7 +116,6 @@ class SettingServiceProvider extends ServiceProvider
         return [
             SettingsManager::class,
             SettingStore::class,
-            'setting',
         ];
     }
 }

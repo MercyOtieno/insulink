@@ -78,7 +78,7 @@ class ThemeService
         if ($theme == Theme::getThemeName()) {
             return [
                 'error'   => true,
-                'message' => 'Theme "' . $theme . '" is activated already!',
+                'message' => trans('packages/theme::theme.theme_activated_already', ['name' => $theme]),
             ];
         }
 
@@ -100,17 +100,21 @@ class ThemeService
             ];
         }
 
+        $published = $this->publishAssets($theme);
+
+        if ($published['error']) {
+            return $published;
+        }
+
         $this->settingStore
             ->set('theme', $theme)
             ->save();
-
-        $this->publishAssets($theme);
 
         Helper::clearCache();
 
         return [
             'error'   => false,
-            'message' => __('Activate theme :name successfully!', ['name' => $theme]),
+            'message' => trans('packages/theme::theme.active_success', ['name' => $theme]),
         ];
     }
 
@@ -125,20 +129,20 @@ class ThemeService
         if (!$this->files->isDirectory($location)) {
             return [
                 'error'   => true,
-                'message' => __('This theme is not exists.'),
+                'message' => trans('packages/theme::theme.theme_is_not_existed'),
             ];
         }
 
         if (!$this->files->exists($location . '/theme.json')) {
             return [
                 'error'   => true,
-                'message' => __('Missing file theme.json!'),
+                'message' => trans('packages/theme::theme.missing_json_file'),
             ];
         }
 
         return [
             'error'   => false,
-            'message' => __('Theme is valid!'),
+            'message' => trans('packages/theme::theme.theme_invalid'),
         ];
     }
 
@@ -168,7 +172,18 @@ class ThemeService
 
         foreach ($themes as $theme) {
             $resourcePath = $this->getPath($theme, 'public');
-            $publishPath = public_path('themes/' . $theme);
+
+            $themePath = public_path('themes');
+            if (!$this->files->isDirectory($themePath)) {
+                $this->files->makeDirectory($themePath, 0755, true);
+            } elseif (!$this->files->isWritable($themePath)) {
+                return [
+                    'error'   => true,
+                    'message' => trans('packages/theme::theme.folder_is_not_writeable', ['name' => $themePath]),
+                ];
+            }
+
+            $publishPath = $themePath . '/' . $theme;
 
             if (!$this->files->isDirectory($publishPath)) {
                 $this->files->makeDirectory($publishPath, 0755, true);
@@ -180,7 +195,7 @@ class ThemeService
 
         return [
             'error'   => false,
-            'message' => __('Publish assets for :themes successfully!', ['themes' => implode(', ', $themes)]),
+            'message' => trans('packages/theme::theme.published_assets_success', ['themes' => implode(', ', $themes)]),
         ];
     }
 
@@ -200,8 +215,7 @@ class ThemeService
         if (Theme::getThemeName() == $theme) {
             return [
                 'error'   => true,
-                'message' => __('Cannot remove activated theme, please activate another theme before removing ":name"!',
-                    ['name' => $theme]),
+                'message' => trans('packages/theme::theme.cannot_remove_theme', ['name' => $theme]),
             ];
         }
 
@@ -217,7 +231,7 @@ class ThemeService
 
         return [
             'error'   => false,
-            'message' => __('Theme ":name" has been destroyed.', ['name' => $theme]),
+            'message' => trans('packages/theme::theme.theme_deleted', ['name' => $theme]),
         ];
     }
 
@@ -237,7 +251,7 @@ class ThemeService
 
         return [
             'error'   => false,
-            'message' => __('Remove assets of a theme :name successfully!', ['name' => $theme]),
+            'message' => trans('packages/theme::theme.removed_assets', ['name' => $theme]),
         ];
     }
 }

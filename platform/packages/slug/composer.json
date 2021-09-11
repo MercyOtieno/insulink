@@ -1,6 +1,6 @@
 {
     "name": "botble/slug",
-    "description": "Slug/Permalink for Botble CMS application",
+    "description": "Slug/Permalink",
     "type": "package",
     "autoload": {
         "psr-4": {

@@ -49,20 +49,13 @@ integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="ano
         integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous" defer></script>
 {!! Theme::footer() !!}
 
-@if (theme_option('facebook_comment_enabled_in_post', 'yes') == 'yes' || theme_option('facebook_comment_enabled_in_product', 'yes') == 'yes' || (theme_option('facebook_chat_enabled', 'yes') == 'yes' && theme_option('facebook_page_id')))
-
 
 <!-- Go to www.addthis.com/dashboard to customize your tools -->
 <script src="https://kit.fontawesome.com/04ea62f7f6.js" crossorigin="anonymous" defer></script>
-@if (theme_option('facebook_chat_enabled', 'yes') == 'yes' && theme_option('facebook_page_id'))
-<div class="fb-customerchat" attribution="install_email" page_id="{{ theme_option('facebook_page_id') }}"
-    theme_color="{{ theme_option('primary_color', '#026e94') }}">
-</div>
-@endif
-@endif
+
 @routes
 <!--Start of Tawk.to Script-->
-<script type="text/javascript" defer>
+<script type="text/javascript">
     var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
     (function(){
     var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
@@ -72,7 +65,7 @@ integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="ano
     s1.setAttribute('crossorigin','*');
     s0.parentNode.insertBefore(s1,s0);
     })();
-    </script>
+</script>
     <!--End of Tawk.to Script-->
 </body>
 

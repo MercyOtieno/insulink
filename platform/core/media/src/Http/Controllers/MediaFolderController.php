@@ -49,11 +49,12 @@ class MediaFolderController extends Controller
             $parentId = $request->input('parent_id');
 
             $folder = $this->folderRepository->getModel();
-            $folder->user_id = Auth::user()->getKey();
+            $folder->user_id = Auth::id();
             $folder->name = $this->folderRepository->createName($name, $parentId);
             $folder->slug = $this->folderRepository->createSlug($name, $parentId);
             $folder->parent_id = $parentId;
             $this->folderRepository->createOrUpdate($folder);
+
             return RvMedia::responseSuccess([], trans('core/media::media.folder_created'));
         } catch (Exception $exception) {
             return RvMedia::responseError($exception->getMessage());

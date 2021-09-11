@@ -16,6 +16,12 @@ class FormServiceProvider extends ServiceProvider
             'attributes' => [],
         ]);
 
+        Form::component('mediaImages', 'core/base::forms.partials.images', [
+            'name',
+            'values'     => [],
+            'attributes' => [],
+        ]);
+
         Form::component('mediaFile', 'core/base::forms.partials.file', [
             'name',
             'value'      => null,
@@ -112,6 +118,15 @@ class FormServiceProvider extends ServiceProvider
             'optgroupsAttributes' => [],
         ]);
 
+        Form::component('autocomplete', 'core/base::forms.partials.autocomplete', [
+            'name',
+            'list'                => [],
+            'selected'            => null,
+            'selectAttributes'    => [],
+            'optionsAttributes'   => [],
+            'optgroupsAttributes' => [],
+        ]);
+
         Form::component('googleFonts', 'core/base::forms.partials.google-fonts', [
             'name',
             'selected'          => null,
@@ -122,6 +137,13 @@ class FormServiceProvider extends ServiceProvider
         Form::component('customColor', 'core/base::forms.partials.color', [
             'name',
             'value'      => null,
+            'attributes' => [],
+        ]);
+
+        Form::component('repeater', 'core/base::forms.partials.repeater', [
+            'name',
+            'value'      => null,
+            'fields'     => [],
             'attributes' => [],
         ]);
     }

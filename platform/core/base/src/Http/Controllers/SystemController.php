@@ -2,16 +2,16 @@
 
 namespace Botble\Base\Http\Controllers;
 
+use Arr;
 use Assets;
-use Botble\ACL\Models\UserMeta;
 use Botble\Base\Http\Responses\BaseHttpResponse;
 use Botble\Base\Supports\Helper;
+use Botble\Base\Supports\Language;
 use Botble\Base\Supports\MembershipAuthorization;
 use Botble\Base\Supports\SystemManagement;
 use Botble\Base\Tables\InfoTable;
 use Botble\Table\TableBuilder;
 use Exception;
-use File;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Contracts\View\Factory;
@@ -22,6 +22,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
+use Menu;
 use Throwable;
 
 class SystemController extends Controller
@@ -54,11 +55,19 @@ class SystemController extends Controller
         $systemEnv = SystemManagement::getSystemEnv();
         $serverEnv = SystemManagement::getServerEnv();
 
+        $requiredPhpVersion = Arr::get($composerArray, 'require.php', '^7.3');
+        $requiredPhpVersion = str_replace('^', '', $requiredPhpVersion);
+        $requiredPhpVersion = str_replace('~', '', $requiredPhpVersion);
+
+        $matchPHPRequirement = version_compare(phpversion(), $requiredPhpVersion) > 0;
+
         return view('core/base::system.info', compact(
             'packages',
             'infoTable',
             'systemEnv',
-            'serverEnv'
+            'serverEnv',
+            'matchPHPRequirement',
+            'requiredPhpVersion'
         ));
     }
 
@@ -86,6 +95,7 @@ class SystemController extends Controller
         switch ($request->input('type')) {
             case 'clear_cms_cache':
                 Helper::clearCache();
+                Menu::clearCacheMenuItems();
                 break;
             case 'refresh_compiled_views':
                 foreach ($files->glob(config('view.compiled') . '/*') as $view) {
@@ -99,8 +109,10 @@ class SystemController extends Controller
                 $files->delete($app->getCachedRoutesPath());
                 break;
             case 'clear_log':
-                foreach (File::allFiles(storage_path('logs')) as $file) {
-                    File::delete($file->getPathname());
+                if ($files->isDirectory(storage_path('logs'))) {
+                    foreach ($files->allFiles(storage_path('logs')) as $file) {
+                        $files->delete($file->getPathname());
+                    }
                 }
                 break;
         }
@@ -128,14 +140,24 @@ class SystemController extends Controller
      */
     public function getLanguage($lang, Request $request)
     {
-        if ($lang != false && array_key_exists($lang, Assets::getAdminLocales())) {
+        if ($lang != false && array_key_exists($lang, Language::getAvailableLocales())) {
             if (Auth::check()) {
-                UserMeta::setMeta('site-locale', $lang);
                 cache()->forget(md5('cache-dashboard-menu-' . $request->user()->getKey()));
             }
             session()->put('site-locale', $lang);
         }
 
         return redirect()->back();
+    }
+
+    /**
+     * @param BaseHttpResponse $response
+     * @return BaseHttpResponse
+     */
+    public function getMenuItemsCount(BaseHttpResponse $response)
+    {
+        $data = apply_filters(BASE_FILTER_MENU_ITEMS_COUNT, []);
+
+        return $response->setData($data);
     }
 }

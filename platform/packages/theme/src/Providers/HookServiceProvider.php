@@ -3,6 +3,9 @@
 namespace Botble\Theme\Providers;
 
 use Botble\Dashboard\Supports\DashboardWidgetInstance;
+use Botble\Theme\Supports\Vimeo;
+use Botble\Theme\Supports\Youtube;
+use Html;
 use Illuminate\Support\Collection;
 use Illuminate\Support\ServiceProvider;
 use Throwable;
@@ -13,13 +16,14 @@ class HookServiceProvider extends ServiceProvider
     {
         add_filter(DASHBOARD_FILTER_ADMIN_LIST, [$this, 'addStatsWidgets'], 4, 2);
 
-        add_filter(BASE_FILTER_AFTER_SETTING_CONTENT, [$this, 'addSetting'], 39, 1);
+        add_filter(BASE_FILTER_AFTER_SETTING_CONTENT, [$this, 'addSetting'], 39);
 
         theme_option()
             ->setArgs(['debug' => config('app.debug')])
             ->setSection([
-                'title'      => __('General'),
-                'desc'       => __('General settings'),
+                'title'      => trans('packages/theme::theme.theme_option_general'),
+                'desc'       => trans('packages/theme::theme.theme_option_general_description'),
+                'priority'   => 0,
                 'id'         => 'opt-text-subsection-general',
                 'subsection' => true,
                 'icon'       => 'fa fa-home',
@@ -85,17 +89,18 @@ class HookServiceProvider extends ServiceProvider
                     [
                         'id'         => 'seo_og_image',
                         'type'       => 'mediaImage',
-                        'label'      => __('SEO default Open Graph image'),
+                        'label'      => trans('packages/theme::theme.theme_option_seo_open_graph_image'),
                         'attributes' => [
-                            'name'    => 'seo_og_image',
-                            'value'   => null,
+                            'name'  => 'seo_og_image',
+                            'value' => null,
                         ],
                     ],
                 ],
             ])
             ->setSection([
-                'title'      => __('Logo'),
-                'desc'       => __('Logo'),
+                'title'      => trans('packages/theme::theme.theme_option_logo'),
+                'desc'       => trans('packages/theme::theme.theme_option_logo'),
+                'priority'   => 0,
                 'id'         => 'opt-text-subsection-logo',
                 'subsection' => true,
                 'icon'       => 'fa fa-image',
@@ -103,7 +108,7 @@ class HookServiceProvider extends ServiceProvider
                     [
                         'id'         => 'favicon',
                         'type'       => 'mediaImage',
-                        'label'      => __('Favicon'),
+                        'label'      => trans('packages/theme::theme.theme_option_favicon'),
                         'attributes' => [
                             'name'  => 'favicon',
                             'value' => null,
@@ -112,7 +117,7 @@ class HookServiceProvider extends ServiceProvider
                     [
                         'id'         => 'logo',
                         'type'       => 'mediaImage',
-                        'label'      => __('Logo'),
+                        'label'      => trans('packages/theme::theme.theme_option_logo'),
                         'attributes' => [
                             'name'  => 'logo',
                             'value' => null,
@@ -120,6 +125,47 @@ class HookServiceProvider extends ServiceProvider
                     ],
                 ],
             ]);
+
+        add_shortcode('media', null, null, function ($shortcode) {
+            $url = rtrim($shortcode->url, '/');
+
+            if (!$url) {
+                return null;
+            }
+
+            $iframe = null;
+
+            if (Youtube::isYoutubeURL($url)) {
+                $iframe = Html::tag('iframe', '', [
+                    'class'           => 'embed-responsive-item',
+                    'allowfullscreen' => true,
+                    'frameborder'     => 0,
+                    'height'          => 315,
+                    'width'           => 420,
+                    'src'             => Youtube::getYoutubeVideoEmbedURL($url),
+                ])->toHtml();
+            }
+
+            if (Vimeo::isVimeoURL($url)) {
+                $videoId = Vimeo::getVimeoID($url);
+                if ($videoId) {
+                    $iframe = Html::tag('iframe', '', [
+                        'class'           => 'embed-responsive-item',
+                        'height'          => 315,
+                        'width'           => 420,
+                        'allow'           => 'autoplay; fullscreen; picture-in-picture',
+                        'src'             => 'https://player.vimeo.com/video/' . $videoId,
+                    ])->toHtml();
+                }
+            }
+
+            if ($iframe) {
+                return Html::tag('div', $iframe, ['class' => 'embed-responsive embed-responsive-16by9 mb30'])
+                    ->toHtml();
+            }
+
+            return null;
+        });
     }
 
     /**

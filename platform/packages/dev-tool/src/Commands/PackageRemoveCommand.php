@@ -3,7 +3,7 @@
 namespace Botble\DevTool\Commands;
 
 use Botble\Base\Supports\Helper;
-use DB;
+use Illuminate\Support\Facades\DB;
 use Exception;
 use File;
 use Illuminate\Console\Command;

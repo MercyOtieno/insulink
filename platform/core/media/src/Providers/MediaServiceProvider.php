@@ -2,6 +2,7 @@
 
 namespace Botble\Media\Providers;
 
+use Aws\S3\S3Client;
 use Botble\Base\Supports\Helper;
 use Botble\Base\Traits\LoadAndPublishDataTrait;
 use Botble\Media\Chunks\Storage\ChunkStorage;
@@ -22,11 +23,15 @@ use Botble\Media\Repositories\Interfaces\MediaFileInterface;
 use Botble\Media\Repositories\Interfaces\MediaFolderInterface;
 use Botble\Media\Repositories\Interfaces\MediaSettingInterface;
 use Botble\Setting\Supports\SettingStore;
-use Event;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\AliasLoader;
 use Illuminate\Routing\Events\RouteMatched;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider;
+use League\Flysystem\AwsS3v3\AwsS3Adapter;
+use League\Flysystem\Filesystem;
+use RvMedia;
 
 /**
  * @since 02/07/2016 09:50 AM
@@ -72,10 +77,60 @@ class MediaServiceProvider extends ServiceProvider
             ->loadRoutes()
             ->publishAssets();
 
+        Storage::extend('wasabi', function ($app, $config) {
+            $conf = [
+                'endpoint'        => 'https://' . $config['bucket'] . '.s3.' . $config['region'] . '.wasabisys.com/',
+                'bucket_endpoint' => true,
+                'credentials'     => [
+                    'key'    => $config['key'],
+                    'secret' => $config['secret'],
+                ],
+                'region'          => $config['region'],
+                'version'         => 'latest',
+            ];
+
+            $client = new S3Client($conf);
+
+            $adapter = new AwsS3Adapter($client, $config['bucket'], $config['root']);
+
+            $filesystem = new Filesystem($adapter);
+
+            return $filesystem;
+        });
+
         $config = $this->app->make('config');
         $setting = $this->app->make(SettingStore::class);
 
         $config->set([
+            'filesystems.default'                  => $setting->get('media_driver', 'public'),
+            'filesystems.disks.s3.key'             => $setting
+                ->get('media_aws_access_key_id', $config->get('filesystems.disks.s3.key')),
+            'filesystems.disks.s3.secret'          => $setting
+                ->get('media_aws_secret_key', $config->get('filesystems.disks.s3.secret')),
+            'filesystems.disks.s3.region'          => $setting
+                ->get('media_aws_default_region', $config->get('filesystems.disks.s3.region')),
+            'filesystems.disks.s3.bucket'          => $setting
+                ->get('media_aws_bucket', $config->get('filesystems.disks.s3.bucket')),
+            'filesystems.disks.s3.url'             => $setting
+                ->get('media_aws_url', $config->get('filesystems.disks.s3.url')),
+            'filesystems.disks.do_spaces'          => [
+                'driver'     => 's3',
+                'visibility' => 'public',
+                'key'        => $setting->get('media_do_spaces_access_key_id'),
+                'secret'     => $setting->get('media_do_spaces_secret_key'),
+                'region'     => $setting->get('media_do_spaces_default_region'),
+                'bucket'     => $setting->get('media_do_spaces_bucket'),
+                'endpoint'   => $setting->get('media_do_spaces_endpoint'),
+            ],
+            'filesystems.disks.wasabi'             => [
+                'driver'     => 'wasabi',
+                'visibility' => 'public',
+                'key'        => $setting->get('media_wasabi_access_key_id'),
+                'secret'     => $setting->get('media_wasabi_secret_key'),
+                'region'     => $setting->get('media_wasabi_default_region'),
+                'bucket'     => $setting->get('media_wasabi_bucket'),
+                'root'       => $setting->get('media_wasabi_root', '/'),
+            ],
             'core.media.media.chunk.enabled'       => (bool)$setting->get('media_chunk_enabled',
                 $config->get('core.media.media.chunk.enabled')),
             'core.media.media.chunk.chunk_size'    => (int)$setting->get('media_chunk_size',
@@ -103,11 +158,10 @@ class MediaServiceProvider extends ServiceProvider
         ]);
 
         $this->app->booted(function () {
-            if (config('core.media.media.chunk.clear.schedule.enabled')) {
+            if (RvMedia::getConfig('chunk.clear.schedule.enabled')) {
                 $schedule = $this->app->make(Schedule::class);
 
-                $schedule->command('cms:media:chunks:clear')
-                    ->cron(config('core.media.media.chunk.clear.schedule.cron'));
+                $schedule->command('cms:media:chunks:clear')->cron(RvMedia::getConfig('chunk.clear.schedule.cron'));
             }
         });
 

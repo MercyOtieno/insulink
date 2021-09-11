@@ -9,7 +9,8 @@ use Botble\AuditLog\Repositories\Eloquent\AuditLogRepository;
 use Botble\AuditLog\Repositories\Interfaces\AuditLogInterface;
 use Botble\Base\Supports\Helper;
 use Botble\Base\Traits\LoadAndPublishDataTrait;
-use Event;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\AliasLoader;
 use Illuminate\Routing\Events\RouteMatched;
 use Illuminate\Support\ServiceProvider;
@@ -45,8 +46,6 @@ class AuditLogServiceProvider extends ServiceProvider
             ->loadMigrations()
             ->publishAssets();
 
-        $this->app->register(HookServiceProvider::class);
-
         Event::listen(RouteMatched::class, function () {
             dashboard_menu()
                 ->registerItem([
@@ -58,6 +57,14 @@ class AuditLogServiceProvider extends ServiceProvider
                     'url'         => route('audit-log.index'),
                     'permissions' => ['audit-log.index'],
                 ]);
+        });
+
+        $this->app->booted(function () {
+            $this->app->register(HookServiceProvider::class);
+
+            $schedule = $this->app->make(Schedule::class);
+
+            $schedule->command('model:prune', ['--model' => AuditHistory::class])->dailyAt('00:30');
         });
     }
 }

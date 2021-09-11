@@ -4,7 +4,7 @@ namespace Botble\AuditLog;
 
 use Botble\PluginManagement\Abstracts\PluginOperationAbstract;
 use Botble\Dashboard\Repositories\Interfaces\DashboardWidgetInterface;
-use Schema;
+use Illuminate\Support\Facades\Schema;
 
 class Plugin extends PluginOperationAbstract
 {

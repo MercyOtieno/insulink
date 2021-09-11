@@ -6,7 +6,7 @@ use Closure;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Auth\Middleware\Authenticate as BaseAuthenticate;
 use Illuminate\Http\Request;
-use Auth;
+
 class Authenticate extends BaseAuthenticate
 {
 
@@ -30,24 +30,14 @@ class Authenticate extends BaseAuthenticate
                 $flag = $route->getName();
             }
 
+            $flag = preg_replace('/.create.store$/', '.create', $flag);
+            $flag = preg_replace('/.edit.update$/', '.edit', $flag);
+
             if ($flag && !$request->user()->hasAnyPermission((array)$flag)) {
                 if ($request->expectsJson()) {
                     return response()->json(['message' => 'Unauthenticated.'], 401);
                 }
-                foreach ($guards as $guard) {
-                    if (Auth::guard($guard)->check()) {
-                        $role = Auth::user()->isSuperUser(); 
-                        switch ($role) {
-                            case '1':
-                                return redirect(route('dashboard.index'));
-                                break;
-
-                            default:
-                                return redirect(route('customer.dashboard'));
-                                break;
-                        }
-                    }
-                }
+                return redirect()->route('dashboard.index');
             }
         }
 

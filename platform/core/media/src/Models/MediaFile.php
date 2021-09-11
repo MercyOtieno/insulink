@@ -75,7 +75,7 @@ class MediaFile extends BaseModel
     {
         $type = 'document';
 
-        foreach (config('core.media.media.mime_types', []) as $key => $value) {
+        foreach (RvMedia::getConfig('mime_types', []) as $key => $value) {
             if (in_array($this->attributes['mime_type'], $value)) {
                 $type = $key;
                 break;
@@ -124,7 +124,6 @@ class MediaFile extends BaseModel
      */
     public function canGenerateThumbnails(): bool
     {
-        return RvMedia::isImage($this->mime_type) &&
-            !in_array($this->mime_type, ['image/svg+xml', 'image/x-icon']);
+        return RvMedia::canGenerateThumbnails($this->mime_type);
     }
 }

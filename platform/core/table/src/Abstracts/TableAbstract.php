@@ -3,22 +3,27 @@
 namespace Botble\Table\Abstracts;
 
 use Assets;
+use BaseHelper;
 use Botble\Base\Events\UpdatedContentEvent;
 use Botble\Support\Repositories\Interfaces\RepositoryInterface;
 use Botble\Table\Supports\TableExportHandler;
-use Carbon\Carbon;
 use Form;
 use Html;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Routing\UrlGenerator;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\HtmlString;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Request;
+use RvMedia;
 use Throwable;
 use Yajra\DataTables\DataTables;
+use Yajra\DataTables\QueryDataTable;
 use Yajra\DataTables\Services\DataTable;
 
 abstract class TableAbstract extends DataTable
@@ -128,7 +133,7 @@ abstract class TableAbstract extends DataTable
         }
 
         if (!$this->getOption('id')) {
-            $this->setOption('id', 'table_' . md5(get_class($this)));
+            $this->setOption('id', strtolower(Str::slug(Str::snake(get_class($this)))));
         }
 
         if (!$this->getOption('class')) {
@@ -174,6 +179,7 @@ abstract class TableAbstract extends DataTable
     public function setHasFilter(bool $hasFilter): self
     {
         $this->hasFilter = $hasFilter;
+
         return $this;
     }
 
@@ -200,6 +206,7 @@ abstract class TableAbstract extends DataTable
     public function setType(string $type): self
     {
         $this->type = $type;
+
         return $this;
     }
 
@@ -257,7 +264,7 @@ abstract class TableAbstract extends DataTable
 
         return $this->builder()
             ->columns($this->getColumns())
-            ->ajax(['url' => $this->getAjaxUrl()])
+            ->ajax(['url' => $this->getAjaxUrl(), 'method' => 'POST'])
             ->parameters([
                 'dom'          => $this->getDom(),
                 'buttons'      => $this->getBuilderParameters(),
@@ -269,8 +276,8 @@ abstract class TableAbstract extends DataTable
                 'searchDelay'  => 350,
                 'bStateSave'   => $this->bStateSave,
                 'lengthMenu'   => Arr::sortRecursive([
-                    array_values(array_unique(array_merge([10, 30, 50], [$this->pageLength, -1]))),
-                    array_values(array_unique(array_merge([10, 30, 50],
+                    array_values(array_unique(array_merge([10, 30, 50, 100, 500], [$this->pageLength, -1]))),
+                    array_values(array_unique(array_merge([10, 30, 50, 100, 500],
                         [$this->pageLength, trans('core/base::tables.all')]))),
                 ]),
                 'pageLength'   => $this->pageLength,
@@ -293,14 +300,14 @@ abstract class TableAbstract extends DataTable
                     'infoEmpty'         => trans('core/base::tables.no_record'),
                     'lengthMenu'        => Html::tag('span', '_MENU_', ['class' => 'dt-length-style'])->toHtml(),
                     'search'            => '',
-                    'searchPlaceholder' => trans('core/table::general.search'),
+                    'searchPlaceholder' => trans('core/table::table.search'),
                     'zeroRecords'       => trans('core/base::tables.no_record'),
                     'processing'        => Html::image(url('vendor/core/core/base/images/loading-spinner-blue.gif')),
                     'paginate'          => [
                         'next'     => trans('pagination.next'),
                         'previous' => trans('pagination.previous'),
                     ],
-                    'infoFiltered'      => trans('core/table::general.filtered'),
+                    'infoFiltered'      => trans('core/table::table.filtered'),
                 ],
                 'aaSorting'    => $this->useDefaultSorting ? [
                     [
@@ -308,6 +315,8 @@ abstract class TableAbstract extends DataTable
                         'desc',
                     ],
                 ] : [],
+                'responsive'   => true,
+                'autoWidth'    => false,
             ]);
     }
 
@@ -425,6 +434,7 @@ abstract class TableAbstract extends DataTable
     public function setAjaxUrl(string $ajaxUrl): self
     {
         $this->ajaxUrl = $ajaxUrl;
+
         return $this;
     }
 
@@ -478,15 +488,19 @@ abstract class TableAbstract extends DataTable
      */
     public function getButtons(): array
     {
-        $buttons = [];
-        if (!$this->buttons()) {
-            return $buttons;
+        $buttons = apply_filters(BASE_FILTER_TABLE_BUTTONS, $this->buttons(), get_class($this->repository->getModel()));
+
+        if (!$buttons) {
+            return [];
         }
-        foreach ($this->buttons() as $key => $button) {
+
+        $data = [];
+
+        foreach ($buttons as $key => $button) {
             if (Arr::get($button, 'extend') == 'collection') {
-                $buttons[] = $button;
+                $data[] = $button;
             } else {
-                $buttons[] = [
+                $data[] = [
                     'className' => 'action-item',
                     'text'      => Html::tag('span', $button['text'], [
                         'data-action' => $key,
@@ -495,12 +509,13 @@ abstract class TableAbstract extends DataTable
                 ];
             }
         }
-        return $buttons;
+
+        return $data;
     }
 
     /**
      * @return array
-     * @throws \Throwable
+     * @throws Throwable
      * @since 2.1
      */
     public function buttons()
@@ -583,23 +598,21 @@ abstract class TableAbstract extends DataTable
     public function htmlInitCompleteFunction(): ?string
     {
         return '
-                $(".dataTables_wrapper").css({"width": "100%"});
-
-                if (jQuery().select2) {
-                    $(document).find(".select-multiple").select2({
-                        width: "100%",
-                        allowClear: true,
-                        placeholder: $(this).data("placeholder")
-                    });
-                    $(document).find(".select-search-full").select2({
-                        width: "100%"
-                    });
-                    $(document).find(".select-full").select2({
-                        width: "100%",
-                        minimumResultsForSearch: -1
-                    });
-                }
-            ';
+            if (jQuery().select2) {
+                $(document).find(".select-multiple").select2({
+                    width: "100%",
+                    allowClear: true,
+                    placeholder: $(this).data("placeholder")
+                });
+                $(document).find(".select-search-full").select2({
+                    width: "100%"
+                });
+                $(document).find(".select-full").select2({
+                    width: "100%",
+                    minimumResultsForSearch: -1
+                });
+            }
+        ';
     }
 
     /**
@@ -702,6 +715,7 @@ abstract class TableAbstract extends DataTable
     public function bulkActions(): array
     {
         $actions = [];
+
         if ($this->getBulkChanges()) {
             $actions['bulk-change'] = view('core/table::bulk-changes', [
                 'bulk_changes' => $this->getBulkChanges(),
@@ -744,12 +758,16 @@ abstract class TableAbstract extends DataTable
 
         foreach ($requestFilters as $requestFilter) {
             if (isset($requestFilter['column']) && !empty($requestFilter['column'])) {
-                $query = $this->applyFilterCondition($query, $requestFilter['column'], $requestFilter['operator'],
-                    $requestFilter['value']);
+                $query = $this->applyFilterCondition(
+                    $query,
+                    $requestFilter['column'],
+                    $requestFilter['operator'],
+                    $requestFilter['value']
+                );
             }
         }
 
-        return parent::applyScopes($query);
+        return parent::applyScopes(apply_filters(BASE_FILTER_TABLE_QUERY, $query));
     }
 
     /**
@@ -772,7 +790,7 @@ abstract class TableAbstract extends DataTable
                     break;
                 }
 
-                $value = Carbon::createFromFormat(config('core.base.general.date_format.date'), $value)->toDateString();
+                $value = BaseHelper::formatDate($value);
                 $query = $query->whereDate($this->repository->getTable() . '.' . $key, $operator, $value);
                 break;
             default:
@@ -811,30 +829,45 @@ abstract class TableAbstract extends DataTable
         }
         $attributes = [
             'class'        => 'form-control input-value filter-column-value',
-            'placeholder'  => trans('core/table::general.value'),
+            'placeholder'  => trans('core/table::table.value'),
             'autocomplete' => 'off',
         ];
 
         switch ($type) {
             case 'select':
                 $attributes['class'] = $attributes['class'] . ' select';
-                $attributes['placeholder'] = trans('core/table::general.select_option');
+                $attributes['placeholder'] = trans('core/table::table.select_option');
                 $html = Form::customSelect($inputName, $data, $value, $attributes)->toHtml();
                 break;
+
             case 'select-search':
                 $attributes['class'] = $attributes['class'] . ' select-search-full';
-                $attributes['placeholder'] = trans('core/table::general.select_option');
+                $attributes['placeholder'] = trans('core/table::table.select_option');
                 $html = Form::customSelect($inputName, $data, $value, $attributes)->toHtml();
                 break;
+
+            case 'select-ajax':
+                $attributes = [
+                    'class'              => $attributes['class'] . ' select-search-ajax',
+                    'data-url'           => Arr::get($data, 'url'),
+                    'data-minimum-input' => Arr::get($data, 'minimum-input', 2),
+                    'multiple'           => Arr::get($data, 'multiple', false),
+                    'data-placeholder'   => Arr::get($data, 'placeholder', $attributes['placeholder']),
+                ];
+                $html = Form::customSelect($inputName, Arr::get($data, 'selected', []), $value, $attributes)->toHtml();
+                break;
+
             case 'number':
                 $html = Form::number($inputName, $value, $attributes)->toHtml();
                 break;
+
             case 'date':
                 $attributes['class'] = $attributes['class'] . ' datepicker';
                 $attributes['data-date-format'] = config('core.base.general.date_format.js.date');
                 $content = Form::text($inputName, $value, $attributes)->toHtml();
                 $html = view('core/table::partials.date-field', compact('content'))->render();
                 break;
+
             default:
                 $html = Form::text($inputName, $value, $attributes)->toHtml();
                 break;
@@ -885,11 +918,11 @@ abstract class TableAbstract extends DataTable
         if (strpos($key, '.') !== -1) {
             $key = Arr::last(explode('.', $key));
         }
+
         switch ($key) {
             case 'created_at':
             case 'updated_at':
-                $value = Carbon::createFromFormat(config('core.base.general.date_format.date'), $value)
-                    ->toDateTimeString();
+                $value = BaseHelper::formatDateTime($value);
                 break;
         }
 
@@ -938,18 +971,6 @@ abstract class TableAbstract extends DataTable
     }
 
     /**
-     * @return array
-     * @deprecated 5.3
-     */
-    protected function getYesNoSelect(): array
-    {
-        return [
-            0 => trans('core/base::base.no'),
-            1 => trans('core/base::base.yes'),
-        ];
-    }
-
-    /**
      * @param array $buttons
      * @param string $url
      * @param null|string $permission
@@ -960,9 +981,11 @@ abstract class TableAbstract extends DataTable
     {
         if (!$permission || Auth::user()->hasPermission($permission)) {
             $queryString = http_build_query(Request::query());
+
             if ($queryString) {
                 $url .= '?' . $queryString;
             }
+
             $buttons['create'] = [
                 'link' => $url,
                 'text' => view('core/table::partials.create')->render(),
@@ -988,5 +1011,44 @@ abstract class TableAbstract extends DataTable
         }
 
         return $actions;
+    }
+
+    /**
+     * @param QueryDataTable $data
+     * @param array $escapeColumn
+     * @param bool $mDataSupport
+     * @return mixed
+     */
+    public function toJson($data, $escapeColumn = [], $mDataSupport = true)
+    {
+        if ($this->repository && $this->repository->getModel()) {
+            $data = apply_filters(BASE_FILTER_GET_LIST_DATA, $data, $this->repository->getModel());
+        }
+
+        return $data
+            ->escapeColumns($escapeColumn)
+            ->make($mDataSupport);
+    }
+
+    /**
+     * @param string $image
+     * @param array $attributes
+     * @return Application|UrlGenerator|HtmlString|string|string[]|null
+     */
+    protected function displayThumbnail($image, array $attributes = ['width' => 50])
+    {
+        if ($this->request()->input('action') == 'csv') {
+            return RvMedia::getImageUrl($image, null, false, RvMedia::getDefaultImage());
+        }
+
+        if ($this->request()->input('action') == 'excel') {
+            return RvMedia::getImageUrl($image, 'thumb', false, RvMedia::getDefaultImage());
+        }
+
+        return Html::image(
+            RvMedia::getImageUrl($image, 'thumb', false, RvMedia::getDefaultImage()),
+            trans('core/base::tables.image'),
+            $attributes
+        );
     }
 }

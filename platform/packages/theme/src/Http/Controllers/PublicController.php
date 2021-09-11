@@ -2,89 +2,50 @@
 
 namespace Botble\Theme\Http\Controllers;
 
-use Botble\Theme\Events\RenderingSingleEvent;
-use Botble\Base\Http\Responses\BaseHttpResponse;
-use Botble\Page\Repositories\Interfaces\PageInterface;
-use Botble\Setting\Supports\SettingStore;
-use Botble\Slug\Repositories\Interfaces\SlugInterface;
+use BaseHelper;
+use Botble\Page\Models\Page;
+use Botble\Page\Services\PageService;
 use Botble\Theme\Events\RenderingHomePageEvent;
+use Botble\Theme\Events\RenderingSingleEvent;
 use Botble\Theme\Events\RenderingSiteMapEvent;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Arr;
 use Response;
+use SeoHelper;
 use SiteMapManager;
+use SlugHelper;
 use Theme;
 
 class PublicController extends Controller
 {
     /**
-     * @var SlugInterface
-     */
-    protected $slugRepository;
-
-    /**
-     * @var SettingStore
-     */
-    protected $settingStore;
-
-    /**
-     * PublicController constructor.
-     * @param SlugInterface $slugRepository
-     * @param SettingStore $settingStore
-     */
-    public function __construct(SlugInterface $slugRepository, SettingStore $settingStore)
-    {
-        $this->slugRepository = $slugRepository;
-        $this->settingStore = $settingStore;
-    }
-
-    /**
-     * @param BaseHttpResponse $response
-     * @return BaseHttpResponse|\Illuminate\Http\Response|Response
-     * @throws FileNotFoundException
-     */
-    public function getIndex(BaseHttpResponse $response)
-    {
-        if (defined('PAGE_MODULE_SCREEN_NAME')) {
-            $homepage = theme_option('homepage_id', $this->settingStore->get('show_on_front'));
-            if ($homepage) {
-                $homepage = app(PageInterface::class)->findById($homepage);
-                if ($homepage) {
-                    return $this->getView($response, $homepage->slug);
-                }
-            }
-        }
-
-        Theme::breadcrumb()->add(__('Home'), url('/'));
-
-        event(RenderingHomePageEvent::class);
-
-        return Theme::scope('index')->render();
-    }
-
-    /**
      * @param string $key
-     * @param BaseHttpResponse $response
-     * @return BaseHttpResponse|Response
+     * @return \Illuminate\Http\RedirectResponse|Response
      * @throws FileNotFoundException
      */
-    public function getView(BaseHttpResponse $response, $key = null)
+    public function getView($key = null)
     {
         if (empty($key)) {
-            return $this->getIndex($response);
+            return $this->getIndex();
         }
 
-        $slug = $this->slugRepository->getFirstBy(['key' => $key, 'prefix' => '']);
+        $slug = SlugHelper::getSlug($key, '');
 
         if (!$slug) {
             abort(404);
         }
 
+        if (defined('PAGE_MODULE_SCREEN_NAME')) {
+            if ($slug->reference_type == Page::class && BaseHelper::isHomepage($slug->reference_id)) {
+                return redirect()->route('public.index');
+            }
+        }
+
         $result = apply_filters(BASE_FILTER_PUBLIC_SINGLE_DATA, $slug);
 
         if (isset($result['slug']) && $result['slug'] !== $key) {
-            return $response->setNextUrl(route('public.single', $result['slug']));
+            return redirect()->route('public.single', $result['slug']);
         }
 
         event(new RenderingSingleEvent($slug));
@@ -97,6 +58,33 @@ class PublicController extends Controller
     }
 
     /**
+     * @return \Illuminate\Http\Response|Response
+     */
+    public function getIndex()
+    {
+        if (defined('PAGE_MODULE_SCREEN_NAME')) {
+            $homepageId = BaseHelper::getHomepageId();
+            if ($homepageId) {
+                $slug = SlugHelper::getSlug(null, SlugHelper::getPrefix(Page::class), Page::class, $homepageId);
+
+                if ($slug) {
+                    $data = (new PageService)->handleFrontRoutes($slug);
+
+                    return Theme::scope($data['view'], $data['data'], $data['default_view'])->render();
+                }
+            }
+        }
+
+        SeoHelper::setTitle(theme_option('site_title'));
+
+        Theme::breadcrumb()->add(__('Home'), route('public.index'));
+
+        event(RenderingHomePageEvent::class);
+
+        return Theme::scope('index')->render();
+    }
+
+    /**
      * @return string
      */
     public function getSiteMap()
@@ -104,6 +92,6 @@ class PublicController extends Controller
         event(RenderingSiteMapEvent::class);
 
         // show your site map (options: 'xml' (default), 'html', 'txt', 'ror-rss', 'ror-rdf')
-        return SiteMapManager::render('xml');
+        return SiteMapManager::render();
     }
 }

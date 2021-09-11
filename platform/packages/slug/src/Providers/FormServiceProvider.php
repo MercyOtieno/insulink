@@ -17,8 +17,8 @@ class FormServiceProvider extends ServiceProvider
                 'id'         => null,
                 'prefix'     => '',
                 'preview'    => false,
-                'ending_url' => config('core.base.general.public_single_ending_url'),
                 'attributes' => [],
+                'editable'   => true,
             ]);
         });
     }

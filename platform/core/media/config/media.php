@@ -31,13 +31,15 @@ return [
         ],
     ],
     'allowed_mime_types' => env('RV_MEDIA_ALLOWED_MIME_TYPES',
-        'jpg,jpeg,png,gif,txt,docx,zip,mp3,bmp,csv,xls,xlsx,ppt,pptx,pdf,mp4,doc,mpga,wav'),
+        'jpg,jpeg,png,gif,txt,docx,zip,mp3,bmp,csv,xls,xlsx,ppt,pptx,pdf,mp4,doc,mpga,wav,webp'),
     'mime_types'         => [
         'image'    => [
             'image/png',
             'image/jpeg',
             'image/gif',
             'image/bmp',
+            'image/svg+xml',
+            'image/webp',
         ],
         'video'    => [
             'video/mp4',

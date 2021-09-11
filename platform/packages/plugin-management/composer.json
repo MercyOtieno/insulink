@@ -1,6 +1,6 @@
 {
     "name": "botble/plugin-management",
-    "description": "Plugin management package for Botble CMS application",
+    "description": "Plugin management package",
     "type": "package",
     "autoload": {
         "psr-4": {

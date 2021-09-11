@@ -5,6 +5,8 @@ namespace Botble\Base\Supports;
 use Botble\Base\Repositories\Interfaces\MetaBoxInterface;
 use Exception;
 use Throwable;
+use Illuminate\Database\Eloquent\Model;
+use Botble\Base\Models\MetaBox as MetaBoxModel;
 
 class MetaBox
 {
@@ -30,7 +32,7 @@ class MetaBox
     /**
      * @param string $id
      * @param string $title
-     * @param string|array $callback
+     * @param string|array|\Closure $callback
      * @param null $reference
      * @param string $context
      * @param string $priority
@@ -171,7 +173,7 @@ class MetaBox
     }
 
     /**
-     * @param \Illuminate\Database\Eloquent\Model $object
+     * @param Model $object
      * @param string $key
      * @param $value
      * @param $options
@@ -200,13 +202,13 @@ class MetaBox
             $fieldMeta->meta_value = [$value];
             $this->metaBoxRepository->createOrUpdate($fieldMeta);
             return true;
-        } catch (Exception $ex) {
+        } catch (Exception $exception) {
             return false;
         }
     }
 
     /**
-     * @param \Illuminate\Database\Eloquent\Model $object
+     * @param Model $object
      * @param string $key
      * @param boolean $single
      * @param array $select
@@ -214,7 +216,12 @@ class MetaBox
      */
     public function getMetaData($object, string $key, $single = false, $select = ['meta_value'])
     {
-        $field = $this->getMeta($object, $key, $select);
+        if ($object instanceof MetaBoxModel) {
+            $field = $object;
+        } else {
+            $field = $this->getMeta($object, $key, $select);
+        }
+
         if (!$field) {
             return $single ? '' : [];
         }
@@ -222,11 +229,12 @@ class MetaBox
         if ($single) {
             return $field->meta_value[0];
         }
+
         return $field->meta_value;
     }
 
     /**
-     * @param \Illuminate\Database\Eloquent\Model $object
+     * @param Model $object
      * @param string $key
      * @param array $select
      * @return mixed
@@ -241,7 +249,7 @@ class MetaBox
     }
 
     /**
-     * @param \Illuminate\Database\Eloquent\Model $object
+     * @param Model $object
      * @param string $key
      * @return mixed
      * @throws Exception
@@ -253,5 +261,13 @@ class MetaBox
             'reference_id'   => $object->id,
             'reference_type' => get_class($object),
         ]);
+    }
+
+    /**
+     * @return array
+     */
+    public function getMetaBoxes(): array
+    {
+        return $this->metaBoxes;
     }
 }

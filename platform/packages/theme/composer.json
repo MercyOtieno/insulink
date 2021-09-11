@@ -1,6 +1,6 @@
 {
     "name": "botble/theme",
-    "description": "Theme package for Botble CMS application",
+    "description": "Theme package",
     "type": "package",
     "autoload": {
         "psr-4": {

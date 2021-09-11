@@ -2,9 +2,9 @@
 
 namespace Botble\DevTool\Commands;
 
-use DB;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Console\Command;
-use Schema;
+use Illuminate\Support\Facades\Schema;
 
 class TruncateTablesCommand extends Command
 {

@@ -2,7 +2,7 @@
     <div class="rv-media-wrapper">
         <input type="checkbox" id="media_aside_collapse" class="fake-click-event hidden">
         <input type="checkbox" id="media_details_collapse" class="fake-click-event hidden">
-        <aside class="rv-media-aside @if (config('core.media.media.sidebar_display') != 'vertical') rv-media-aside-hide-desktop @endif">
+        <aside class="rv-media-aside @if (RvMedia::getConfig('sidebar_display') != 'vertical') rv-media-aside-hide-desktop @endif">
             <label for="media_aside_collapse" class="collapse-sidebar">
                 <i class="fa fa-sign-out"></i>
             </label>
@@ -17,14 +17,14 @@
                                 <i class="fa fa-recycle"></i> {{ trans('core/media::media.everything') }}
                             </a>
                         </li>
-                        @if (array_key_exists('image', config('core.media.media.mime_types', [])))
+                        @if (array_key_exists('image', RvMedia::getConfig('mime_types', [])))
                             <li>
                                 <a href="#" class="js-rv-media-change-filter" data-type="filter" data-value="image">
                                     <i class="fa fa-file-image"></i> {{ trans('core/media::media.image') }}
                                 </a>
                             </li>
                         @endif
-                        @if (array_key_exists('video', config('core.media.media.mime_types', [])))
+                        @if (array_key_exists('video', RvMedia::getConfig('mime_types', [])))
                             <li>
                                 <a href="#" class="js-rv-media-change-filter" data-type="filter" data-value="video">
                                     <i class="fa fa-file-video"></i> {{ trans('core/media::media.video') }}
@@ -82,6 +82,10 @@
                             <button class="btn btn-success js-dropzone-upload">
                                 <i class="fas fa-cloud-upload-alt"></i> {{ trans('core/media::media.upload') }}
                             </button>
+
+                            <button class="btn btn-success js-download-action" data-toggle="modal" data-target="#modal_download_url">
+                                <i class="fas fa-cloud-download-alt"></i> {{ trans('core/media::media.download_link') }}
+                            </button>
                         @endif
                         @if (RvMedia::hasPermission('folders.create'))
                             <button class="btn btn-success" data-toggle="modal" data-target="#modal_add_folder">
@@ -92,10 +96,10 @@
                             <i class="fas fa-sync"></i> {{ trans('core/media::media.refresh') }}
                         </button>
 
-                        @if (config('core.media.media.sidebar_display') != 'vertical')
+                        @if (RvMedia::getConfig('sidebar_display') != 'vertical')
                             <div class="btn-group" role="group">
                                 <div class="dropdown">
-                                    <button class="btn btn-success dropdown-toggle js-rv-media-change-filter-group" type="button" data-toggle="dropdown">
+                                    <button class="btn btn-success dropdown-toggle js-rv-media-change-filter-group js-filter-by-type" type="button" data-toggle="dropdown">
                                         <i class="fa fa-filter"></i> {{ trans('core/media::media.filter') }} <span class="js-rv-media-filter-current"></span>
                                     </button>
                                     <ul class="dropdown-menu">
@@ -104,14 +108,14 @@
                                                 <i class="fa fa-recycle"></i> {{ trans('core/media::media.everything') }}
                                             </a>
                                         </li>
-                                        @if (array_key_exists('image', config('core.media.media.mime_types', [])))
+                                        @if (array_key_exists('image', RvMedia::getConfig('mime_types', [])))
                                             <li>
                                                 <a href="#" class="js-rv-media-change-filter" data-type="filter" data-value="image">
                                                     <i class="fa fa-file-image"></i> {{ trans('core/media::media.image') }}
                                                 </a>
                                             </li>
                                         @endif
-                                        @if (array_key_exists('video', config('core.media.media.mime_types', [])))
+                                        @if (array_key_exists('video', RvMedia::getConfig('mime_types', [])))
                                             <li>
                                                 <a href="#" class="js-rv-media-change-filter" data-type="filter" data-value="video">
                                                     <i class="fa fa-file-video"></i> {{ trans('core/media::media.video') }}
@@ -129,7 +133,7 @@
 
                             <div class="btn-group" role="group">
                                 <div class="dropdown">
-                                    <button class="btn btn-success dropdown-toggle js-rv-media-change-filter-group" type="button" data-toggle="dropdown">
+                                    <button class="btn btn-success dropdown-toggle js-rv-media-change-filter-group js-filter-by-view-in" type="button" data-toggle="dropdown">
                                         <i class="fa fa-eye"></i> {{ trans('core/media::media.view_in') }} <span class="js-rv-media-filter-current"></span>
                                     </button>
                                     <ul class="dropdown-menu">
@@ -318,7 +322,7 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h4 class="modal-title">
-                            <i class="fab fa-windows"></i> {{ trans('core/media::media.create_folder') }}
+                            <i class="fa fa-folder"></i> {{ trans('core/media::media.create_folder') }}
                         </h4>
                         <button type="button" class="close" data-dismiss-modal="#modal_add_folder" aria-label="{{ trans('core/media::media.close') }}">
                             <span aria-hidden="true">&times;</span>
@@ -431,6 +435,35 @@
                             <button type="button" class="btn btn-primary" data-dismiss-modal="#modal_empty_trash">{{ trans('core/media::media.close') }}</button>
                         </div>
                     </form>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" tabindex="-1" role="dialog" id="modal_download_url">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title" data-downloading="{{trans('core/media::media.downloading')}}" data-text="{{ trans('core/media::media.download_link') }}">
+                            <i class="fas fa-cloud-download-alt"></i> {{ trans('core/media::media.download_link') }}
+                        </h4>
+                        <button type="button" class="close" data-dismiss-modal="#modal_download_url" aria-label="{{ trans('core/media::media.close') }}">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form class="rv-form form-download-url">
+                            <div id="download-form-wrapper">
+                                <div class="form-group">
+                                <textarea rows="4"
+                                          name="urls"
+                                          class="form-control"
+                                          placeholder="http://example.com/image1.jpg&#10;http://example.com/image2.jpg&#10;http://example.com/image3.jpg&#10;..."></textarea>
+                                </div>
+                                {!! Form::helper(trans('core/media::media.download_explain')) !!}
+                            </div>
+                            <button class="btn btn-success w-100" type="submit">{{ trans('core/media::media.download_link') }}</button>
+                        </form>
+                        <div class="modal-notice mt-2" id="modal-notice" style="max-height: 350px;overflow: auto"></div>
+                    </div>
                 </div>
             </div>
         </div>

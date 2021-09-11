@@ -273,6 +273,7 @@ class Language
         'bn_BD'          => ['bn', 'bn_BD', 'বাংলা', 'ltr', 'bd'],
         'bo'             => ['bo', 'bo', 'བོད་སྐད', 'ltr', 'tibet'],
         'bs_BA'          => ['bs', 'bs_BA', 'Bosanski', 'ltr', 'ba'],
+        'ca'             => ['ca', 'ca_ES', 'Catalan', 'ltr', 'es'],
         'ceb'            => ['ceb', 'ceb', 'Cebuano', 'ltr', 'ph'],
         'cs_CZ'          => ['cs', 'cs_CZ', 'Čeština', 'ltr', 'cz'],
         'cy'             => ['cy', 'cy', 'Cymraeg', 'ltr', 'gb-wls'],
@@ -321,6 +322,7 @@ class Language
         'jv_ID'          => ['jv', 'jv_ID', 'Basa Jawa', 'ltr', 'id'],
         'ka_GE'          => ['ka', 'ka_GE', 'ქართული', 'ltr', 'ge'],
         'kk'             => ['kk', 'kk', 'Қазақ тілі', 'ltr', 'kz'],
+        'kh'             => ['kh', 'kh', 'Cambodia', 'ltr', 'kh'],
         'ko_KR'          => ['ko', 'ko_KR', '한국어', 'ltr', 'kr'],
         'ckb'            => ['ku', 'ckb', 'کوردی', 'rtl', 'kurdistan'],
         'lo'             => ['lo', 'lo', 'ພາສາລາວ', 'ltr', 'la'],
@@ -391,8 +393,17 @@ class Language
             }
             foreach (Language::getListLanguages() as $key => $language) {
                 if (in_array($key, [$locale, str_replace('-', '_', $locale)]) ||
-                    in_array($language[0], [$locale, str_replace('-', '_', $locale)])
+                    in_array($language[1], [$locale, str_replace('-', '_', $locale)])
                 ) {
+                    $languages[$locale] = [
+                        'locale' => $locale,
+                        'name'   => $language[2],
+                        'flag'   => $language[4],
+                    ];
+                }
+
+                if (!array_key_exists($locale, $languages) &&
+                    in_array($language[0], [$locale, str_replace('-', '_', $locale)])) {
                     $languages[$locale] = [
                         'locale' => $locale,
                         'name'   => $language[2],

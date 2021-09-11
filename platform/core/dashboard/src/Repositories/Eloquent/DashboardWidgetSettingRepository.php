@@ -22,7 +22,7 @@ class DashboardWidgetSettingRepository extends RepositoriesAbstract implements D
             ])
             ->with('widget')
             ->orderBy('order')
-            ->where('user_id', Auth::user()->getKey())
+            ->where('user_id', Auth::id())
             ->get();
 
         $this->resetModel();

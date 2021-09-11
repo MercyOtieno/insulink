@@ -3,13 +3,12 @@
 namespace Botble\Menu\Tables;
 
 use BaseHelper;
-use Botble\Menu\Models\Menu;
-use Html;
-use Illuminate\Support\Facades\Auth;
 use Botble\Base\Enums\BaseStatusEnum;
 use Botble\Menu\Repositories\Interfaces\MenuInterface;
 use Botble\Table\Abstracts\TableAbstract;
+use Html;
 use Illuminate\Contracts\Routing\UrlGenerator;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Yajra\DataTables\DataTables;
 
@@ -33,9 +32,9 @@ class MenuTable extends TableAbstract
      */
     public function __construct(DataTables $table, UrlGenerator $urlGenerator, MenuInterface $menuRepository)
     {
-        $this->repository = $menuRepository;
-        $this->setOption('id', 'table-menus');
         parent::__construct($table, $urlGenerator);
+
+        $this->repository = $menuRepository;
 
         if (!Auth::user()->hasAnyPermission(['menus.edit', 'menus.destroy'])) {
             $this->hasOperations = false;
@@ -65,14 +64,12 @@ class MenuTable extends TableAbstract
             })
             ->editColumn('status', function ($item) {
                 return $item->status->toHtml();
-            });
-
-        return apply_filters(BASE_FILTER_GET_LIST_DATA, $data, $this->repository->getModel())
+            })
             ->addColumn('operations', function ($item) {
                 return $this->getOperations('menus.edit', 'menus.destroy', $item);
-            })
-            ->escapeColumns([])
-            ->make(true);
+            });
+
+        return $this->toJson($data);
     }
 
     /**
@@ -80,18 +77,15 @@ class MenuTable extends TableAbstract
      */
     public function query()
     {
-        $model = $this->repository->getModel();
+        $query = $this->repository->getModel()
+            ->select([
+                'id',
+                'name',
+                'created_at',
+                'status',
+            ]);
 
-        $select = [
-            'menus.id',
-            'menus.name',
-            'menus.created_at',
-            'menus.status',
-        ];
-
-        $query = $model->select($select);
-
-        return $this->applyScopes(apply_filters(BASE_FILTER_TABLE_QUERY, $query, $model, $select));
+        return $this->applyScopes($query);
     }
 
     /**
@@ -101,22 +95,18 @@ class MenuTable extends TableAbstract
     {
         return [
             'id'         => [
-                'name'  => 'menus.id',
                 'title' => trans('core/base::tables.id'),
                 'width' => '20px',
             ],
             'name'       => [
-                'name'  => 'menus.name',
                 'title' => trans('core/base::tables.name'),
                 'class' => 'text-left',
             ],
             'created_at' => [
-                'name'  => 'menus.created_at',
                 'title' => trans('core/base::tables.created_at'),
                 'width' => '100px',
             ],
             'status'     => [
-                'name'  => 'menus.status',
                 'title' => trans('core/base::tables.status'),
                 'width' => '100px',
             ],
@@ -128,9 +118,7 @@ class MenuTable extends TableAbstract
      */
     public function buttons()
     {
-        $buttons = $this->addCreateButton(route('menus.create'), 'menus.create');
-
-        return apply_filters(BASE_FILTER_TABLE_BUTTONS, $buttons, Menu::class);
+        return $this->addCreateButton(route('menus.create'), 'menus.create');
     }
 
     /**
@@ -147,18 +135,18 @@ class MenuTable extends TableAbstract
     public function getBulkChanges(): array
     {
         return [
-            'menus.name'       => [
+            'name'       => [
                 'title'    => trans('core/base::tables.name'),
                 'type'     => 'text',
                 'validate' => 'required|max:120',
             ],
-            'menus.status'     => [
+            'status'     => [
                 'title'    => trans('core/base::tables.status'),
                 'type'     => 'select',
                 'choices'  => BaseStatusEnum::labels(),
                 'validate' => 'required|' . Rule::in(BaseStatusEnum::values()),
             ],
-            'menus.created_at' => [
+            'created_at' => [
                 'title' => trans('core/base::tables.created_at'),
                 'type'  => 'date',
             ],

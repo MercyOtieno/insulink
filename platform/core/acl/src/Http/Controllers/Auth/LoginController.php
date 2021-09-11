@@ -64,6 +64,7 @@ class LoginController extends BaseController
 
         Assets::addScripts(['jquery-validation'])
             ->addScriptsDirectly('vendor/core/core/acl/js/login.js')
+            ->addStylesDirectly('vendor/core/core/acl/css/animate.min.css')
             ->addStylesDirectly('vendor/core/core/acl/css/login.css')
             ->removeStyles([
                 'select2',
@@ -115,7 +116,7 @@ class LoginController extends BaseController
         }
 
         if ($this->attemptLogin($request)) {
-            app(UserInterface::class)->update(['id' => $user->id], ['last_login' => now(config('app.timezone'))]);
+            app(UserInterface::class)->update(['id' => $user->id], ['last_login' => now()]);
             if (!session()->has('url.intended')) {
                 session()->flash('url.intended', url()->current());
             }

@@ -2,6 +2,7 @@
 
 namespace Botble\Page\Services;
 
+use BaseHelper;
 use Botble\Base\Enums\BaseStatusEnum;
 use Botble\Page\Models\Page;
 use Botble\Page\Repositories\Interfaces\PageInterface;
@@ -38,24 +39,34 @@ class PageService
             return $slug;
         }
 
-        $page = app(PageInterface::class)->getFirstBy($condition, ['*']);
+        $page = app(PageInterface::class)->getFirstBy($condition, ['*'], ['slugable']);
 
         if (empty($page)) {
             abort(404);
         }
 
-        $page->slugable = $slug;
-
-        SeoHelper::setTitle($page->name)
-            ->setDescription($page->description);
-
         $meta = new SeoOpenGraph;
         if ($page->image) {
             $meta->setImage(RvMedia::getImageUrl($page->image));
         }
-        $meta->setDescription($page->description);
+
+        if (!BaseHelper::isHomepage($page->id)) {
+            SeoHelper::setTitle($page->name)
+                ->setDescription($page->description);
+
+            $meta->setTitle($page->name);
+            $meta->setDescription($page->description);
+        } else {
+            $siteTitle = theme_option('seo_title') ? theme_option('seo_title') : theme_option('site_title');
+
+            SeoHelper::setTitle($siteTitle)
+                ->setDescription(theme_option('seo_description'));
+
+            $meta->setTitle($siteTitle);
+            $meta->setDescription(theme_option('seo_description'));
+        }
+
         $meta->setUrl($page->url);
-        $meta->setTitle($page->name);
         $meta->setType('article');
 
         SeoHelper::setSeoOpenGraph($meta);
@@ -65,14 +76,16 @@ class PageService
                 ->layout($page->template);
         }
 
-        admin_bar()
-            ->registerLink(trans('packages/page::pages.edit_this_page'), route('pages.edit', $page->id));
-
-        Theme::breadcrumb()
-            ->add(__('Home'), url('/'))
-            ->add($page->name, $page->url);
+        if (function_exists('admin_bar') && Auth::check() && Auth::user()->hasPermission('pages.edit')) {
+            admin_bar()
+                ->registerLink(trans('packages/page::pages.edit_this_page'), route('pages.edit', $page->id));
+        }
 
         do_action(BASE_ACTION_PUBLIC_RENDER_SINGLE, PAGE_MODULE_SCREEN_NAME, $page);
+
+        Theme::breadcrumb()
+            ->add(__('Home'), route('public.index'))
+            ->add(SeoHelper::getTitle(), $page->url);
 
         return [
             'view'         => 'page',

@@ -2,11 +2,11 @@
 
 namespace Botble\Analytics\Http\Controllers;
 
+use Analytics;
 use Botble\Analytics\Exceptions\InvalidConfiguration;
 use Botble\Analytics\Period;
 use Botble\Base\Http\Controllers\BaseController;
 use Botble\Base\Http\Responses\BaseHttpResponse;
-use Analytics;
 use Carbon\Carbon;
 use Exception;
 use Throwable;
@@ -21,8 +21,8 @@ class AnalyticsController extends BaseController
      */
     public function getGeneral(BaseHttpResponse $response)
     {
-        $startDate = Carbon::today(config('app.timezone'))->startOfDay();
-        $endDate = Carbon::today(config('app.timezone'))->endOfDay();
+        $startDate = today()->startOfDay();
+        $endDate = today()->endOfDay();
         $dimensions = 'hour';
 
         try {
@@ -54,6 +54,16 @@ class AnalyticsController extends BaseController
                 }
             }
 
+            if (count($visitorData) == 0) {
+                for ($i = 0; $i <= 23; $i++) {
+                    $visitorData[] = [
+                        'axis'      => $i . 'h',
+                        'visitors'  => 0,
+                        'pageViews' => 0,
+                    ];
+                }
+            }
+
             $stats = collect($visitorData);
             $country_stats = Analytics::performQuery($period, 'ga:sessions',
                 ['dimensions' => 'ga:countryIsoCode'])->rows;
@@ -66,7 +76,7 @@ class AnalyticsController extends BaseController
             return $response
                 ->setError()
                 ->setMessage(trans('plugins/analytics::analytics.wrong_configuration',
-                    ['version' => get_cms_version()]));
+                    ['version' => number_format((float) get_cms_version(), 2)]));
         } catch (Exception $exception) {
             return $response
                 ->setError()
@@ -81,8 +91,8 @@ class AnalyticsController extends BaseController
      */
     public function getTopVisitPages(BaseHttpResponse $response)
     {
-        $startDate = Carbon::today(config('app.timezone'))->startOfDay();
-        $endDate = Carbon::today(config('app.timezone'))->endOfDay();
+        $startDate = today()->startOfDay();
+        $endDate = today()->endOfDay();
 
         try {
             $period = Period::create($startDate, $endDate);
@@ -93,7 +103,7 @@ class AnalyticsController extends BaseController
             return $response
                 ->setError()
                 ->setMessage(trans('plugins/analytics::analytics.wrong_configuration',
-                    ['version' => get_cms_version()]));
+                    ['version' => number_format((float) get_cms_version(), 2)]));
         } catch (Exception $exception) {
             return $response
                 ->setError()
@@ -108,8 +118,8 @@ class AnalyticsController extends BaseController
      */
     public function getTopBrowser(BaseHttpResponse $response)
     {
-        $startDate = Carbon::today(config('app.timezone'))->startOfDay();
-        $endDate = Carbon::today(config('app.timezone'))->endOfDay();
+        $startDate = today()->startOfDay();
+        $endDate = today()->endOfDay();
 
         try {
             $period = Period::create($startDate, $endDate);
@@ -120,7 +130,7 @@ class AnalyticsController extends BaseController
             return $response
                 ->setError()
                 ->setMessage(trans('plugins/analytics::analytics.wrong_configuration',
-                    ['version' => get_cms_version()]));
+                    ['version' => number_format((float) get_cms_version(), 2)]));
         } catch (Exception $exception) {
             return $response
                 ->setError()
@@ -135,8 +145,8 @@ class AnalyticsController extends BaseController
      */
     public function getTopReferrer(BaseHttpResponse $response)
     {
-        $startDate = Carbon::today(config('app.timezone'))->startOfDay();
-        $endDate = Carbon::today(config('app.timezone'))->endOfDay();
+        $startDate = today()->startOfDay();
+        $endDate = today()->endOfDay();
 
         try {
             $period = Period::create($startDate, $endDate);
@@ -147,7 +157,7 @@ class AnalyticsController extends BaseController
             return $response
                 ->setError()
                 ->setMessage(trans('plugins/analytics::analytics.wrong_configuration',
-                    ['version' => get_cms_version()]));
+                    ['version' => number_format((float) get_cms_version(), 2)]));
         } catch (Exception $exception) {
             return $response
                 ->setError()

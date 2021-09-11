@@ -92,7 +92,7 @@ class Captcha
             $attributes['data-sitekey'] = $this->optionOrConfig($options, 'site_key');
         }
 
-        return $html . '<script>var refreshRecaptcha = function () { grecaptcha.reset(); };</script><div class="g-recaptcha" ' . $this->buildAttributes($attributes) . '></div>';
+        return $html . '<script>"use strict"; var refreshRecaptcha = function () { grecaptcha.reset(); };</script><div class="g-recaptcha" ' . $this->buildAttributes($attributes) . '></div>';
     }
 
     /**
@@ -157,15 +157,6 @@ class Captcha
         }
 
         return count($html) ? ' ' . implode(' ', $html) : '';
-    }
-
-    /**
-     * @return null
-     * @deprecated 5.3
-     */
-    public function script()
-    {
-        return null;
     }
 
     /**

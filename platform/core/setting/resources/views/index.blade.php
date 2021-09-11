@@ -22,11 +22,13 @@
 
                 <div class="flexbox-annotated-section-content">
                     <div class="wrapper-content pd-all-20">
-                        <div class="form-group">
+                        @php $maxEmailCount = 4 @endphp
+                        <div class="form-group" id="admin_email_wrapper" data-emails="{{ json_encode(get_admin_email()) }}" data-max="{{ $maxEmailCount }}">
                             <label class="text-title-field"
                                    for="admin_email">{{ trans('core/setting::setting.general.admin_email') }}</label>
-                            <input type="email" class="next-input" name="admin_email" id="admin_email"
-                                   value="{{ setting('admin_email') }}">
+                            <a id="add" class="link" data-placeholder="email{{ '@' . $host }}"><small>+ {{ trans('core/setting::setting.email_add_more') }}</small></a>
+
+                            {{ Form::helper(trans('core/setting::setting.emails_warning', ['count' => $maxEmailCount])) }}
                         </div>
 
                         <div class="form-group">
@@ -35,7 +37,7 @@
                             </label>
                             <div class="ui-select-wrapper">
                                 <select name="time_zone" class="ui-select form-control select-search-full" id="time_zone">
-                                    @foreach(DateTimeZone::listIdentifiers(DateTimeZone::ALL) as $timezone)
+                                    @foreach(DateTimeZone::listIdentifiers() as $timezone)
                                         <option value="{{ $timezone }}" @if (setting('time_zone', 'UTC') === $timezone) selected @endif>{{ $timezone }}</option>
                                     @endforeach
                                 </select>
@@ -51,8 +53,14 @@
                             </label>
                             <div class="ui-select-wrapper">
                                 <select name="locale" class="ui-select form-control select-search-full" id="locale">
+                                    @php
+                                        $defaultLocale = setting('locale', config('app.locale'));
+                                        if (app()->environment('demo') && session('site-locale') && array_key_exists(session('site-locale'), \Botble\Base\Supports\Language::getAvailableLocales())) {
+                                            $defaultLocale = session('site-locale');
+                                        }
+                                    @endphp
                                     @foreach (\Botble\Base\Supports\Language::getAvailableLocales() as $key => $locale)
-                                        <option value="{{ $locale['locale'] }}" @if (setting('locale', config('app.locale')) === $locale['locale']) selected @endif>{{ $locale['name'] }} - {{ $locale['locale'] }}</option>
+                                        <option value="{{ $locale['locale'] }}" @if ($defaultLocale === $locale['locale']) selected @endif>{{ $locale['name'] }} - {{ $locale['locale'] }}</option>
                                     @endforeach
                                 </select>
                                 <svg class="svg-next-icon svg-next-icon-size-16">
@@ -68,11 +76,11 @@
                             </label>
                             <label class="hrv-label">
                                 <input type="radio" name="locale_direction" class="hrv-radio" value="ltr"
-                                       @if (setting('locale_direction', 'ltr') == 'ltr') checked @endif>{{ __('Left to Right') }}
+                                       @if (setting('locale_direction', 'ltr') == 'ltr') checked @endif>{{ trans('core/setting::setting.locale_direction_ltr') }}
                             </label>
                             <label class="hrv-label">
                                 <input type="radio" name="locale_direction" class="hrv-radio" value="rtl"
-                                       @if (setting('locale_direction', 'ltr') == 'rtl') checked @endif>{{ __('Right to Left') }}
+                                       @if (setting('locale_direction', 'ltr') == 'rtl') checked @endif>{{ trans('core/setting::setting.locale_direction_rtl') }}
                             </label>
                         </div>
 
@@ -121,9 +129,33 @@
 
                         <div class="form-group">
                             <label class="text-title-field"
+                                   for="admin-login-screen-backgrounds">{{ trans('core/setting::setting.general.admin_login_screen_backgrounds') }}
+                            </label>
+                            <div class="admin-login-screen-backgrounds-setting">
+                                {!! Form::mediaImages('login_screen_backgrounds[]', setting('login_screen_backgrounds')) !!}
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="text-title-field"
                                    for="admin_title">{{ trans('core/setting::setting.general.admin_title') }}</label>
                             <input data-counter="120" type="text" class="next-input" name="admin_title" id="admin_title"
                                    value="{{ setting('admin_title', config('app.name')) }}">
+                        </div>
+
+                        <div class="form-group">
+
+                            <label class="text-title-field"
+                                   for="admin_locale_direction">{{ trans('core/setting::setting.general.admin_locale_direction') }}
+                            </label>
+                            <label class="hrv-label">
+                                <input type="radio" name="admin_locale_direction" class="hrv-radio" value="ltr"
+                                       @if (setting('admin_locale_direction', 'ltr') == 'ltr') checked @endif>{{ trans('core/setting::setting.locale_direction_ltr') }}
+                            </label>
+                            <label class="hrv-label">
+                                <input type="radio" name="admin_locale_direction" class="hrv-radio" value="rtl"
+                                       @if (setting('admin_locale_direction', 'ltr') == 'rtl') checked @endif>{{ trans('core/setting::setting.locale_direction_rtl') }}
+                            </label>
                         </div>
 
                         <div class="form-group">
@@ -133,11 +165,11 @@
                             </label>
                             <label class="hrv-label">
                                 <input type="radio" name="rich_editor" class="hrv-radio" value="ckeditor"
-                                       @if (setting('rich_editor', 'ckeditor') == 'ckeditor') checked @endif>{{ __('CKEditor') }}
+                                       @if (BaseHelper::getRichEditor() == 'ckeditor') checked @endif>CKEditor
                             </label>
                             <label class="hrv-label">
                                 <input type="radio" name="rich_editor" class="hrv-radio" value="tinymce"
-                                       @if (setting('rich_editor', 'ckeditor') == 'tinymce') checked @endif>{{ __('TinyMCE') }}
+                                       @if (BaseHelper::getRichEditor() == 'tinymce') checked @endif>TinyMCE
                             </label>
                         </div>
 
@@ -159,17 +191,11 @@
                             </div>
                         </div>
 
-                        <div class="form-group">
-                                <input type="hidden" name="enable_change_admin_theme" value="0">
-                                <label><input type="checkbox" class="hrv-checkbox" value="1"
-                                              @if (setting('enable_change_admin_theme')) checked @endif name="enable_change_admin_theme"> {{ trans('core/setting::setting.general.enable_change_admin_theme') }} </label>
-                        </div>
-
-                        @if (count(Assets::getAdminLocales()) > 1)
+                        @if (count(Assets::getThemes()) > 1)
                             <div class="form-group">
-                                <input type="hidden" name="enable_multi_language_in_admin" value="0">
-                                <label><input type="checkbox" class="hrv-checkbox" value="1"
-                                              @if (setting('enable_multi_language_in_admin')) checked @endif name="enable_multi_language_in_admin"> {{ trans('core/setting::setting.general.enable_multi_language_in_admin') }} </label>
+                                    <input type="hidden" name="enable_change_admin_theme" value="0">
+                                    <label><input type="checkbox" class="hrv-checkbox" value="1"
+                                                  @if (setting('enable_change_admin_theme')) checked @endif name="enable_change_admin_theme"> {{ trans('core/setting::setting.general.enable_change_admin_theme') }} </label>
                             </div>
                         @endif
                     </div>

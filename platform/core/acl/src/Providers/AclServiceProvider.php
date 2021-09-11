@@ -16,11 +16,12 @@ use Botble\ACL\Repositories\Interfaces\RoleInterface;
 use Botble\ACL\Repositories\Interfaces\UserInterface;
 use Botble\Base\Supports\Helper;
 use Botble\Base\Traits\LoadAndPublishDataTrait;
-use Event;
+use EmailHandler;
 use Exception;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Routing\Events\RouteMatched;
 use Illuminate\Routing\Router;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 
 class AclServiceProvider extends ServiceProvider
@@ -61,16 +62,12 @@ class AclServiceProvider extends ServiceProvider
         $this->app->register(EventServiceProvider::class);
 
         $this->setNamespace('core/acl')
-            ->loadAndPublishConfigurations(['general', 'permissions'])
+            ->loadAndPublishConfigurations(['general', 'permissions', 'email'])
             ->loadAndPublishViews()
             ->loadAndPublishTranslations()
             ->publishAssets()
             ->loadRoutes(['web'])
             ->loadMigrations();
-
-        config()->set(['auth.providers.users.model' => User::class]);
-
-        $this->app->register(HookServiceProvider::class);
 
         $this->garbageCollect();
 
@@ -94,6 +91,14 @@ class AclServiceProvider extends ServiceProvider
                     'url'         => route('users.index'),
                     'permissions' => ['users.index'],
                 ]);
+        });
+
+        $this->app->booted(function () {
+            config()->set(['auth.providers.users.model' => User::class]);
+
+            EmailHandler::addTemplateSettings('acl', config('core.acl.email', []), 'core');
+
+            $this->app->register(HookServiceProvider::class);
         });
     }
 

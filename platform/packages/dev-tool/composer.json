@@ -1,6 +1,6 @@
 {
     "name": "botble/dev-tool",
-    "description": "Dev tools package for Botble CMS application",
+    "description": "Dev tools package",
     "type": "package",
     "autoload": {
         "psr-4": {

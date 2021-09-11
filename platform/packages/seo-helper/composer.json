@@ -1,6 +1,6 @@
 {
     "name": "botble/seo-helper",
-    "description": "SEO helper package for Botble CMS application",
+    "description": "SEO helper package",
     "type": "package",
     "autoload": {
         "psr-4": {

@@ -12,8 +12,8 @@ use Form;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Throwable;
 
 class TableController extends Controller
@@ -35,20 +35,19 @@ class TableController extends Controller
 
     /**
      * @param BulkChangeRequest $request
-     * @param TableBuilder $tableBuilder
      * @return array|mixed
      * @throws Throwable
      */
-    public function getDataForBulkChanges(BulkChangeRequest $request, TableBuilder $tableBuilder)
+    public function getDataForBulkChanges(BulkChangeRequest $request)
     {
-        $object = $tableBuilder->create($request->input('class'));
+        $object = $this->tableBuilder->create($request->input('class'));
 
         $data = $object->getValueInput(null, null, 'text');
         if (!$request->input('key')) {
             return $data;
         }
 
-        $column = Arr::get($object->getBulkChanges(), $request->input('key'), null);
+        $column = Arr::get($object->getBulkChanges(), $request->input('key'));
         if (empty($column)) {
             return $data;
         }
@@ -91,7 +90,7 @@ class TableController extends Controller
         if (empty($ids)) {
             return $response
                 ->setError()
-                ->setMessage(trans('core/table::general.please_select_record'));
+                ->setMessage(trans('core/table::table.please_select_record'));
         }
 
         $inputKey = $request->input('key');
@@ -120,44 +119,41 @@ class TableController extends Controller
                 ->setMessage($exception->getMessage());
         }
 
-        return $response->setMessage(trans('core/table::general.save_bulk_change_success'));
+        return $response->setMessage(trans('core/table::table.save_bulk_change_success'));
     }
 
     /**
      * @param FilterRequest $request
-     * @param TableBuilder $tableBuilder
      * @return array|mixed
      * @throws BindingResolutionException
      * @throws Throwable
      */
-    public function getFilterInput(FilterRequest $request, TableBuilder $tableBuilder)
+    public function getFilterInput(FilterRequest $request)
     {
-        $object = $tableBuilder->create($request->input('class'));
+        $object = $this->tableBuilder->create($request->input('class'));
 
         $data = $object->getValueInput(null, null, 'text');
         if (!$request->input('key')) {
             return $data;
         }
 
-        $column = Arr::get($object->getFilters(), $request->input('key'), null);
+        $column = Arr::get($object->getFilters(), $request->input('key'));
         if (empty($column)) {
             return $data;
         }
 
+        $value = $request->input('value');
+        $choices = Arr::get($column, 'choices', []);
+
         if (isset($column['callback']) && method_exists($object, $column['callback'])) {
-            return $object->getValueInput(
-                null,
-                $request->input('value'),
-                $column['type'],
-                call_user_func([$object, $column['callback']])
-            );
+            $choices = call_user_func_array([$object, $column['callback']], [$value]);
         }
 
         return $object->getValueInput(
             null,
-            $request->input('value'),
+            $value,
             $column['type'],
-            Arr::get($column, 'choices', [])
+            $choices
         );
     }
 }

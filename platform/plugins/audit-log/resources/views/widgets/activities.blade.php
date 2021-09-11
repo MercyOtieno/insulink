@@ -8,7 +8,7 @@
             @endforeach
         </ul>
     </div>
-    @if ($histories->total() > $limit)
+    @if ($histories instanceof Illuminate\Pagination\LengthAwarePaginator && $histories->total() > $limit)
         <div class="widget_footer">
             @include('core/dashboard::partials.paginate', ['data' => $histories, 'limit' => $limit])
         </div>

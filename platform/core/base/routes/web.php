@@ -2,10 +2,10 @@
 
 use Botble\Base\Http\Controllers\SystemController;
 
-Route::group(['namespace' => 'Botble\Base\Http\Controllers', 'middleware' => 'web'], function () {
+Route::group(['namespace' => 'Botble\Base\Http\Controllers', 'middleware' => ['web', 'core']], function () {
     Route::group(['prefix' => BaseHelper::getAdminPrefix(), 'middleware' => 'auth'], function () {
         Route::group(['prefix' => 'system/info'], function () {
-            Route::get('', [
+            Route::match(['GET', 'POST'], '', [
                 'as'         => 'system.info',
                 'uses'       => 'SystemController@getInfo',
                 'permission' => ACL_ROLE_SUPER_USER,
@@ -31,7 +31,13 @@ Route::group(['namespace' => 'Botble\Base\Http\Controllers', 'middleware' => 'we
         Route::post('membership/authorize', [
             'as'         => 'membership.authorize',
             'uses'       => 'SystemController@authorize',
-            'permission' => ACL_ROLE_SUPER_USER,
+            'permission' => false,
+        ]);
+
+        Route::get('menu-items-count', [
+            'as'         => 'menu-items-count',
+            'uses'       => 'SystemController@getMenuItemsCount',
+            'permission' => false,
         ]);
     });
 

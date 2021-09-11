@@ -3,14 +3,13 @@
 namespace Botble\Page\Tables;
 
 use BaseHelper;
-use Botble\Page\Models\Page;
-use Illuminate\Support\Facades\Auth;
 use Botble\Base\Enums\BaseStatusEnum;
 use Botble\Page\Repositories\Interfaces\PageInterface;
 use Botble\Table\Abstracts\TableAbstract;
 use Html;
 use Illuminate\Contracts\Routing\UrlGenerator;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Yajra\DataTables\DataTables;
 
@@ -34,9 +33,9 @@ class PageTable extends TableAbstract
      */
     public function __construct(DataTables $table, UrlGenerator $urlGenerator, PageInterface $pageRepository)
     {
-        $this->repository = $pageRepository;
-        $this->setOption('id', 'table-pages');
         parent::__construct($table, $urlGenerator);
+
+        $this->repository = $pageRepository;
 
         if (!Auth::user()->hasAnyPermission(['pages.edit', 'pages.destroy'])) {
             $this->hasOperations = false;
@@ -60,14 +59,10 @@ class PageTable extends TableAbstract
                     $name = Html::link(route('pages.edit', $item->id), $item->name);
                 }
 
-                if (function_exists('theme_option')) {
-                    $homepageId = theme_option('homepage_id', setting('show_on_front'));
-
-                    if ($homepageId == $item->id) {
-                        $name .= Html::tag('span', ' — ' . trans('packages/page::pages.front_page'), [
-                            'class' => 'additional-page-name',
-                        ])->toHtml();
-                    }
+                if (function_exists('theme_option') && BaseHelper::isHomepage($item->id)) {
+                    $name .= Html::tag('span', ' — ' . trans('packages/page::pages.front_page'), [
+                        'class' => 'additional-page-name',
+                    ])->toHtml();
                 }
 
                 return apply_filters(PAGE_FILTER_PAGE_NAME_IN_ADMIN_LIST, $name, $item);
@@ -83,14 +78,12 @@ class PageTable extends TableAbstract
             })
             ->editColumn('status', function ($item) {
                 return $item->status->toHtml();
-            });
-
-        return apply_filters(BASE_FILTER_GET_LIST_DATA, $data, $this->repository->getModel())
+            })
             ->addColumn('operations', function ($item) {
                 return $this->getOperations('pages.edit', 'pages.destroy', $item);
-            })
-            ->escapeColumns([])
-            ->make(true);
+            });
+
+        return $this->toJson($data);
     }
 
     /**
@@ -98,20 +91,15 @@ class PageTable extends TableAbstract
      */
     public function query()
     {
-        $model = $this->repository->getModel();
+        $query = $this->repository->getModel()->select([
+            'id',
+            'name',
+            'template',
+            'created_at',
+            'status',
+        ]);
 
-        $select = [
-            'pages.id',
-            'pages.name',
-            'pages.template',
-            'pages.created_at',
-            'pages.status',
-        ];
-
-        $query = $model
-            ->select($select);
-
-        return $this->applyScopes(apply_filters(BASE_FILTER_TABLE_QUERY, $query, $model, $select));
+        return $this->applyScopes($query);
     }
 
     /**
@@ -121,28 +109,23 @@ class PageTable extends TableAbstract
     {
         return [
             'id'         => [
-                'name'  => 'pages.id',
                 'title' => trans('core/base::tables.id'),
                 'width' => '20px',
             ],
             'name'       => [
-                'name'  => 'pages.name',
                 'title' => trans('core/base::tables.name'),
                 'class' => 'text-left',
             ],
             'template'   => [
-                'name'  => 'pages.template',
                 'title' => trans('core/base::tables.template'),
                 'class' => 'text-left',
             ],
             'created_at' => [
-                'name'  => 'pages.created_at',
                 'title' => trans('core/base::tables.created_at'),
                 'width' => '100px',
                 'class' => 'text-center',
             ],
             'status'     => [
-                'name'  => 'pages.status',
                 'title' => trans('core/base::tables.status'),
                 'width' => '100px',
                 'class' => 'text-center',
@@ -155,9 +138,7 @@ class PageTable extends TableAbstract
      */
     public function buttons()
     {
-        $buttons = $this->addCreateButton(route('pages.create'), 'pages.create');
-
-        return apply_filters(BASE_FILTER_TABLE_BUTTONS, $buttons, Page::class);
+        return $this->addCreateButton(route('pages.create'), 'pages.create');
     }
 
     /**
@@ -174,24 +155,24 @@ class PageTable extends TableAbstract
     public function getBulkChanges(): array
     {
         return [
-            'pages.name'       => [
+            'name'       => [
                 'title'    => trans('core/base::tables.name'),
                 'type'     => 'text',
                 'validate' => 'required|max:120',
             ],
-            'pages.status'     => [
+            'status'     => [
                 'title'    => trans('core/base::tables.status'),
                 'type'     => 'select',
                 'choices'  => BaseStatusEnum::labels(),
                 'validate' => 'required|' . Rule::in(BaseStatusEnum::values()),
             ],
-            'pages.template'   => [
+            'template'   => [
                 'title'    => trans('core/base::tables.template'),
                 'type'     => 'select',
                 'choices'  => get_page_templates(),
                 'validate' => 'required',
             ],
-            'pages.created_at' => [
+            'created_at' => [
                 'title' => trans('core/base::tables.created_at'),
                 'type'  => 'date',
             ],

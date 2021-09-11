@@ -9,7 +9,7 @@
         <div class="clearfix"></div>
         <div class="page-container">
             <div class="page-sidebar-wrapper">
-                <div class="page-sidebar navbar-collapse collapse">
+                <div class="page-sidebar navbar-collapse collapse show">
                     <div class="sidebar">
                         <div class="sidebar-content">
                             <ul class="page-sidebar-menu page-header-fixed" data-keep-expanded="false" data-auto-scroll="true" data-slide-speed="200">
@@ -21,7 +21,7 @@
             </div>
 
             <div class="page-content-wrapper">
-                <div class="page-content @if (Route::currentRouteName() == 'media.index') rv-media-integrate-wrapper @endif">
+                <div class="page-content @if (Route::currentRouteName() == 'media.index') rv-media-integrate-wrapper @endif" style="min-height: 100vh">
                     {!! Breadcrumbs::render('main', page_title()->getTitle(false)) !!}
                     <div class="clearfix"></div>
                     <div id="main">
@@ -41,5 +41,4 @@
 
 @push('footer')
     @routes
-    @include('core/base::layouts.partials.scripts')
 @endpush

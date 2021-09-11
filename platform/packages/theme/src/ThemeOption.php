@@ -4,7 +4,6 @@ namespace Botble\Theme;
 
 use Exception;
 use Form;
-use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Support\Arr;
 use Language;
 use Setting;
@@ -93,6 +92,7 @@ class ThemeOption
             }
             $sections[$priority] = $section;
         }
+
         ksort($sections);
 
         return $sections;
@@ -118,6 +118,7 @@ class ThemeOption
                 }
             }
         }
+
         ksort($fields);
 
         return $fields;
@@ -146,22 +147,27 @@ class ThemeOption
         if (empty($this->optName) || is_array($this->optName)) {
             return;
         }
+
         if (!isset($this->sections[$this->optName])) {
             $this->sections[$this->optName] = [];
             $this->priority[$this->optName]['sections'] = 1;
         }
+
         if (!isset($this->args[$this->optName])) {
             $this->args[$this->optName] = [];
             $this->priority[$this->optName]['args'] = 1;
         }
+
         if (!isset($this->fields[$this->optName])) {
             $this->fields[$this->optName] = [];
             $this->priority[$this->optName]['fields'] = 1;
         }
+
         if (!isset($this->help[$this->optName])) {
             $this->help[$this->optName] = [];
             $this->priority[$this->optName]['help'] = 1;
         }
+
         if (!isset($this->errors[$this->optName])) {
             $this->errors[$this->optName] = [];
         }
@@ -203,9 +209,11 @@ class ThemeOption
     public function setSection(array $section = []): self
     {
         $this->checkOptName();
+
         if (empty($section)) {
             return $this;
         }
+
         if (!isset($section['id'])) {
             if (isset($section['type']) && $section['type'] == 'divide') {
                 $section['id'] = time();
@@ -232,15 +240,18 @@ class ThemeOption
 
                 return $this;
             }
+
             if (!isset($section['priority'])) {
                 $section['priority'] = $this->getPriority('sections');
             }
+
             if (isset($section['fields'])) {
                 if (!empty($section['fields']) && is_array($section['fields'])) {
                     $this->processFieldsArray($section['id'], $section['fields']);
                 }
                 unset($section['fields']);
             }
+
             $this->sections[$this->optName][$section['id']] = $section;
         } else {
             $this->errors[$this->optName]['section']['empty'] = 'Unable to create a section due an empty section array or the section variable passed was not an array.';
@@ -292,10 +303,12 @@ class ThemeOption
             if (!isset($field['priority'])) {
                 $field['priority'] = $this->getPriority('fields');
             }
+
             if (isset($field['id'])) {
                 $this->fields[$this->optName][$field['id']] = $field;
             }
         }
+
         return $this;
     }
 
@@ -317,6 +330,7 @@ class ThemeOption
                         unset($this->sections[$this->optName][$id]);
                         continue;
                     }
+
                     if ($priority != '') {
                         $newPriority = $section['priority'];
                         $section['priority'] = $priority;
@@ -346,20 +360,19 @@ class ThemeOption
     {
         $this->checkOptName();
 
-        if (!empty($this->optName) && !empty($id)) {
-            if (isset($this->sections[$this->optName][$id])) {
-                $this->sections[$this->optName][$id]['hidden'] = $hide;
-            }
+        if (!empty($this->optName) && !empty($id) && isset($this->sections[$this->optName][$id])) {
+            $this->sections[$this->optName][$id]['hidden'] = $hide;
         }
     }
 
     /**
      * @param string $id
-     * @return bool
+     * @return bool|array
      */
     public function getField(string $id = '')
     {
         $this->checkOptName();
+
         if (!empty($this->optName) && !empty($id)) {
             return isset($this->fields[$this->optName][$id]) ? $this->fields[$this->optName][$id] : false;
         }
@@ -404,6 +417,7 @@ class ThemeOption
                         unset($this->fields[$this->optName][$id]);
                         continue;
                     }
+
                     if (isset($priority) && $priority != '') {
                         $newPriority = $field['priority'];
                         $field['priority'] = $priority;
@@ -423,9 +437,11 @@ class ThemeOption
     public function getArgs(): array
     {
         $this->checkOptName();
+
         if (!empty($this->optName) && !empty($this->args[$this->optName])) {
             return $this->args[$this->optName];
         }
+
         return [];
     }
 
@@ -436,12 +452,15 @@ class ThemeOption
     public function setArgs(array $args = []): self
     {
         $this->checkOptName();
+
         if (!empty($this->optName) && !empty($args) && is_array($args)) {
             if (isset($this->args[$this->optName]) && isset($this->args[$this->optName]['clearArgs'])) {
                 $this->args[$this->optName] = [];
             }
+
             $this->args[$this->optName] = parse_args($args, $this->args[$this->optName]);
         }
+
         return $this;
     }
 
@@ -452,6 +471,7 @@ class ThemeOption
     public function getArg(string $key = ''): ?string
     {
         $this->checkOptName();
+
         if (!empty($this->optName) && !empty($key) && !empty($this->args[$this->optName])) {
             return Arr::get($this->args[$this->optName], $key);
         }
@@ -463,7 +483,6 @@ class ThemeOption
      * @param string $key
      * @param string $value
      * @return ThemeOption
-     * @throws FileNotFoundException
      */
     public function setOption(string $key, ?string $value = ''): self
     {
@@ -471,6 +490,10 @@ class ThemeOption
 
         if ($option && Arr::get($option, 'clean_tags', true)) {
             $value = clean($value);
+        }
+
+        if (is_array($value)) {
+            $value = json_encode($value);
         }
 
         Setting::set($this->getOptionKey($key, $this->getCurrentLocaleCode()), $value);
@@ -483,9 +506,14 @@ class ThemeOption
      * @param string $locale
      * @return string
      */
-    protected function getOptionKey(string $key, ?string $locale): string
+    protected function getOptionKey(string $key, ?string $locale = ''): string
     {
-        return $this->optName . '-' . setting()->get('theme') . $locale . '-' . $key;
+        $theme = setting('theme');
+        if (!$theme) {
+            $theme = Arr::first(scan_folder(theme_path()));
+        }
+
+        return $this->optName . '-' . $theme . $locale . '-' . $key;
     }
 
     /**
@@ -513,12 +541,10 @@ class ThemeOption
                 $field['attributes']['value'] = $this->getOption($field['attributes']['name']);
             }
 
-            if ($field['type'] == 'select') {
-                return call_user_func_array([Form::class, $field['type']], $field['attributes']);
-            }
-            return call_user_func_array([Form::class, $field['type']], $field['attributes']);
+            return call_user_func_array([Form::class, $field['type']], array_values($field['attributes']));
         } catch (Exception $exception) {
-            return $exception->getMessage();
+            info($exception->getMessage());
+            return null;
         }
     }
 
@@ -536,14 +562,28 @@ class ThemeOption
      * @param string $default
      * @return string
      */
-    public function getOption(string $key = '', ?string $default = ''): ?string
+    public function getOption(string $key = '', $default = ''): ?string
     {
-        $value = setting($this->getOptionKey($key, $this->getCurrentLocaleCode()),
-            setting($this->optName . '-' . setting()->get('theme') . '-' . $key, $default));
+        if (is_array($default)) {
+            $default = json_encode($default);
+        }
 
-        return $value ? $value : $default;
+        $default = setting($this->getOptionKey($key), $default);
+
+        $value = setting($this->getOptionKey($key, $this->getCurrentLocaleCode()), $default);
+
+        $value = $value ?: $default;
+
+        if (is_array($value)) {
+            $value = json_encode($value);
+        }
+
+        return $value;
     }
 
+    /**
+     * @return bool|void
+     */
     public function saveOptions()
     {
         return setting()->save();

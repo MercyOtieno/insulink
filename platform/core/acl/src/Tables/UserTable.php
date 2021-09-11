@@ -3,7 +3,6 @@
 namespace Botble\ACL\Tables;
 
 use BaseHelper;
-use Botble\ACL\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Botble\ACL\Enums\UserStatusEnum;
 use Botble\ACL\Repositories\Interfaces\ActivationInterface;
@@ -48,10 +47,10 @@ class UserTable extends TableAbstract
         UserInterface $userRepository,
         ActivateUserService $service
     ) {
+        parent::__construct($table, $urlGenerator);
+
         $this->repository = $userRepository;
         $this->service = $service;
-        $this->setOption('id', 'table-users');
-        parent::__construct($table, $urlGenerator);
 
         if (!Auth::user()->hasAnyPermission(['users.edit', 'users.destroy'])) {
             $this->hasOperations = false;
@@ -74,7 +73,7 @@ class UserTable extends TableAbstract
                     return $item->username;
                 }
 
-                return Html::link(route('user.profile.view', $item->id), $item->username);
+                return Html::link(route('users.profile.view', $item->id), $item->username);
             })
             ->editColumn('created_at', function ($item) {
                 return BaseHelper::formatDate($item->created_at);
@@ -96,9 +95,7 @@ class UserTable extends TableAbstract
 
                 return UserStatusEnum::DEACTIVATED()->toHtml();
             })
-            ->removeColumn('role_id');
-
-        return apply_filters(BASE_FILTER_GET_LIST_DATA, $data, $this->repository->getModel())
+            ->removeColumn('role_id')
             ->addColumn('operations', function ($item) {
 
                 $action = null;
@@ -114,9 +111,9 @@ class UserTable extends TableAbstract
 
                 return apply_filters(ACL_FILTER_USER_TABLE_ACTIONS,
                     $action . view('core/acl::users.partials.actions', ['item' => $item])->render(), $item);
-            })
-            ->escapeColumns([])
-            ->make(true);
+            });
+
+        return $this->toJson($data);
     }
 
     /**
@@ -124,23 +121,21 @@ class UserTable extends TableAbstract
      */
     public function query()
     {
-        $model = $this->repository->getModel();
-        $select = [
-            'users.id',
-            'users.username',
-            'users.email',
-            'roles.name as role_name',
-            'roles.id as role_id',
-            'users.updated_at',
-            'users.created_at',
-            'users.super_user',
-        ];
-
-        $query = $model->leftJoin('role_users', 'users.id', '=', 'role_users.user_id')
+        $query = $this->repository->getModel()
+            ->leftJoin('role_users', 'users.id', '=', 'role_users.user_id')
             ->leftJoin('roles', 'roles.id', '=', 'role_users.role_id')
-            ->select($select);
+            ->select([
+                'users.id as id',
+                'username',
+                'email',
+                'roles.name as role_name',
+                'roles.id as role_id',
+                'users.updated_at as updated_at',
+                'users.created_at as created_at',
+                'super_user',
+            ]);
 
-        return $this->applyScopes(apply_filters(BASE_FILTER_TABLE_QUERY, $query, $model, $select));
+        return $this->applyScopes($query);
     }
 
     /**
@@ -150,22 +145,18 @@ class UserTable extends TableAbstract
     {
         return [
             'username'   => [
-                'name'  => 'users.username',
                 'title' => trans('core/acl::users.username'),
                 'class' => 'text-left',
             ],
             'email'      => [
-                'name'  => 'users.email',
                 'title' => trans('core/acl::users.email'),
                 'class' => 'text-left',
             ],
             'role_name'  => [
-                'name'       => 'role_name',
                 'title'      => trans('core/acl::users.role'),
                 'searchable' => false,
             ],
             'created_at' => [
-                'name'  => 'users.created_at',
                 'title' => trans('core/base::tables.created_at'),
                 'width' => '100px',
             ],
@@ -175,7 +166,6 @@ class UserTable extends TableAbstract
                 'width' => '100px',
             ],
             'super_user' => [
-                'name'  => 'users.super_user',
                 'title' => trans('core/acl::users.is_super'),
                 'width' => '100px',
             ],
@@ -187,9 +177,7 @@ class UserTable extends TableAbstract
      */
     public function buttons()
     {
-        $buttons = $this->addCreateButton(route('users.create'), 'users.create');
-
-        return apply_filters(BASE_FILTER_TABLE_BUTTONS, $buttons, User::class);
+        return $this->addCreateButton(route('users.create'), 'users.create');
     }
 
     /**
@@ -214,7 +202,7 @@ class UserTable extends TableAbstract
     public function getFilters(): array
     {
         $filters = $this->getBulkChanges();
-        Arr::forget($filters, 'users.status');
+        Arr::forget($filters, 'status');
 
         return $filters;
     }
@@ -225,23 +213,23 @@ class UserTable extends TableAbstract
     public function getBulkChanges(): array
     {
         return [
-            'users.username'   => [
+            'username'   => [
                 'title'    => trans('core/acl::users.username'),
                 'type'     => 'text',
                 'validate' => 'required|max:120',
             ],
-            'users.email'      => [
+            'email'      => [
                 'title'    => trans('core/base::tables.email'),
                 'type'     => 'text',
                 'validate' => 'required|max:120|email',
             ],
-            'users.status'     => [
+            'status'     => [
                 'title'    => trans('core/base::tables.status'),
                 'type'     => 'select',
                 'choices'  => UserStatusEnum::labels(),
                 'validate' => 'required|in:' . implode(',', UserStatusEnum::values()),
             ],
-            'users.created_at' => [
+            'created_at' => [
                 'title' => trans('core/base::tables.created_at'),
                 'type'  => 'date',
             ],
@@ -275,10 +263,13 @@ class UserTable extends TableAbstract
             throw new Exception(trans('core/base::system.disabled_in_demo_mode'));
         }
 
-        if ($inputKey === 'users.status') {
+        if ($inputKey === 'status') {
+
+            $hasWarning = false;
+
             foreach ($ids as $id) {
-                if ($inputValue == UserStatusEnum::DEACTIVATED && Auth::user()->getKey() == $id) {
-                    throw new Exception(trans('core/acl::users.lock_user_logged_in'));
+                if ($inputValue == UserStatusEnum::DEACTIVATED && Auth::id() == $id) {
+                    $hasWarning = true;
                 }
 
                 $user = $this->repository->findOrFail($id);
@@ -288,7 +279,12 @@ class UserTable extends TableAbstract
                 } else {
                     app(ActivationInterface::class)->remove($user);
                 }
+
                 event(new UpdatedContentEvent(USER_MODULE_SCREEN_NAME, request(), $user));
+            }
+
+            if ($hasWarning) {
+                throw new Exception(trans('core/acl::users.lock_user_logged_in'));
             }
 
             return true;

@@ -80,19 +80,19 @@
                     <div class="dd nestable-menu" id="nestable" data-depth="0">
                         {!!
                              Menu::generateMenu([
-                                'slug' => $menu->slug,
-                                'view' => 'packages/menu::partials.menu',
-                                'theme' => false,
+                                'slug'   => $menu->slug,
+                                'view'   => 'packages/menu::partials.menu',
+                                'theme'  => false,
                                 'active' => false,
                              ])
                         !!}
                     </div>
                     @if (defined('THEME_MODULE_SCREEN_NAME'))
                         <hr>
-                        <h3>{{ __('Menu settings') }}</h3>
+                        <h3>{{ trans('packages/menu::menu.menu_settings') }}</h3>
                         <div class="row">
                             <div class="col-md-4">
-                                <p><i>{{ __('Display location') }}</i></p>
+                                <p><i>{{ trans('packages/menu::menu.display_location') }}</i></p>
                             </div>
                             <div class="col-md-8">
                                 @foreach (Menu::getMenuLocations() as $location => $description)

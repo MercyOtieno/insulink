@@ -119,8 +119,6 @@
       'Action' => 'Botble\\Base\\Facades\\ActionFacade',
       'Filter' => 'Botble\\Base\\Facades\\FilterFacade',
       'EmailHandler' => 'Botble\\Base\\Facades\\EmailHandlerFacade',
-      'DashboardMenu' => 'Botble\\Base\\Facades\\DashboardMenuFacade',
-      'MailVariable' => 'Botble\\Base\\Facades\\MailVariableFacade',
       'Breadcrumbs' => 'Botble\\Base\\Facades\\BreadcrumbsFacade',
       'JsValidator' => 'Botble\\JsValidation\\Facades\\JsValidatorFacade',
     ),
@@ -301,6 +299,17 @@
     'providers' => 
     array (
       0 => 'Laravel\\Passport\\PassportServiceProvider',
+    ),
+  ),
+  'laravel/socialite' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'Laravel\\Socialite\\SocialiteServiceProvider',
+    ),
+    'aliases' => 
+    array (
+      'Socialite' => 'Laravel\\Socialite\\Facades\\Socialite',
     ),
   ),
   'laravel/tinker' => 

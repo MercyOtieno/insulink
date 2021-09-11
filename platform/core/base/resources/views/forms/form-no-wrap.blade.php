@@ -9,7 +9,7 @@
         @if (!in_array($field->getName(), $exclude))
             {!! $field->render() !!}
             @if ($field->getName() == 'name' && defined('BASE_FILTER_SLUG_AREA'))
-                {!! apply_filters(BASE_FILTER_SLUG_AREA, $form->getModel()) !!}
+                {!! apply_filters(BASE_FILTER_SLUG_AREA, null, $form->getModel()) !!}
             @endif
         @endif
     @endforeach
@@ -20,6 +20,8 @@
     {!! $form->getMetaBox($key) !!}
 @endforeach
 
+@php do_action(BASE_ACTION_META_BOXES, 'top', $form->getModel()) @endphp
+@php do_action(BASE_ACTION_META_BOXES, 'side', $form->getModel()) @endphp
 @php do_action(BASE_ACTION_META_BOXES, 'advanced', $form->getModel()) @endphp
 
 {!! $form->getActionButtons() !!}

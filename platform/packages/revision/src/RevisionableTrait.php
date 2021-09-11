@@ -2,12 +2,16 @@
 
 namespace Botble\Revision;
 
-use Illuminate\Support\Facades\Auth;
 use DateTime;
-use DB;
 use Exception;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
+/**
+ * @mixin \Eloquent|SoftDeletes
+ */
 trait RevisionableTrait
 {
     /**
@@ -118,7 +122,7 @@ trait RevisionableTrait
             }
 
             // the below is ugly, for sure, but it's required so we can save the standard model
-            // then use the keep / dontkeep values for later, in the isRevisionable method
+            // then use the keep / dontKeep values for later, in the isRevisionable method
             $this->dontKeep = isset($this->dontKeepRevisionOf) ?
                 array_merge($this->dontKeepRevisionOf, $this->dontKeep)
                 : $this->dontKeep;
@@ -150,6 +154,7 @@ trait RevisionableTrait
         } else {
             $limitReached = false;
         }
+
         if (isset($this->revisionCleanup)) {
             $revisionCleanup = $this->revisionCleanup;
         } else {
@@ -192,7 +197,7 @@ trait RevisionableTrait
     }
 
     /**
-     * @return mixed
+     * @return \Illuminate\Database\Eloquent\Relations\MorphMany
      */
     public function revisionHistory()
     {
@@ -243,6 +248,7 @@ trait RevisionableTrait
         if (isset($this->doKeep) && in_array($key, $this->doKeep)) {
             return true;
         }
+
         if (isset($this->dontKeep) && in_array($key, $this->dontKeep)) {
             return false;
         }
@@ -257,7 +263,7 @@ trait RevisionableTrait
     {
         try {
             if (Auth::check()) {
-                return Auth::user()->getAuthIdentifier();
+                return Auth::id();
             }
         } catch (Exception $exception) {
             return null;
@@ -300,7 +306,7 @@ trait RevisionableTrait
     }
 
     /**
-     * If softdeletes are enabled, store the deleted time
+     * If soft deletes are enabled, store the deleted time
      * @throws Exception
      */
     public function postDelete()

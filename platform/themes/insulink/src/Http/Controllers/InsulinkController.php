@@ -24,17 +24,17 @@ class InsulinkController extends PublicController
     /**
      * {@inheritDoc}
      */
-    public function getIndex(BaseHttpResponse $response)
+    public function getIndex()
     {
-        return parent::getIndex($response);
+        return parent::getIndex();
     }
 
     /**
      * {@inheritDoc}
      */
-    public function getView(BaseHttpResponse $response, $key = null)
+    public function getView($key = null)
     {
-        return parent::getView($response, $key);
+        return parent::getView($key);
     }
 
     /**
@@ -72,13 +72,14 @@ class InsulinkController extends PublicController
                         ->join('underwriters', 'underwriters.id', '=', 'products.underwriter_id')
                         ->select('underwriters.id', 'underwriters.company', 'underwriters.status')
                         ->where('products.category', 'health')
-                        ->where('underwriters.status','active')
+                        ->where('underwriters.status', 'active')
                         ->groupBy('underwriters.id')
                         ->get();
         return $underwriters;
     }
     
-    public function listallUndwerwriters(){
+    public function listallUndwerwriters()
+    {
         return DB::table('products')
                 ->join('underwriters', 'underwriters.id', '=', 'products.underwriter_id')
                 ->select('underwriters.id', 'underwriters.company', 'underwriters.status')

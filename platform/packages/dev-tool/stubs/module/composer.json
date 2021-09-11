@@ -1,6 +1,6 @@
 {
   "name": "botble/{-name}",
-  "description": "{Name} package for Botble CMS application",
+  "description": "{Name} package",
   "type": "package",
   "autoload": {
     "psr-4": {

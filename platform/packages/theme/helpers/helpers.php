@@ -2,13 +2,12 @@
 
 use Botble\Theme\Facades\AdminBarFacade;
 use Botble\Theme\Facades\ThemeOptionFacade;
-use Illuminate\Contracts\Filesystem\FileNotFoundException;
 
 if (!function_exists('sanitize_html_class')) {
     /**
-     * @param $class
+     * @param string $class
      * @param string $fallback
-     * @return mixed
+     * @return string
      */
     function sanitize_html_class($class, $fallback = '')
     {
@@ -21,6 +20,7 @@ if (!function_exists('sanitize_html_class')) {
         if ('' == $sanitized && $fallback) {
             return sanitize_html_class($fallback);
         }
+
         /**
          * Filters a sanitized HTML class string.
          *
@@ -28,7 +28,6 @@ if (!function_exists('sanitize_html_class')) {
          * @param string $class HTML class before sanitization.
          * @param string $fallback The fallback string.
          * @since 2.8.0
-         *
          */
         return apply_filters('sanitize_html_class', $sanitized, $class, $fallback);
     }
@@ -36,7 +35,7 @@ if (!function_exists('sanitize_html_class')) {
 
 if (!function_exists('parse_args')) {
     /**
-     * @param $args
+     * @param array|object $args
      * @param string $defaults
      * @return array
      */
@@ -60,10 +59,9 @@ if (!function_exists('theme')) {
     /**
      * Get the theme instance.
      *
-     * @param  string $themeName
-     * @param  string $layoutName
-     * @return Theme
-     * @throws FileNotFoundException
+     * @param string $themeName
+     * @param string $layoutName
+     * @return \Illuminate\Contracts\Foundation\Application|mixed
      */
     function theme($themeName = null, $layoutName = null)
     {
@@ -76,21 +74,21 @@ if (!function_exists('theme')) {
         if ($layoutName) {
             $theme->layout($layoutName);
         }
+
         return $theme;
     }
 }
 
 if (!function_exists('theme_option')) {
     /**
-     * @return mixed
-     *
+     * @return \Botble\Theme\ThemeOption|string
      */
     function theme_option($key = null, $default = '')
     {
         if (!empty($key)) {
             try {
                 return ThemeOption::getOption($key, $default);
-            } catch (FileNotFoundException $exception) {
+            } catch (Exception $exception) {
                 info($exception->getMessage());
             }
         }
@@ -102,7 +100,6 @@ if (!function_exists('theme_option')) {
 if (!function_exists('theme_path')) {
     /**
      * @return string
-     *
      */
     function theme_path($path = null)
     {

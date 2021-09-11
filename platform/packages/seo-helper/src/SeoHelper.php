@@ -2,6 +2,7 @@
 
 namespace Botble\SeoHelper;
 
+use Arr;
 use Botble\Base\Models\BaseModel;
 use Botble\SeoHelper\Contracts\SeoHelperContract;
 use Botble\SeoHelper\Contracts\SeoMetaContract;
@@ -207,12 +208,29 @@ class SeoHelper implements SeoHelperContract
                     MetaBox::deleteMetaData($object, 'seo_meta');
                     return false;
                 }
-                MetaBox::saveMetaBoxData($object, 'seo_meta', $request->input('seo_meta'));
+
+                $seoMeta = $request->input('seo_meta', []);
+
+                if (!Arr::get($seoMeta, 'seo_title')) {
+                    Arr::forget($seoMeta, 'seo_title');
+                }
+
+                if (!Arr::get($seoMeta, 'seo_description')) {
+                    Arr::forget($seoMeta, 'seo_description');
+                }
+
+                if (!empty($seoMeta)) {
+                    MetaBox::saveMetaBoxData($object, 'seo_meta', $seoMeta);
+                } else {
+                    MetaBox::deleteMetaData($object, 'seo_meta');
+                }
+
                 return true;
-            } catch (Exception $ex) {
+            } catch (Exception $exception) {
                 return false;
             }
         }
+
         return false;
     }
 
@@ -227,6 +245,7 @@ class SeoHelper implements SeoHelperContract
             if (in_array(get_class($object), config('packages.seo-helper.general.supported', []))) {
                 MetaBox::deleteMetaData($object, 'seo_meta');
             }
+
             return true;
         } catch (Exception $ex) {
             return false;
@@ -242,10 +261,12 @@ class SeoHelper implements SeoHelperContract
         if (!is_array($model)) {
             $model = [$model];
         }
+
         config([
             'packages.seo-helper.general.supported' => array_merge(config('packages.seo-helper.general.supported', []),
                 $model),
         ]);
+
         return $this;
     }
 }

@@ -28,7 +28,7 @@ if (!function_exists('language_flag')) {
      */
     function language_flag(string $flag, ?string $name = null): string
     {
-        return Html::image(url(BASE_LANGUAGE_FLAG_PATH . $flag . '.svg'), $name, ['title' => $name, 'width' => 16]);
+        return Html::image(asset(BASE_LANGUAGE_FLAG_PATH . $flag . '.svg'), $name, ['title' => $name, 'width' => 16]);
     }
 }
 
@@ -49,13 +49,18 @@ if (!function_exists('render_editor')) {
 
 if (!function_exists('is_in_admin')) {
     /**
+     * @param bool $force
      * @return bool
      */
-    function is_in_admin(): bool
+    function is_in_admin($force = false): bool
     {
-        $isInAdmin = request()->segment(1) === BaseHelper::getAdminPrefix();
+        $prefix = BaseHelper::getAdminPrefix();
 
-        return apply_filters(IS_IN_ADMIN_FILTER, $isInAdmin);
+        $segments = array_slice(request()->segments(), 0, count(explode('/', $prefix)));
+
+        $isInAdmin = implode('/', $segments) === $prefix;
+
+        return $force ? $isInAdmin : apply_filters(IS_IN_ADMIN_FILTER, $isInAdmin);
     }
 }
 
@@ -88,7 +93,7 @@ if (!function_exists('get_cms_version')) {
         try {
             return trim(get_file_data(core_path('VERSION'), false));
         } catch (Exception $exception) {
-            return '5.7';
+            return '5.20';
         }
     }
 }

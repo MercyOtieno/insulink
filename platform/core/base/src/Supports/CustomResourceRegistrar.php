@@ -69,7 +69,7 @@ class CustomResourceRegistrar extends ResourceRegistrar
 
         $action = $this->getResourceAction($name, $controller, 'update', $options);
 
-        return $this->router->post($uri, $action);
+        return $this->router->post($uri, $action)->name($name . '.update');
     }
 
     /**
@@ -87,6 +87,26 @@ class CustomResourceRegistrar extends ResourceRegistrar
 
         $action = $this->getResourceAction($name, $controller, 'store', $options);
 
-        return $this->router->post($uri, $action);
+        return $this->router->post($uri, $action)->name($name . '.store');
+    }
+
+    /**
+     * Add the index method for a resourceful route.
+     *
+     * @param string $name
+     * @param string $base
+     * @param string $controller
+     * @param array $options
+     * @return \Illuminate\Routing\Route
+     */
+    protected function addResourceIndex($name, $base, $controller, $options)
+    {
+        $uri = $this->getResourceUri($name);
+
+        unset($options['missing']);
+
+        $action = $this->getResourceAction($name, $controller, 'index', $options);
+
+        return $this->router->match(['GET', 'POST'], $uri, $action);
     }
 }

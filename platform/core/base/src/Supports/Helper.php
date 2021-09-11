@@ -5,14 +5,14 @@ namespace Botble\Base\Supports;
 use Artisan;
 use Cache;
 use Eloquent;
-use Event;
 use Exception;
 use File;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Schema;
 use Request;
-use Schema;
 
 class Helper
 {
@@ -61,25 +61,13 @@ class Helper
     public static function formatLog($input, $line = '', $function = '', $class = ''): array
     {
         return array_merge($input, [
-            'user_id'   => Auth::check() ? Auth::user()->getKey() : 'System',
+            'user_id'   => Auth::check() ? Auth::id() : 'System',
             'ip'        => Request::ip(),
             'line'      => $line,
             'function'  => $function,
             'class'     => $class,
             'userAgent' => Request::header('User-Agent'),
         ]);
-    }
-
-    /**
-     * @param string $plugin
-     *
-     * @return boolean
-     * @since 3.3
-     * @deprecated
-     */
-    public static function removePluginData(string $plugin): bool
-    {
-        return self::removeModuleFiles($plugin, 'plugins');
     }
 
     /**
@@ -190,264 +178,6 @@ class Helper
     }
 
     /**
-     * @return string[]
-     */
-    public static function countries(): array
-    {
-        return [
-            'AF' => 'Afghanistan',
-            'AX' => 'Åland Islands',
-            'AL' => 'Albania',
-            'DZ' => 'Algeria',
-            'AS' => 'American Samoa',
-            'AD' => 'Andorra',
-            'AO' => 'Angola',
-            'AI' => 'Anguilla',
-            'AQ' => 'Antarctica',
-            'AG' => 'Antigua & Barbuda',
-            'AR' => 'Argentina',
-            'AM' => 'Armenia',
-            'AW' => 'Aruba',
-            'AU' => 'Australia',
-            'AT' => 'Austria',
-            'AZ' => 'Azerbaijan',
-            'BS' => 'Bahamas',
-            'BH' => 'Bahrain',
-            'BD' => 'Bangladesh',
-            'BB' => 'Barbados',
-            'BY' => 'Belarus',
-            'BE' => 'Belgium',
-            'BZ' => 'Belize',
-            'BJ' => 'Benin',
-            'BM' => 'Bermuda',
-            'BT' => 'Bhutan',
-            'BO' => 'Bolivia',
-            'BA' => 'Bosnia & Herzegovina',
-            'BW' => 'Botswana',
-            'BV' => 'Bouvet Island',
-            'BR' => 'Brazil',
-            'IO' => 'British Indian Ocean Territory',
-            'VG' => 'British Virgin Islands',
-            'BN' => 'Brunei',
-            'BG' => 'Bulgaria',
-            'BF' => 'Burkina Faso',
-            'BI' => 'Burundi',
-            'KH' => 'Cambodia',
-            'CM' => 'Cameroon',
-            'CA' => 'Canada',
-            'CV' => 'Cape Verde',
-            'BQ' => 'Caribbean Netherlands',
-            'KY' => 'Cayman Islands',
-            'CF' => 'Central African Republic',
-            'TD' => 'Chad',
-            'CL' => 'Chile',
-            'CN' => 'China',
-            'CX' => 'Christmas Island',
-            'CC' => 'Cocos (Keeling) Islands',
-            'CO' => 'Colombia',
-            'KM' => 'Comoros',
-            'CG' => 'Congo - Brazzaville',
-            'CD' => 'Congo - Kinshasa',
-            'CK' => 'Cook Islands',
-            'CR' => 'Costa Rica',
-            'CI' => 'Côte d’Ivoire',
-            'HR' => 'Croatia',
-            'CU' => 'Cuba',
-            'CW' => 'Curaçao',
-            'CY' => 'Cyprus',
-            'CZ' => 'Czechia',
-            'DK' => 'Denmark',
-            'DJ' => 'Djibouti',
-            'DM' => 'Dominica',
-            'DO' => 'Dominican Republic',
-            'EC' => 'Ecuador',
-            'EG' => 'Egypt',
-            'SV' => 'El Salvador',
-            'GQ' => 'Equatorial Guinea',
-            'ER' => 'Eritrea',
-            'EE' => 'Estonia',
-            'SZ' => 'Eswatini',
-            'ET' => 'Ethiopia',
-            'FK' => 'Falkland Islands',
-            'FO' => 'Faroe Islands',
-            'FJ' => 'Fiji',
-            'FI' => 'Finland',
-            'FR' => 'France',
-            'GF' => 'French Guiana',
-            'PF' => 'French Polynesia',
-            'TF' => 'French Southern Territories',
-            'GA' => 'Gabon',
-            'GM' => 'Gambia',
-            'GE' => 'Georgia',
-            'DE' => 'Germany',
-            'GH' => 'Ghana',
-            'GI' => 'Gibraltar',
-            'GR' => 'Greece',
-            'GL' => 'Greenland',
-            'GD' => 'Grenada',
-            'GP' => 'Guadeloupe',
-            'GU' => 'Guam',
-            'GT' => 'Guatemala',
-            'GG' => 'Guernsey',
-            'GN' => 'Guinea',
-            'GW' => 'Guinea-Bissau',
-            'GY' => 'Guyana',
-            'HT' => 'Haiti',
-            'HM' => 'Heard & McDonald Islands',
-            'HN' => 'Honduras',
-            'HK' => 'Hong Kong SAR China',
-            'HU' => 'Hungary',
-            'IS' => 'Iceland',
-            'IN' => 'India',
-            'ID' => 'Indonesia',
-            'IR' => 'Iran',
-            'IQ' => 'Iraq',
-            'IE' => 'Ireland',
-            'IM' => 'Isle of Man',
-            'IL' => 'Israel',
-            'IT' => 'Italy',
-            'JM' => 'Jamaica',
-            'JP' => 'Japan',
-            'JE' => 'Jersey',
-            'JO' => 'Jordan',
-            'KZ' => 'Kazakhstan',
-            'KE' => 'Kenya',
-            'KI' => 'Kiribati',
-            'KW' => 'Kuwait',
-            'KG' => 'Kyrgyzstan',
-            'LA' => 'Laos',
-            'LV' => 'Latvia',
-            'LB' => 'Lebanon',
-            'LS' => 'Lesotho',
-            'LR' => 'Liberia',
-            'LY' => 'Libya',
-            'LI' => 'Liechtenstein',
-            'LT' => 'Lithuania',
-            'LU' => 'Luxembourg',
-            'MO' => 'Macao SAR China',
-            'MG' => 'Madagascar',
-            'MW' => 'Malawi',
-            'MY' => 'Malaysia',
-            'MV' => 'Maldives',
-            'ML' => 'Mali',
-            'MT' => 'Malta',
-            'MH' => 'Marshall Islands',
-            'MQ' => 'Martinique',
-            'MR' => 'Mauritania',
-            'MU' => 'Mauritius',
-            'YT' => 'Mayotte',
-            'MX' => 'Mexico',
-            'FM' => 'Micronesia',
-            'MD' => 'Moldova',
-            'MC' => 'Monaco',
-            'MN' => 'Mongolia',
-            'ME' => 'Montenegro',
-            'MS' => 'Montserrat',
-            'MA' => 'Morocco',
-            'MZ' => 'Mozambique',
-            'MM' => 'Myanmar (Burma)',
-            'NA' => 'Namibia',
-            'NR' => 'Nauru',
-            'NP' => 'Nepal',
-            'NL' => 'Netherlands',
-            'NC' => 'New Caledonia',
-            'NZ' => 'New Zealand',
-            'NI' => 'Nicaragua',
-            'NE' => 'Niger',
-            'NG' => 'Nigeria',
-            'NU' => 'Niue',
-            'NF' => 'Norfolk Island',
-            'KP' => 'North Korea',
-            'MK' => 'North Macedonia',
-            'MP' => 'Northern Mariana Islands',
-            'NO' => 'Norway',
-            'OM' => 'Oman',
-            'PK' => 'Pakistan',
-            'PW' => 'Palau',
-            'PS' => 'Palestinian Territories',
-            'PA' => 'Panama',
-            'PG' => 'Papua New Guinea',
-            'PY' => 'Paraguay',
-            'PE' => 'Peru',
-            'PH' => 'Philippines',
-            'PN' => 'Pitcairn Islands',
-            'PL' => 'Poland',
-            'PT' => 'Portugal',
-            'PR' => 'Puerto Rico',
-            'QA' => 'Qatar',
-            'RE' => 'Réunion',
-            'RO' => 'Romania',
-            'RU' => 'Russia',
-            'RW' => 'Rwanda',
-            'WS' => 'Samoa',
-            'SM' => 'San Marino',
-            'ST' => 'São Tomé & Príncipe',
-            'SA' => 'Saudi Arabia',
-            'SN' => 'Senegal',
-            'RS' => 'Serbia',
-            'SC' => 'Seychelles',
-            'SL' => 'Sierra Leone',
-            'SG' => 'Singapore',
-            'SX' => 'Sint Maarten',
-            'SK' => 'Slovakia',
-            'SI' => 'Slovenia',
-            'SB' => 'Solomon Islands',
-            'SO' => 'Somalia',
-            'ZA' => 'South Africa',
-            'GS' => 'South Georgia & South Sandwich Islands',
-            'KR' => 'South Korea',
-            'SS' => 'South Sudan',
-            'ES' => 'Spain',
-            'LK' => 'Sri Lanka',
-            'BL' => 'St. Barthélemy',
-            'SH' => 'St. Helena',
-            'KN' => 'St. Kitts & Nevis',
-            'LC' => 'St. Lucia',
-            'MF' => 'St. Martin',
-            'PM' => 'St. Pierre & Miquelon',
-            'VC' => 'St. Vincent & Grenadines',
-            'SD' => 'Sudan',
-            'SR' => 'Suriname',
-            'SJ' => 'Svalbard & Jan Mayen',
-            'SE' => 'Sweden',
-            'CH' => 'Switzerland',
-            'SY' => 'Syria',
-            'TW' => 'Taiwan',
-            'TJ' => 'Tajikistan',
-            'TZ' => 'Tanzania',
-            'TH' => 'Thailand',
-            'TL' => 'Timor-Leste',
-            'TG' => 'Togo',
-            'TK' => 'Tokelau',
-            'TO' => 'Tonga',
-            'TT' => 'Trinidad & Tobago',
-            'TN' => 'Tunisia',
-            'TR' => 'Turkey',
-            'TM' => 'Turkmenistan',
-            'TC' => 'Turks & Caicos Islands',
-            'TV' => 'Tuvalu',
-            'UM' => 'U.S. Outlying Islands',
-            'VI' => 'U.S. Virgin Islands',
-            'UG' => 'Uganda',
-            'UA' => 'Ukraine',
-            'AE' => 'United Arab Emirates',
-            'GB' => 'United Kingdom',
-            'US' => 'United States',
-            'UY' => 'Uruguay',
-            'UZ' => 'Uzbekistan',
-            'VU' => 'Vanuatu',
-            'VA' => 'Vatican City',
-            'VE' => 'Venezuela',
-            'VN' => 'Vietnam',
-            'WF' => 'Wallis & Futuna',
-            'EH' => 'Western Sahara',
-            'YE' => 'Yemen',
-            'ZM' => 'Zambia',
-            'ZW' => 'Zimbabwe',
-        ];
-    }
-
-    /**
      * @param string $countryCode
      * @return string
      */
@@ -458,6 +188,14 @@ class Helper
         }
 
         return Arr::get(self::countries(), $countryCode, $countryCode);
+    }
+
+    /**
+     * @return string[]
+     */
+    public static function countries(): array
+    {
+        return config('core.base.general.countries', []);
     }
 
     /**
@@ -474,6 +212,56 @@ class Helper
         $response = curl_exec($curl);
         curl_close($curl);
 
-        return $response;
+        return $response ?: Request::ip();
+    }
+
+    /**
+     * @param string $setting
+     * @return bool
+     */
+    public static function isIniValueChangeable(string $setting): bool
+    {
+        static $iniAll;
+
+        if (!isset($iniAll)) {
+            $iniAll = false;
+            // Sometimes `ini_get_all()` is disabled via the `disable_functions` option for "security purposes".
+            if (function_exists('ini_get_all')) {
+                $iniAll = ini_get_all();
+            }
+        }
+
+        // Bit operator to workaround https://bugs.php.net/bug.php?id=44936 which changes access level to 63 in PHP 5.2.6 - 5.2.17.
+        if (isset($iniAll[$setting]['access']) && (INI_ALL === ($iniAll[$setting]['access'] & 7) || INI_USER === ($iniAll[$setting]['access'] & 7))) {
+            return true;
+        }
+
+        // If we were unable to retrieve the details, fail gracefully to assume it's changeable.
+        if (!is_array($iniAll)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @param int $value
+     * @return int
+     */
+    public static function convertHrToBytes($value)
+    {
+        $value = strtolower(trim($value));
+        $bytes = (int)$value;
+
+        if (false !== strpos($value, 'g')) {
+            $bytes *= 1024 * 1024 * 1024;
+        } elseif (false !== strpos($value, 'm')) {
+            $bytes *= 1024 * 1024;
+        } elseif (false !== strpos($value, 'k')) {
+            $bytes *= 1024;
+        }
+
+        // Deal with large (float) values which run into the maximum integer size.
+        return min($bytes, PHP_INT_MAX);
     }
 }

@@ -1,6 +1,7 @@
 <?php
 
 use Botble\Setting\Facades\SettingFacade;
+use Illuminate\Support\Collection;
 
 if (!function_exists('setting')) {
     /**
@@ -21,6 +22,20 @@ if (!function_exists('setting')) {
         }
 
         return SettingFacade::getFacadeRoot();
+    }
+}
+
+if (!function_exists('get_admin_email')) {
+    /**
+     * get admin email(s)
+     *
+     * @return Collection
+     */
+    function get_admin_email(): Collection
+    {
+        $email = setting('admin_email', []);
+
+        return collect(is_array($email) ? $email : [$email]);
     }
 }
 
@@ -113,6 +128,8 @@ if (!function_exists('get_setting_email_status')) {
      */
     function get_setting_email_status($type, $module, $templateKey)
     {
-        return setting(get_setting_email_status_key($type, $module, $templateKey), true);
+        $default = config($type . '.' . $module . '.email.templates.' . $templateKey . '.enabled', true);
+
+        return setting(get_setting_email_status_key($type, $module, $templateKey), $default);
     }
 }

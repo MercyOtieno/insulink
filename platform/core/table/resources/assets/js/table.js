@@ -75,7 +75,7 @@
         className: 'buttons-excel',
 
         text: dt => {
-            return '<i class="far fa-file-excel"></i> ' + dt.i18n('buttons.excel', BotbleVariables.languages.tables.excel);
+            return '<i class="far fa-file-excel"></i> ' + dt.i18n('buttons.excel', BotbleVariables.languages.tables.excel ? BotbleVariables.languages.tables.excel : 'Excel');
         },
 
         action: (e, dt) => {
@@ -87,7 +87,7 @@
         className: 'buttons-excel',
 
         text: dt => {
-            return '<i class="far fa-file-excel"></i> ' + dt.i18n('buttons.excel', BotbleVariables.languages.tables.excel);
+            return '<i class="far fa-file-excel"></i> ' + dt.i18n('buttons.excel', BotbleVariables.languages.tables.excel ? BotbleVariables.languages.tables.excel : 'Excel');
         },
 
         action: (e, dt) => {
@@ -104,7 +104,7 @@
         className: 'buttons-export',
 
         text: dt => {
-            return '<i class="fa fa-download"></i> ' + dt.i18n('buttons.export', BotbleVariables.languages.tables.export) + '&nbsp;<span class="caret"/>';
+            return '<i class="fa fa-download"></i> ' + dt.i18n('buttons.export', BotbleVariables.languages.tables.export ? BotbleVariables.languages.tables.export : 'Export') + '&nbsp;<span class="caret"/>';
         },
 
         buttons: ['csv', 'excel']
@@ -114,7 +114,7 @@
         className: 'buttons-csv',
 
         text: dt => {
-            return '<i class="fas fa-file-csv"></i> ' + dt.i18n('buttons.csv', BotbleVariables.languages.tables.csv);
+            return '<i class="fas fa-file-csv"></i> ' + dt.i18n('buttons.csv', BotbleVariables.languages.tables.csv ? BotbleVariables.languages.tables.csv : 'CSV');
         },
 
         action: (e, dt) => {
@@ -126,7 +126,7 @@
         className: 'buttons-csv',
 
         text: dt => {
-            return '<i class="fas fa-file-csv"></i> ' + dt.i18n('buttons.csv', BotbleVariables.languages.tables.csv);
+            return '<i class="fas fa-file-csv"></i> ' + dt.i18n('buttons.csv', BotbleVariables.languages.tables.csv ? BotbleVariables.languages.tables.csv : 'CSV');
         },
 
         action: (e, dt) => {
@@ -168,7 +168,7 @@
         className: 'buttons-print',
 
         text: dt => {
-            return '<i class="fa fa-print"></i> ' + dt.i18n('buttons.print', BotbleVariables.languages.tables.print);
+            return '<i class="fa fa-print"></i> ' + dt.i18n('buttons.print', BotbleVariables.languages.tables.print ? BotbleVariables.languages.tables.print : 'Print');
         },
 
         action: (e, dt) => {
@@ -180,7 +180,7 @@
         className: 'buttons-reset',
 
         text: dt => {
-            return '<i class="fa fa-undo"></i> ' + dt.i18n('buttons.reset', BotbleVariables.languages.tables.reset);
+            return '<i class="fa fa-undo"></i> ' + dt.i18n('buttons.reset', BotbleVariables.languages.tables.reset ? BotbleVariables.languages.tables.reset : 'Reset');
         },
 
         action: () => {
@@ -193,7 +193,7 @@
         className: 'buttons-reload',
 
         text: dt => {
-            return '<i class="fas fa-sync"></i> ' + dt.i18n('buttons.reload', BotbleVariables.languages.tables.reload);
+            return '<i class="fas fa-sync"></i> ' + dt.i18n('buttons.reload', BotbleVariables.languages.tables.reload ? BotbleVariables.languages.tables.reload : 'Reload');
         },
 
         action: (e, dt) => {
@@ -238,38 +238,36 @@
         }
 
         init() {
-            if (typeof window.LaravelDataTables !== 'undefined') {
 
-                $(document).on('change', '.table-check-all', event => {
-                    let _self = $(event.currentTarget);
-                    let set = _self.attr('data-set');
-                    let checked = _self.prop('checked');
-                    $(set).each((index, el) => {
-                        if (checked) {
-                            $(el).prop('checked', true);
-                        } else {
-                            $(el).prop('checked', false);
-                        }
-                    });
-                });
-
-                $(document).on('change', '.checkboxes', event => {
-                    let _self = $(event.currentTarget);
-                    let table = _self.closest('.table-wrapper').find('.table').prop('id');
-
-                    let ids = [];
-                    let $table = $('#' + table);
-                    $table.find('.checkboxes:checked').each((i, el) => {
-                        ids[i] = $(el).val();
-                    });
-
-                    if (ids.length !== $table.find('.checkboxes').length) {
-                        _self.closest('.table-wrapper').find('.table-check-all').prop('checked', false);
+            $(document).on('change', '.table-check-all', event => {
+                let _self = $(event.currentTarget);
+                let set = _self.attr('data-set');
+                let checked = _self.prop('checked');
+                $(set).each((index, el) => {
+                    if (checked) {
+                        $(el).prop('checked', true);
                     } else {
-                        _self.closest('.table-wrapper').find('.table-check-all').prop('checked', true);
+                        $(el).prop('checked', false);
                     }
                 });
-            }
+            });
+
+            $(document).on('change', '.checkboxes', event => {
+                let _self = $(event.currentTarget);
+                let table = _self.closest('.table-wrapper').find('.table').prop('id');
+
+                let ids = [];
+                let $table = $('#' + table);
+                $table.find('.checkboxes:checked').each((i, el) => {
+                    ids[i] = $(el).val();
+                });
+
+                if (ids.length !== $table.find('.checkboxes').length) {
+                    _self.closest('.table-wrapper').find('.table-check-all').prop('checked', false);
+                } else {
+                    _self.closest('.table-wrapper').find('.table-check-all').prop('checked', true);
+                }
+            });
 
             $(document).on('click', '.btn-show-table-options', event => {
                 event.preventDefault();
@@ -338,7 +336,7 @@
                 });
 
                 if (ids.length === 0) {
-                    Botble.showError('Please select at least one record to perform this action!');
+                    Botble.showError(BotbleVariables.languages.tables.please_select_record ? BotbleVariables.languages.tables.please_select_record : 'Please select at least one record to perform this action!');
                     return false;
                 }
 
@@ -374,11 +372,11 @@
                         if (data.error) {
                             Botble.showError(data.message);
                         } else {
-                            $table.find('.table-check-all').prop('checked', false);
-                            window.LaravelDataTables[_self.data('parent-table')].draw();
                             Botble.showSuccess(data.message);
                         }
 
+                        $table.find('.table-check-all').prop('checked', false);
+                        window.LaravelDataTables[_self.data('parent-table')].draw();
                         _self.closest('.modal').modal('hide');
                         _self.removeClass('button-loading');
                     },
@@ -401,7 +399,7 @@
                 });
 
                 if (ids.length === 0) {
-                    Botble.showError('Please select at least one record to perform this action!');
+                    Botble.showError(BotbleVariables.languages.tables.please_select_record ? BotbleVariables.languages.tables.please_select_record : 'Please select at least one record to perform this action!');
                     return false;
                 }
 
@@ -443,16 +441,15 @@
                         if (data.error) {
                             Botble.showError(data.message);
                         } else {
-                            $table.find('.table-check-all').prop('checked', false);
-                            $.each(ids, (index, item) => {
-                                window.LaravelDataTables[_self.data('parent-table')].row($table.find('.checkboxes[value="' + item + '"]').closest('tr')).remove().draw();
-                            });
                             Botble.showSuccess(data.message);
-
-                            _self.closest('.modal').modal('hide');
-                            _self.removeClass('button-loading');
                         }
-                        _self.text(text);
+
+                        $table.find('.table-check-all').prop('checked', false);
+                        $.each(ids, (index, item) => {
+                            window.LaravelDataTables[_self.data('parent-table')].row($table.find('.checkboxes[value="' + item + '"]').closest('tr')).remove().draw();
+                        });
+                        _self.closest('.modal').modal('hide');
+                        _self.removeClass('button-loading');
                     },
                     error: data => {
                         Botble.handleError(data);

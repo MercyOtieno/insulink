@@ -4,10 +4,13 @@ namespace Botble\AuditLog\Models;
 
 use Botble\ACL\Models\User;
 use Botble\Base\Models\BaseModel;
+use Illuminate\Database\Eloquent\MassPrunable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class AuditHistory extends BaseModel
 {
+    use MassPrunable;
+
     /**
      * The database table used by the model.
      *
@@ -47,5 +50,13 @@ class AuditHistory extends BaseModel
     public function user()
     {
         return $this->belongsTo(User::class)->withDefault();
+    }
+
+    /**
+     * @return \Illuminate\Database\Query\Builder
+     */
+    public function prunable()
+    {
+        return $this->whereDate('created_at', '>', now()->subDays(30)->toDateString());
     }
 }

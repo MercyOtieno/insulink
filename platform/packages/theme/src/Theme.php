@@ -2,11 +2,11 @@
 
 namespace Botble\Theme;
 
+use Botble\Base\Supports\Helper;
 use Botble\Theme\Contracts\Theme as ThemeContract;
 use Botble\Theme\Exceptions\UnknownLayoutFileException;
 use Botble\Theme\Exceptions\UnknownPartialFileException;
 use Botble\Theme\Exceptions\UnknownThemeException;
-use Botble\Widget\Repositories\Interfaces\WidgetInterface;
 use Closure;
 use Exception;
 use File;
@@ -17,10 +17,8 @@ use Illuminate\Filesystem\Filesystem;
 use Illuminate\Http\Response;
 use Illuminate\Support\Arr;
 use Illuminate\View\Factory;
-use Language;
 use SeoHelper;
 use Symfony\Component\HttpFoundation\Cookie;
-use WidgetGroup;
 
 class Theme implements ThemeContract
 {
@@ -383,18 +381,25 @@ class Theme implements ThemeContract
             return $this->theme;
         }
 
-        if (setting('theme')) {
-            return setting('theme');
+        $theme = setting('theme');
+        if ($theme) {
+            return $theme;
         }
 
-        return Arr::first(scan_folder(theme_path()));
+        $theme = Arr::first(scan_folder(theme_path()));
+
+        if (Helper::isConnectedDatabase()) {
+            setting()->set('theme', $theme)->save();
+        }
+
+        return $theme;
     }
 
     /**
      * Fire event to config listener.
      *
      * @param string $event
-     * @param array $args
+     * @param mixed $args
      * @return void
      * @throws FileNotFoundException
      */
@@ -426,7 +431,7 @@ class Theme implements ThemeContract
      */
     public function append(string $region, $value): self
     {
-        return $this->appendOrPrepend($region, $value, 'append');
+        return $this->appendOrPrepend($region, $value);
     }
 
     /**
@@ -510,7 +515,7 @@ class Theme implements ThemeContract
 
         // Buffer processes to save request.
         return Arr::get($this->bindings, $name, function () use (&$events, &$bindings, $name) {
-            $response = current($events->fire($name));
+            $response = current($events->dispatch($name));
             Arr::set($bindings, $name, $response);
             return $response;
         });
@@ -718,7 +723,7 @@ class Theme implements ThemeContract
             return $this->regions[$region];
         }
 
-        return $default ? $default : '';
+        return $default ?: '';
     }
 
     /**
@@ -729,7 +734,7 @@ class Theme implements ThemeContract
      */
     public function has(string $region): bool
     {
-        return (boolean)isset($this->regions[$region]);
+        return isset($this->regions[$region]);
     }
 
     /**
@@ -764,6 +769,7 @@ class Theme implements ThemeContract
     public function ofWithLayout($view, $args = [])
     {
         $view = $this->getLayoutName() . '.' . $view;
+
         return $this->of($view, $args);
     }
 
@@ -780,16 +786,21 @@ class Theme implements ThemeContract
     {
         // Fire event global assets.
         $this->fire('asset', $this->asset);
+
         // Fire event before render theme.
         $this->fire('beforeRenderTheme', $this);
+
         // Fire event before render layout.
         $this->fire('beforeRenderLayout.' . $this->layout, $this);
+
         // Keeping arguments.
         $this->arguments = $args;
 
         $content = $this->view->make($view, $args)->render();
+
         // View path of content.
         $this->content = $view;
+
         // Set up a content regional.
         $this->regions['content'] = $content;
 
@@ -864,9 +875,9 @@ class Theme implements ThemeContract
     protected function handleViewNotFound($path)
     {
         if (app()->isLocal()) {
-            dd('Theme is not support this view, please create file ' . theme_path() . '/' . str_replace($this->getThemeNamespace(),
-                    $this->getThemeName(),
-                    str_replace('::', '/', str_replace('.', '/', $path))) . '.blade.php" to render this page!');
+            $path = str_replace($this->getThemeNamespace(), $this->getThemeName(), $path);
+            $file = str_replace('::', '/', str_replace('.', '/', $path));
+            dd('This theme has not supported this view, please create file "' . theme_path($file) . '.blade.php" to render this page!');
         }
 
         abort(404);
@@ -928,7 +939,7 @@ class Theme implements ThemeContract
      */
     public function hasContentArgument($key): bool
     {
-        return (bool)isset($this->arguments[$key]);
+        return isset($this->arguments[$key]);
     }
 
     /**
@@ -942,6 +953,7 @@ class Theme implements ThemeContract
         if ($this->view->exists($this->content)) {
             return $realPath ? $this->view->getFinder()->find($this->content) : $this->content;
         }
+
         return null;
     }
 
@@ -981,9 +993,6 @@ class Theme implements ThemeContract
         }
 
         $content->withHeaders([
-            'Author'            => 'Botble Technologies (contact@botble.com)',
-            'Author-Team'       => 'https://botble.com',
-            'CMS'               => 'Botble CMS',
             'CMS-Version'       => get_cms_version(),
             'Authorization-At'  => setting('membership_authorization_at'),
             'Activated-License' => !empty(setting('licensed_to')) ? 'Yes' : 'No',
@@ -1038,30 +1047,11 @@ class Theme implements ThemeContract
     }
 
     /**
-     * @param string $sidebarId
+     * @param string $view
      * @return string
-     * @throws FileNotFoundException
      */
-    public function renderWidgetGroup($sidebarId)
+    public function loadView(string $view)
     {
-        if (!$this->widgets) {
-            $languageCode = null;
-            if (is_plugin_active('language')) {
-                $currentLocale = is_in_admin() ? Language::getCurrentAdminLocaleCode() : Language::getCurrentLocaleCode();
-                $languageCode = $currentLocale && $currentLocale != Language::getDefaultLocaleCode() ? '-' . $currentLocale : null;
-            }
-
-            $widgets = app(WidgetInterface::class)->getByTheme(Theme::getThemeName() . $languageCode);
-
-            foreach ($widgets as $widget) {
-                WidgetGroup::group($widget->sidebar_id)
-                    ->position($widget->position)
-                    ->addWidget($widget->widget_id, $widget->data);
-            }
-
-            $this->widgets = $widgets;
-        }
-
-        return WidgetGroup::group($sidebarId)->display();
+        return $this->view->make($this->getThemeNamespace('views') . '.' . $view)->render();
     }
 }

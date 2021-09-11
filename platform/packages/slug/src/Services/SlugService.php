@@ -29,7 +29,8 @@ class SlugService
      */
     public function create($name, $slugId = 0, $model = null)
     {
-        $slug = Str::slug($name);
+        $slug = Str::slug($name, '-', !SlugHelper::turnOffAutomaticUrlTranslationIntoLatin() ? 'en' : false);
+
         $index = 1;
         $baseSlug = $slug;
 
@@ -63,7 +64,7 @@ class SlugService
                     'key'    => $slug,
                     'prefix' => $prefix,
                 ])
-                ->where('id', '!=', $slugId)
+                ->where('id', '!=', (int)$slugId)
                 ->count() > 0;
     }
 }

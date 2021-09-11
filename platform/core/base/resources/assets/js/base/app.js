@@ -19,7 +19,9 @@ export class App {
 
         // UI Component handlers
         this.handleTabs(); // handle tabs
-        this.handleTooltips(); // handle bootstrap tooltips
+        if (jQuery().tooltip) {
+            this.handleTooltips(); // handle bootstrap tooltips
+        }
         this.handleModals(); // handle modals
 
         // Hacks

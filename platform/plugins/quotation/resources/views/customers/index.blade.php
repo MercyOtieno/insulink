@@ -9,7 +9,7 @@
                 </div>
                 <div class="col-sm-6">
                     <div class="dt-buttons btn-group float-right">
-                        <a class="btn btn-primary action-item" href="{{route('products.create')}}">Add New Product</a>
+                        {{-- <a class="btn btn-primary action-item" href="{{route('products.create')}}">Add New Product</a> --}}
                     </div>
                 </div>
             </div>

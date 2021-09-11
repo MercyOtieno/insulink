@@ -1,6 +1,6 @@
 {
     "name": "botble/widget",
-    "description": "Widget package for Botble CMS application",
+    "description": "Widget package",
     "type": "package",
     "autoload": {
         "psr-4": {

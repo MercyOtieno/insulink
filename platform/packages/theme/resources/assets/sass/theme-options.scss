@@ -90,8 +90,9 @@
         min-height: 500px;
 
         .form-group {
-            .clearfix {
+            div.clearfix {
                 height: 10px;
+                clear: none;
             }
         }
     }
@@ -123,9 +124,15 @@
     opacity: 1;
 }
 
-.tab-in-left li a:hover {
-    background: #e5e5e5;
-    color: #777777;
+.tab-in-left {
+    li {
+        a {
+            &:hover {
+                background: #e5e5e5;
+                color: #777777;
+            }
+        }
+    }
 }
 
 .tab-content-in-right {
@@ -138,5 +145,13 @@
 
     .tab-pane {
         margin: 20px 0 60px;
+    }
+}
+
+.theme-option-main {
+    .form-group {
+        .select2-container {
+            width: 100% !important;
+        }
     }
 }

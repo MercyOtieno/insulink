@@ -4,16 +4,10 @@ namespace Botble\ACL\Services;
 
 use Botble\ACL\Models\User;
 use Botble\ACL\Repositories\Interfaces\ActivationInterface;
-use Botble\ACL\Repositories\Interfaces\UserInterface;
 use InvalidArgumentException;
 
 class ActivateUserService
 {
-    /**
-     * @var UserInterface
-     */
-    protected $userRepository;
-
     /**
      * @var ActivationInterface
      */
@@ -21,19 +15,17 @@ class ActivateUserService
 
     /**
      * ActivateUserService constructor.
-     * @param UserInterface $userRepository
      * @param ActivationInterface $activationRepository
      */
-    public function __construct(UserInterface $userRepository, ActivationInterface $activationRepository)
+    public function __construct(ActivationInterface $activationRepository)
     {
-        $this->userRepository = $userRepository;
         $this->activationRepository = $activationRepository;
     }
 
     /**
      * Activates the given user.
      *
-     * @param mixed $user
+     * @param User $user
      * @return bool
      * @throws InvalidArgumentException
      */
@@ -41,6 +33,10 @@ class ActivateUserService
     {
         if (!$user instanceof User) {
             throw new InvalidArgumentException('No valid user was provided.');
+        }
+
+        if ($this->activationRepository->completed($user)) {
+            return false;
         }
 
         event('acl.activating', $user);

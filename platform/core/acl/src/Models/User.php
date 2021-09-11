@@ -2,22 +2,23 @@
 
 namespace Botble\ACL\Models;
 
-use RvMedia;
-use Exception;
+use Botble\ACL\Notifications\ResetPasswordNotification;
+use Botble\ACL\Traits\PermissionTrait;
 use Botble\Base\Supports\Avatar;
 use Botble\Media\Models\MediaFile;
-use Botble\Quotation\Models\Customer;
-use Botble\ACL\Traits\PermissionTrait;
-use Illuminate\Notifications\Notifiable;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Exception;
 use Illuminate\Contracts\Routing\UrlGenerator;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Botble\ACL\Notifications\ResetPasswordNotification;
-use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use RvMedia;
 
-class User extends Authenticatable implements MustVerifyEmail
+/**
+ * @mixin \Eloquent
+ */
+class User extends Authenticatable
 {
     use PermissionTrait;
     use Notifiable;
@@ -38,10 +39,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'first_name',
         'last_name',
         'password',
-        'super_user',
         'avatar_id',
         'permissions',
-        'email_verified_at'
     ];
 
     /**
@@ -69,9 +68,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     protected $casts = [
         'permissions' => 'json',
-        'email_verified_at' => 'datetime',
     ];
-
 
     /**
      * Always capitalize the first name when we retrieve it
@@ -95,8 +92,17 @@ class User extends Authenticatable implements MustVerifyEmail
 
     /**
      * @return string
+     * @deprecated since v5.15
      */
     public function getFullName()
+    {
+        return $this->name;
+    }
+
+    /**
+     * @return string
+     */
+    public function getNameAttribute()
     {
         return ucfirst($this->first_name) . ' ' . ucfirst($this->last_name);
     }
@@ -114,7 +120,15 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function getAvatarUrlAttribute()
     {
-        return $this->avatar->url ? RvMedia::url($this->avatar->url) : (new Avatar)->create($this->getFullName())->toBase64();
+        if ($this->avatar->url) {
+            return RvMedia::url($this->avatar->url);
+        }
+
+        try {
+            return (new Avatar)->create($this->name)->toBase64();
+        } catch (Exception $exception) {
+            return RvMedia::getDefaultImage();
+        }
     }
 
     /**
@@ -189,7 +203,7 @@ class User extends Authenticatable implements MustVerifyEmail
     public function authorAttributes()
     {
         return [
-            'name'   => $this->getFullName(),
+            'name'   => $this->name,
             'email'  => $this->email,
             'avatar' => $this->avatar_url,
         ];
@@ -254,11 +268,4 @@ class User extends Authenticatable implements MustVerifyEmail
 
         return parent::delete();
     }
-
-
-    public function customer(){
-        return $this->hasOne(Customer::class);
-    }
-
-    
 }

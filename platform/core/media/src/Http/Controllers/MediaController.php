@@ -19,7 +19,6 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
-use Mimey\MimeTypes;
 use RvMedia;
 use Storage;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -120,8 +119,8 @@ class MediaController extends Controller
                 'is_folder' => 'DESC',
             ],
             'paginate'         => [
-                'per_page'      => $request->input('posts_per_page', 30),
-                'current_paged' => $request->input('paged', 1),
+                'per_page'      => (int)$request->input('posts_per_page', 30),
+                'current_paged' => (int)$request->input('paged', 1),
             ],
             'selected_file_id' => $request->input('selected_file_id'),
             'is_popup'         => $request->input('is_popup'),
@@ -144,6 +143,8 @@ class MediaController extends Controller
             ];
         }
 
+        $folderId = $request->input('folder_id');
+
         switch ($request->input('view_in')) {
             case 'all_media':
                 $breadcrumbs = [
@@ -154,8 +155,7 @@ class MediaController extends Controller
                     ],
                 ];
 
-                $queried = $this->fileRepository->getFilesByFolderId($request->input('folder_id'), $paramsFile, true,
-                    $paramsFolder);
+                $queried = $this->fileRepository->getFilesByFolderId($folderId, $paramsFile, true, $paramsFolder);
 
                 $folders = FolderResource::collection($queried->where('is_folder', 1));
 
@@ -172,7 +172,7 @@ class MediaController extends Controller
                     ],
                 ];
 
-                $queried = $this->fileRepository->getTrashed($request->input('folder_id'), $paramsFile, true,
+                $queried = $this->fileRepository->getTrashed($folderId, $paramsFile, true,
                     $paramsFolder);
 
                 $folders = FolderResource::collection($queried->where('is_folder', 1));
@@ -214,7 +214,7 @@ class MediaController extends Controller
                 $favoriteItems = $this->mediaSettingRepository
                     ->getFirstBy([
                         'key'     => 'favorites',
-                        'user_id' => Auth::user()->getKey(),
+                        'user_id' => Auth::id(),
                     ]);
 
                 if (!empty($favoriteItems)) {
@@ -240,7 +240,7 @@ class MediaController extends Controller
                         ],
                     ]);
 
-                    $queried = $this->fileRepository->getFilesByFolderId($request->input('folder_id'), $paramsFile,
+                    $queried = $this->fileRepository->getFilesByFolderId($folderId, $paramsFile,
                         true, $paramsFolder);
 
                     $folders = FolderResource::collection($queried->where('is_folder', 1));
@@ -282,14 +282,17 @@ class MediaController extends Controller
      */
     protected function getBreadcrumbs(Request $request)
     {
-        if (!$request->input('folder_id')) {
+
+        $folderId = $request->input('folder_id');
+
+        if (!$folderId) {
             return [];
         }
 
         if ($request->input('view_in') == 'trash') {
-            $folder = $this->folderRepository->getFirstByWithTrash(['id' => $request->input('folder_id')]);
+            $folder = $this->folderRepository->getFirstByWithTrash(['id' => $folderId]);
         } else {
-            $folder = $this->folderRepository->getFirstBy(['id' => $request->input('folder_id')]);
+            $folder = $this->folderRepository->getFirstBy(['id' => $folderId]);
         }
 
         if (empty($folder)) {
@@ -384,7 +387,7 @@ class MediaController extends Controller
                         $folderData['slug'] = $this->folderRepository->createSlug($oldFolder->name,
                             $oldFolder->parent_id);
                         $folderData['name'] = $oldFolder->name . '-(copy)';
-                        $folderData['user_id'] = Auth::user()->getKey();
+                        $folderData['user_id'] = Auth::id();
                         $folder = $this->folderRepository->create($folderData);
 
                         $files = $this->fileRepository->getFilesByFolderId($id, [], false);
@@ -405,7 +408,7 @@ class MediaController extends Controller
                                 $folderData['slug'] = $this->folderRepository->createSlug($oldFolder->name,
                                     $oldFolder->parent_id);
                                 $folderData['name'] = $oldFolder->name . '-(copy)';
-                                $folderData['user_id'] = Auth::user()->getKey();
+                                $folderData['user_id'] = Auth::id();
                                 $folderData['parent_id'] = $folder->id;
                                 $folder = $this->folderRepository->create($folderData);
 
@@ -423,7 +426,7 @@ class MediaController extends Controller
 
                                 $subFolderData = $sub->replicate()->toArray();
 
-                                $subFolderData['user_id'] = Auth::user()->getKey();
+                                $subFolderData['user_id'] = Auth::id();
                                 $subFolderData['parent_id'] = $folder->id;
 
                                 $sub = $this->folderRepository->create($subFolderData);
@@ -464,7 +467,7 @@ class MediaController extends Controller
             case 'favorite':
                 $meta = $this->mediaSettingRepository->firstOrCreate([
                     'key'     => 'favorites',
-                    'user_id' => Auth::user()->getKey(),
+                    'user_id' => Auth::id(),
                 ]);
 
                 if (!empty($meta->value)) {
@@ -481,7 +484,7 @@ class MediaController extends Controller
             case 'remove_favorite':
                 $meta = $this->mediaSettingRepository->firstOrCreate([
                     'key'     => 'favorites',
-                    'user_id' => Auth::user()->getKey(),
+                    'user_id' => Auth::id(),
                 ]);
 
                 if (!empty($meta)) {
@@ -556,7 +559,7 @@ class MediaController extends Controller
     protected function copyFile($file, $newFolderId = null)
     {
         $file = $file->replicate();
-        $file->user_id = Auth::user()->getKey();
+        $file->user_id = Auth::id();
 
         if ($newFolderId == null) {
             $file->name = $file->name . '-(copy)';
@@ -621,7 +624,7 @@ class MediaController extends Controller
                 ]);
             }
         } else {
-            $fileName = RvMedia::getRealPath('download-' . now(config('app.timezone'))->format('Y-m-d-h-i-s') . '.zip');
+            $fileName = RvMedia::getRealPath('download-' . now()->format('Y-m-d-h-i-s') . '.zip');
             $zip = new Zipper;
             $zip->make($fileName);
             foreach ($items as $item) {

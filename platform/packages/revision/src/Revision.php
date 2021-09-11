@@ -219,9 +219,8 @@ class Revision extends BaseModel
      */
     public function newValue()
     {
-        return $this->getValue('new');
+        return $this->getValue();
     }
-
 
     /**
      * User Responsible.
@@ -233,6 +232,7 @@ class Revision extends BaseModel
         if (empty($this->user_id)) {
             return false;
         }
+
         $userModel = app('config')->get('auth.model');
 
         if (empty($userModel)) {

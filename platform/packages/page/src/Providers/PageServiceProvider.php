@@ -9,8 +9,8 @@ use Botble\Page\Repositories\Caches\PageCacheDecorator;
 use Botble\Page\Repositories\Eloquent\PageRepository;
 use Botble\Page\Repositories\Interfaces\PageInterface;
 use Botble\Shortcode\View\View;
-use Event;
 use Illuminate\Routing\Events\RouteMatched;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -33,12 +33,9 @@ class PageServiceProvider extends ServiceProvider
 
         $this->setNamespace('packages/page')
             ->loadAndPublishConfigurations(['permissions', 'general'])
-            ->loadRoutes(['web'])
             ->loadAndPublishViews()
             ->loadAndPublishTranslations()
             ->loadMigrations();
-
-        $this->app->register(HookServiceProvider::class);
 
         Event::listen(RouteMatched::class, function () {
             dashboard_menu()->registerItem([
@@ -52,7 +49,7 @@ class PageServiceProvider extends ServiceProvider
             ]);
 
             if (function_exists('admin_bar')) {
-                admin_bar()->registerLink(trans('packages/page::pages.menu_name'), route('pages.index'), 'add-new');
+                admin_bar()->registerLink(trans('packages/page::pages.menu_name'), route('pages.create'), 'add-new');
             }
         });
 
@@ -61,5 +58,13 @@ class PageServiceProvider extends ServiceProvider
                 $view->withShortcodes();
             });
         }
+
+        $this->app->booted(function () {
+            $this->app->register(HookServiceProvider::class);
+        });
+
+        $this->app->register(EventServiceProvider::class);
+
+        $this->app->register(RouteServiceProvider::class);
     }
 }

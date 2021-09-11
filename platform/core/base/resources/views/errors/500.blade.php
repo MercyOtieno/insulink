@@ -1,17 +1,19 @@
-@extends('core/base::errors.master')
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="robots" content="noindex,nofollow,noarchive" />
+    <title>{{ __('An Error Occurred: Internal Server Error') }}</title>
+    <link rel="stylesheet" href="{{ asset('vendor/core/core/base/css/error-pages.css') }}">
+</head>
+<body>
+<div class="container">
+    <h1>{{ __('Oops! An Error Occurred') }}</h1>
+    <h2>{{ __('The server returned a "500 Internal Server Error".') }}</h2>
 
-@section('content')
-
-    <div style="margin: 50px;">
-        <div class="col-md-10">
-            <h3>{{ trans('core/base::errors.500_title') }}</h3>
-            <p>{{ trans('core/base::errors.reasons') }}</p>
-            <ul>
-                {!! clean(trans('core/base::errors.500_msg')) !!}
-            </ul>
-
-            <p>{!! clean(trans('core/base::errors.try_again')) !!}</p>
-        </div>
-    </div>
-
-@stop
+    <p>
+        {{ __('Something is broken. Please let us know what you were doing when this error occurred. We will fix it as soon as possible. Sorry for any inconvenience caused.') }}
+    </p>
+</div>
+</body>
+</html>

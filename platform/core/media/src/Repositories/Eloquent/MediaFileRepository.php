@@ -53,7 +53,7 @@ class MediaFileRepository extends RepositoriesAbstract implements MediaFileInter
      */
     public function createSlug($name, $extension, $folderPath)
     {
-        $slug = Str::slug($name);
+        $slug = Str::slug($name, '-', !RvMedia::turnOffAutomaticUrlTranslationIntoLatin() ? 'en' : false);
         $index = 1;
         $baseSlug = $slug;
         while (File::exists(RvMedia::getRealPath(rtrim($folderPath, '/') . '/' . $slug . '.' . $extension))) {
@@ -219,7 +219,7 @@ class MediaFileRepository extends RepositoriesAbstract implements MediaFileInter
                  * @var Eloquent $query
                  */
                 $allMimes = [];
-                foreach (config('core.media.media.mime_types') as $key => $value) {
+                foreach (RvMedia::getConfig('mime_types') as $key => $value) {
                     if ($key == $params['filter']) {
                         return $query->whereIn('media_files.mime_type', $value);
                     }

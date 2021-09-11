@@ -17,22 +17,16 @@ class RedirectIfAuthenticated
      * @param string|null ...$guards
      * @return mixed
      */
-    public function handle($request, Closure $next, ...$guards) {
+    public function handle($request, Closure $next, ...$guards)
+    {
         $guards = empty($guards) ? [null] : $guards;
+
         foreach ($guards as $guard) {
             if (Auth::guard($guard)->check()) {
-                $role = Auth::user()->isSuperUser(); 
-                switch ($role) {
-                    case '1':
-                        return redirect(route('dashboard.index'));
-                        break;
-
-                    default:
-                        return redirect(route('customer.dashboard')); 
-                        break;
-                }
+                return redirect(route('dashboard.index'));
             }
         }
+
         return $next($request);
     }
 }

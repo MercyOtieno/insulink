@@ -1,6 +1,6 @@
 <?php
 
-Route::group(['namespace' => 'Botble\Media\Http\Controllers', 'middleware' => 'web'], function () {
+Route::group(['namespace' => 'Botble\Media\Http\Controllers', 'middleware' => ['web', 'core']], function () {
     Route::group(['prefix' => BaseHelper::getAdminPrefix(), 'middleware' => 'auth'], function () {
         Route::group(['prefix' => 'media', 'as' => 'media.', 'permission' => 'media.index'], function () {
             Route::get('', [
@@ -42,6 +42,11 @@ Route::group(['namespace' => 'Botble\Media\Http\Controllers', 'middleware' => 'w
                 Route::post('upload-from-editor', [
                     'as'   => 'files.upload.from.editor',
                     'uses' => 'MediaFileController@postUploadFromEditor',
+                ]);
+
+                Route::post('download-url', [
+                    'as'   => 'download_url',
+                    'uses' => 'MediaFileController@postDownloadUrl',
                 ]);
             });
 

@@ -315,6 +315,7 @@ class ShortcodeCompiler
         if (empty($this->registered)) {
             return $content;
         }
+
         $pattern = $this->getRegex();
 
         return preg_replace_callback('/' . $pattern . '/s', [$this, 'stripTag'], $content);
@@ -369,5 +370,22 @@ class ShortcodeCompiler
     public function setAdminConfig(string $key, $html)
     {
         $this->registered[$key]['admin_config'] = $html;
+    }
+
+    /**
+     * @param string $value
+     * @return array|array[]
+     */
+    public function getAttributes($value): array
+    {
+        $pattern = $this->getRegex();
+
+        preg_match('/' . $pattern . '/s', $value, $matches);
+
+        // Set matches
+        $this->setMatches($matches);
+
+        // pars the attributes
+        return $this->parseAttributes($this->matches[3]);
     }
 }

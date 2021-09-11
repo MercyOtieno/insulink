@@ -10,6 +10,8 @@ class Botble {
         if (BotbleVariables && BotbleVariables.authorized === '0') {
             this.processAuthorize();
         }
+
+        this.countMenuItemNotifications();
     }
 
     static blockUI(options) {
@@ -77,7 +79,7 @@ class Botble {
         }
     }
 
-    static showNotice(messageType, message) {
+    static showNotice(messageType, message, messageHeader = '') {
         toastr.clear();
 
         toastr.options = {
@@ -94,25 +96,26 @@ class Botble {
             hideMethod: 'fadeOut'
         };
 
-        let messageHeader = '';
-
-        switch (messageType) {
-            case 'error':
-                messageHeader = BotbleVariables.languages.notices_msg.error;
-                break;
-            case 'success':
-                messageHeader = BotbleVariables.languages.notices_msg.success;
-                break;
+        if (!messageHeader) {
+            switch (messageType) {
+                case 'error':
+                    messageHeader = BotbleVariables.languages.notices_msg.error;
+                    break;
+                case 'success':
+                    messageHeader = BotbleVariables.languages.notices_msg.success;
+                    break;
+            }
         }
+
         toastr[messageType](message, messageHeader);
     }
 
-    static showError(message) {
-        this.showNotice('error', message);
+    static showError(message, messageHeader = '') {
+        this.showNotice('error', message, messageHeader);
     }
 
-    static showSuccess(message) {
-        this.showNotice('success', message);
+    static showSuccess(message, messageHeader = '') {
+        this.showNotice('success', message, messageHeader);
     }
 
     static handleError(data) {
@@ -226,26 +229,26 @@ class Botble {
                         .addClass(settings.classname);
                 }
                 $(el)
-                    .unbind('.charCounter')
-                    .bind('keydown.charCounter', () => {
+                    .off('.charCounter')
+                    .on('keydown.charCounter', () => {
                         count(el, container);
                     })
-                    .bind('keypress.charCounter', () => {
+                    .on('keypress.charCounter', () => {
                         count(el, container);
                     })
-                    .bind('keyup.charCounter', () => {
+                    .on('keyup.charCounter', () => {
                         count(el, container);
                     })
-                    .bind('focus.charCounter', () => {
+                    .on('focus.charCounter', () => {
                         count(el, container);
                     })
-                    .bind('mouseover.charCounter', () => {
+                    .on('mouseover.charCounter', () => {
                         count(el, container);
                     })
-                    .bind('mouseout.charCounter', () => {
+                    .on('mouseout.charCounter', () => {
                         count(el, container);
                     })
-                    .bind('paste.charCounter', () => {
+                    .on('paste.charCounter', () => {
                         setTimeout(() => {
                             count(el, container);
                         }, 10);
@@ -259,7 +262,7 @@ class Botble {
             });
         };
 
-        $(document).on('click', 'input[data-counter], textarea[data-counter]', event =>  {
+        $(document).on('click', 'input[data-counter], textarea[data-counter]', event => {
             $(event.currentTarget).charCounter($(event.currentTarget).data('counter'), {
                 container: '<small></small>'
             });
@@ -275,7 +278,7 @@ class Botble {
         navigation.find('li').has('ul').children('a').parent('li').addClass('has-ul');
 
 
-        $(document).on('click', '.sidebar-toggle.d-none', event =>  {
+        $(document).on('click', '.sidebar-toggle.d-none', event => {
             event.preventDefault();
 
             body.toggleClass('sidebar-narrow');
@@ -320,12 +323,74 @@ class Botble {
                 width: '100%',
                 allowClear: true,
             });
+
             $(document).find('.select-search-full').select2({
                 width: '100%'
             });
+
             $(document).find('.select-full').select2({
                 width: '100%',
                 minimumResultsForSearch: -1
+            });
+
+            $('select[multiple].select-sorting').on('select2:select', function (evt) {
+                const $element = $(evt.params.data.element);
+
+                $element.detach();
+                $(this).append($element);
+                $(this).trigger("change");
+            });
+
+            $.each($(document).find('.select-search-ajax'), function (index, value) {
+                const $elSelect = $(value);
+                if ($elSelect.data('url')) {
+                    $elSelect.select2({
+                        placeholder: $elSelect.data('placeholder') || '--Select--',
+                        minimumInputLength: $elSelect.data('minimum-input') || 1,
+                        width: '100%',
+                        delay: 250,
+                        ajax: {
+                            url: $elSelect.data('url'),
+                            dataType: 'json',
+                            type: $(value).data('type') || 'GET',
+                            quietMillis: 50,
+                            data: function (params) {
+                                // Query parameters will be ?search=[term]&page=[page]
+                                return {
+                                    search: params.term,
+                                    page: params.page || 1
+                                };
+                            },
+                            processResults: function (response) {
+                                /**
+                                 * response {
+                                 *  error: false
+                                 *  data: {},
+                                 *  message: ''
+                                 * }
+                                 */
+                                return {
+                                    results: $.map(response.data, function (item) {
+                                        return Object.assign(
+                                            {
+                                                text: item.name,
+                                                id: item.id
+                                            },
+                                            item
+                                        );
+                                    }),
+                                    pagination: {
+                                        more: response.links
+                                            ? response.links.next
+                                            : null
+                                    }
+                                };
+                            },
+                            cache: true
+                        },
+                        allowClear: true
+                    });
+                }
             });
         }
 
@@ -334,15 +399,9 @@ class Botble {
 
                 $('.timepicker-default').timepicker({
                     autoclose: true,
-                    showSeconds: true,
+                    showSeconds: false,
                     minuteStep: 1,
                     defaultTime: false
-                });
-
-                $('.timepicker-no-seconds').timepicker({
-                    autoclose: true,
-                    minuteStep: 5,
-                    defaultTime: false,
                 });
 
                 $('.timepicker-24').timepicker({
@@ -426,7 +485,10 @@ class Botble {
                 }
             });
         }
-        $('[data-toggle="tooltip"]').tooltip({placement: 'top'});
+
+        if (jQuery().tooltip) {
+            $('[data-toggle="tooltip"]').tooltip({placement: 'top', boundary: 'window'});
+        }
 
         if (jQuery().areYouSure) {
             $('form').areYouSure();
@@ -440,6 +502,21 @@ class Botble {
         if (jQuery().textareaAutoSize) {
             $('textarea.textarea-auto-height').textareaAutoSize();
         }
+
+        $('.select2_google_fonts_picker').each(function (i, obj) {
+            if (!$(obj).hasClass('select2-hidden-accessible')){
+                $(obj).select2({
+                    templateResult: function (opt) {
+                        if (!opt.id) {
+                            return opt.text;
+                        }
+                        return $('<span style="font-family:\'' + opt.id + '\';"> ' + opt.text + '</span>');
+                    },
+                })
+            }
+        });
+
+        document.dispatchEvent(new CustomEvent('core-init-resources'));
     }
 
     static numberFormat(number, decimals, dec_point, thousands_sep) {
@@ -468,22 +545,24 @@ class Botble {
         // *    example 12: number_format('1.2000', 3);
         // *    returns 12: '1.200'
         let n = !isFinite(+number) ? 0 : +number,
-            prec = !isFinite(+decimals) ? 0 : Math.abs(decimals),
+            precision = !isFinite(+decimals) ? 0 : Math.abs(decimals),
             sep = (typeof thousands_sep === 'undefined') ? ',' : thousands_sep,
             dec = (typeof dec_point === 'undefined') ? '.' : dec_point,
-            toFixedFix = (n, prec) => {
+            toFixedFix = (n, precision) => {
                 // Fix for IE parseFloat(0.55).toFixed(0) = 0;
-                let k = Math.pow(10, prec);
+                let k = Math.pow(10, precision);
                 return Math.round(n * k) / k;
             },
-            s = (prec ? toFixedFix(n, prec) : Math.round(n)).toString().split('.');
+            s = (precision ? toFixedFix(n, precision) : Math.round(n)).toString().split('.');
         if (s[0].length > 3) {
             s[0] = s[0].replace(/\B(?=(?:\d{3})+(?!\d))/g, sep);
         }
-        if ((s[1] || '').length < prec) {
+
+        if ((s[1] || '').length < precision) {
             s[1] = s[1] || '';
-            s[1] += new Array(prec - s[1].length + 1).join('0');
+            s[1] += new Array(precision - s[1].length + 1).join('0');
         }
+
         return s.join(dec);
     }
 
@@ -542,67 +621,146 @@ class Botble {
                 }
             });
 
-            $(document).find('.btn_gallery').rvMedia({
-                multiple: false,
-                onSelectFiles: (files, $el) => {
-                    switch ($el.data('action')) {
-                        case 'media-insert-ckeditor':
-                            let content = '';
-                            $.each(files, (index, file) => {
-                                let link = file.full_url;
-                                if (file.type === 'youtube') {
-                                    link = link.replace('watch?v=', 'embed/');
-                                    content += '<iframe width="420" height="315" src="' + link + '" frameborder="0" allowfullscreen></iframe><br />';
-                                } else if (file.type === 'image') {
-                                    content += '<img src="' + link + '" alt="' + file.name + '" /><br />';
-                                } else {
-                                    content += '<a href="' + link + '">' + file.name + '</a><br />';
-                                }
-                            });
+            $.each($(document).find('.btn_gallery'), function (index, item) {
+                $(item).rvMedia({
+                    multiple: false,
+                    filter: $(item).data('action') === 'select-image' ? 'image' : 'everything',
+                    view_in: 'all_media',
+                    onSelectFiles: (files, $el) => {
+                        switch ($el.data('action')) {
+                            case 'media-insert-ckeditor':
+                                let content = '';
+                                $.each(files, (index, file) => {
+                                    let link = file.full_url;
+                                    if (file.type === 'youtube') {
+                                        link = link.replace('watch?v=', 'embed/');
+                                        content += '<iframe width="420" height="315" src="' + link + '" frameborder="0" allowfullscreen></iframe><br />';
+                                    } else if (file.type === 'image') {
+                                        content += '<img src="' + link + '" alt="' + file.name + '" /><br />';
+                                    } else {
+                                        content += '<a href="' + link + '">' + file.name + '</a><br />';
+                                    }
+                                });
 
-                            CKEDITOR.instances[$el.data('result')].insertHtml(content);
+                                window.EDITOR.CKEDITOR[$el.data('result')].insertHtml(content);
 
-                            break;
-                        case 'media-insert-tinymce':
-                            let html = '';
-                            $.each(files, (index, file) => {
-                                let link = file.full_url;
-                                if (file.type === 'youtube') {
-                                    link = link.replace('watch?v=', 'embed/');
-                                    html += '<iframe width="420" height="315" src="' + link + '" frameborder="0" allowfullscreen></iframe><br />';
-                                } else if (file.type === 'image') {
-                                    html += '<img src="' + link + '" alt="' + file.name + '" /><br />';
-                                } else {
-                                    html += '<a href="' + link + '">' + file.name + '</a><br />';
-                                }
-                            });
-                            tinymce.activeEditor.execCommand('mceInsertContent', false, html);
-                            break;
-                        case 'select-image':
-                            let firstImage = _.first(files);
-                            $el.closest('.image-box').find('.image-data').val(firstImage.url);
-                            $el.closest('.image-box').find('.preview_image').attr('src', firstImage.thumb);
-                            $el.closest('.image-box').find('.preview-image-wrapper').show();
-                            break;
-                        case 'attachment':
-                            let firstAttachment = _.first(files);
-                            $el.closest('.attachment-wrapper').find('.attachment-url').val(firstAttachment.url);
-                            $('.attachment-details').html('<a href="' + firstAttachment.full_url + '" target="_blank">' + firstAttachment.url + '</a>');
-                            break;
+                                break;
+                            case 'media-insert-tinymce':
+                                let html = '';
+                                $.each(files, (index, file) => {
+                                    let link = file.full_url;
+                                    if (file.type === 'youtube') {
+                                        link = link.replace('watch?v=', 'embed/');
+                                        html += '<iframe width="420" height="315" src="' + link + '" frameborder="0" allowfullscreen></iframe><br />';
+                                    } else if (file.type === 'image') {
+                                        html += '<img src="' + link + '" alt="' + file.name + '" /><br />';
+                                    } else {
+                                        html += '<a href="' + link + '">' + file.name + '</a><br />';
+                                    }
+                                });
+                                tinymce.activeEditor.execCommand('mceInsertContent', false, html);
+                                break;
+                            case 'select-image':
+                                let firstImage = _.first(files);
+                                $el.closest('.image-box').find('.image-data').val(firstImage.url);
+                                $el.closest('.image-box').find('.preview_image').attr('src', firstImage.thumb);
+                                $el.closest('.image-box').find('.preview-image-wrapper').show();
+                                break;
+                            case 'attachment':
+                                let firstAttachment = _.first(files);
+                                $el.closest('.attachment-wrapper').find('.attachment-url').val(firstAttachment.url);
+                                $el.closest('.attachment-wrapper').find('.attachment-details').html('<a href="' + firstAttachment.full_url + '" target="_blank">' + firstAttachment.url + '</a>');
+                                break;
+                        }
                     }
-                }
+                });
             });
 
-            $(document).on('click', '.btn_remove_image', event =>  {
+            $(document).on('click', '.btn_remove_image', event => {
                 event.preventDefault();
                 $(event.currentTarget).closest('.image-box').find('.preview-image-wrapper').hide();
                 $(event.currentTarget).closest('.image-box').find('.image-data').val('');
             });
 
-            $(document).on('click', '.btn_remove_attachment', event =>  {
+            $(document).on('click', '.btn_remove_attachment', event => {
                 event.preventDefault();
                 $(event.currentTarget).closest('.attachment-wrapper').find('.attachment-details a').remove();
                 $(event.currentTarget).closest('.attachment-wrapper').find('.attachment-url').val('');
+            });
+
+            new RvMediaStandAlone('.js-btn-trigger-add-image', {
+                filter: 'image',
+                view_in: 'all_media',
+                onSelectFiles: (files, $el) => {
+                    let $currentBoxList = $el.closest('.gallery-images-wrapper').find('.images-wrapper .list-gallery-media-images');
+
+                    $currentBoxList.removeClass('hidden');
+
+                    $('.default-placeholder-gallery-image').addClass('hidden');
+
+                    _.forEach(files, file => {
+                        let template = $(document).find('#gallery_select_image_template').html();
+
+                        let imageBox = template
+                            .replace(/__name__/gi, $el.attr('data-name'));
+
+                        let $template = $('<li class="gallery-image-item-handler">' + imageBox + '</li>');
+
+                        $template.find('.image-data').val(file.url);
+                        $template.find('.preview_image').attr('src', file.thumb).show();
+
+                        $currentBoxList.append($template);
+                    });
+                }
+            });
+
+            new RvMediaStandAlone('.images-wrapper .btn-trigger-edit-gallery-image', {
+                filter: 'image',
+                view_in: 'all_media',
+                onSelectFiles: (files, $el) => {
+                    let firstItem = _.first(files);
+
+                    let $currentBox = $el.closest('.gallery-image-item-handler').find('.image-box');
+                    let $currentBoxList = $el.closest('.list-gallery-media-images');
+
+                    $currentBox.find('.image-data').val(firstItem.url);
+                    $currentBox.find('.preview_image').attr('src', firstItem.thumb).show();
+
+                    _.forEach(files, (file, index) => {
+                        if (!index) {
+                            return;
+                        }
+                        let template = $(document).find('#gallery_select_image_template').html();
+
+                        let imageBox = template
+                            .replace(/__name__/gi, $currentBox.find('.image-data').attr('name'));
+
+                        let $template = $('<li class="gallery-image-item-handler">' + imageBox + '</li>');
+
+                        $template.find('.image-data').val(file.url);
+                        $template.find('.preview_image').attr('src', file.thumb).show();
+
+                        $currentBoxList.append($template);
+                    });
+                }
+            });
+
+            $(document).on('click', '.btn-trigger-remove-gallery-image', event => {
+                event.preventDefault();
+                $(event.currentTarget).closest('.gallery-image-item-handler').remove();
+                if ($('.list-gallery-media-images').find('.gallery-image-item-handler').length === 0) {
+                    $('.default-placeholder-gallery-image').removeClass('hidden');
+                }
+            });
+
+            $('.list-gallery-media-images').each((index, item) => {
+                if (jQuery().sortable) {
+                    let $current = $(item);
+                    if ($current.data('ui-sortable')) {
+                        $current.sortable('destroy');
+                    }
+                    $current.sortable();
+                }
             });
         }
     }
@@ -625,7 +783,7 @@ class Botble {
         // handle portlet remove
 
         // handle portlet fullscreen
-        $('body').on('click', '.portlet > .portlet-title .fullscreen', event =>  {
+        $('body').on('click', '.portlet > .portlet-title .fullscreen', event => {
             event.preventDefault();
             let _self = $(event.currentTarget);
             let portlet = _self.closest('.portlet');
@@ -647,7 +805,7 @@ class Botble {
             }
         });
 
-        $('body').on('click', '.portlet > .portlet-title > .tools > .collapse, .portlet .portlet-title > .tools > .expand', event =>  {
+        $('body').on('click', '.portlet > .portlet-title > .tools > .collapse, .portlet .portlet-title > .tools > .expand', event => {
             event.preventDefault();
             let _self = $(event.currentTarget);
             let el = _self.closest('.portlet').children('.portlet-body');
@@ -661,18 +819,18 @@ class Botble {
         });
     }
 
-    static initCodeEditor(id) {
+    static initCodeEditor(id, type = 'css') {
         $(document).find('#' + id).wrap('<div id="wrapper_' + id + '"><div class="container_content_codemirror"></div> </div>');
         $('#wrapper_' + id).append('<div class="handle-tool-drag" id="tool-drag_' + id + '"></div>');
         CodeMirror.fromTextArea(document.getElementById(id), {
             extraKeys: {'Ctrl-Space': 'autocomplete'},
             lineNumbers: true,
-            mode: 'css',
+            mode: type,
             autoRefresh: true,
             lineWrapping: true,
         });
 
-        $('.handle-tool-drag').mousedown(event =>  {
+        $('.handle-tool-drag').mousedown(event => {
             let _self = $(event.currentTarget);
             _self.attr('data-start_h', _self.parent().find('.CodeMirror').height()).attr('data-start_y', event.pageY);
             $('body').attr('data-dragtool', _self.attr('id')).on('mousemove', Botble.onDragTool);
@@ -697,6 +855,26 @@ class Botble {
             url: route('membership.authorize'),
             type: 'POST'
         });
+    }
+
+    countMenuItemNotifications() {
+        let $menuItems = $('.menu-item-count');
+        if ($menuItems.length) {
+            $.ajax({
+                type: 'GET',
+                url: route('menu-items-count'),
+                success: res => {
+                    if (!res.error) {
+                        res.data.map(x => {
+                            $('.menu-item-count.' + x.key).text(x.value).show().removeClass('hidden');
+                        });
+                    }
+                },
+                error: err => {
+                    Botble.handleError(err);
+                }
+            });
+        }
     }
 }
 
