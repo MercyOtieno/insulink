@@ -7,11 +7,8 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'Sabberworm\\CSS' => array($vendorDir . '/sabberworm/php-css-parser/lib'),
-    'Parsedown' => array($vendorDir . '/erusev/parsedown'),
-    'PHPMD\\' => array($vendorDir . '/phpmd/phpmd/src/main/php'),
-    'Mpociot' => array($vendorDir . '/mpociot/reflection-docblock/src'),
+    'Orangehill\\Iseed' => array($vendorDir . '/orangehill/iseed/src'),
     'Mockery' => array($vendorDir . '/mockery/mockery/library'),
-    'Kris\\LaravelFormBuilder' => array($vendorDir . '/kris/laravel-form-builder/src'),
     'HTMLPurifier' => array($vendorDir . '/ezyang/htmlpurifier/library'),
-    'Barryvdh' => array($vendorDir . '/barryvdh/reflection-docblock/src'),
+    'Flynsarmy\\CsvSeeder\\' => array($vendorDir . '/flynsarmy/csv-seeder/src'),
 );
