@@ -2,3 +2,5 @@
 .env
 yarn.lock
 storage/cache_keys.json
+composer.lock
+vendor
