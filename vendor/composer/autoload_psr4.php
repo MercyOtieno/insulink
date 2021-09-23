@@ -91,7 +91,6 @@ return array(
     'MyCLabs\\Enum\\' => array($vendorDir . '/myclabs/php-enum/src'),
     'Monolog\\' => array($vendorDir . '/monolog/monolog/src/Monolog'),
     'Monarobase\\CountryList\\' => array($vendorDir . '/monarobase/country-list/src'),
-    'Modules\\' => array($baseDir . '/Modules'),
     'Mni\\FrontYAML\\' => array($vendorDir . '/mnapoli/front-yaml/src'),
     'Mimey\\' => array($vendorDir . '/xantios/mimey/src'),
     'Mews\\Purifier\\' => array($vendorDir . '/mews/purifier/src'),
