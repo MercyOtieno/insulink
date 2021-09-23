@@ -13,11 +13,11 @@ Route::group(['namespace' => 'Theme\Insulink\Http\Controllers', 'middleware' => 
          */
         Route::group(['prefix' => 'quotations'], function () {
             Route::post('/motor/generate/', 'QuotationController@getMotorRates')->name('generate.quote');
-            Route::get('/motor/calculator/', 'App\Http\Controllers\QuotationController@getMotorRates');
-            Route::get('/motor/generated/{type}, {cover_type}, {v_value}, {v_make}, {v_model}, {v_manufacture}', 'App\Http\Controllers\QuotationController@generatedmotorquotes')->name('generated.quote.motor');
+            Route::get('/motor/calculator/', 'QuotationController@getMotorRates');
+            Route::get('/motor/generated/{type}, {cover_type}, {v_value}, {v_make}, {v_model}, {v_manufacture}', 'QuotationController@generatedmotorquotes')->name('generated.quote.motor');
             //Health quotations
             Route::group(['prefix' => 'health'], function() {
-                Route::get('/individual/generate/{ip}/{op}/{age}/{cover_type}', 'App\Http\Controllers\QuotationController@IndividualFamilyHealth');
+                Route::get('/individual/generate/{ip}/{op}/{age}/{cover_type}', 'QuotationController@IndividualFamilyHealth');
             });
         });
     });

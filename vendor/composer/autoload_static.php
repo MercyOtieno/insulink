@@ -235,6 +235,7 @@ class ComposerStaticInitde59feeba26c02ae0d9f8aec99eab8a4
             'MyCLabs\\Enum\\' => 13,
             'Monolog\\' => 8,
             'Monarobase\\CountryList\\' => 23,
+            'Modules\\' => 8,
             'Mni\\FrontYAML\\' => 14,
             'Mimey\\' => 6,
             'Mews\\Purifier\\' => 14,
@@ -727,6 +728,10 @@ class ComposerStaticInitde59feeba26c02ae0d9f8aec99eab8a4
         'Monarobase\\CountryList\\' => 
         array (
             0 => __DIR__ . '/..' . '/monarobase/country-list/src',
+        ),
+        'Modules\\' => 
+        array (
+            0 => __DIR__ . '/../..' . '/Modules',
         ),
         'Mni\\FrontYAML\\' => 
         array (

@@ -23,8 +23,8 @@ Route::group(['namespace' => 'Theme\Insulink\Http\Controllers', 'middleware' => 
          */
         Route::group(['prefix' => 'quotations'], function () {
             Route::get('/motor/generate/{type}/{cover_type}/{v_value}/{v_make}/{v_model}/{v_manufacture}', 'QuotationController@getMotorRates')->name('generate.quote');
-            Route::get('/motor/calculator/', 'App\Http\Controllers\QuotationController@getMotorRates');
-            Route::get('/motor/generated/{type}, {cover_type}, {v_value}, {v_make}, {v_model}, {v_manufacture}', 'App\Http\Controllers\QuotationController@generatedmotorquotes')->name('generated.quote.motor');
+            Route::get('/motor/calculator/', 'QuotationController@getMotorRates');
+            Route::get('/motor/generated/{type}, {cover_type}, {v_value}, {v_make}, {v_model}, {v_manufacture}', 'QuotationController@generatedmotorquotes')->name('generated.quote.motor');
             /**
              * Domestic rates
              */

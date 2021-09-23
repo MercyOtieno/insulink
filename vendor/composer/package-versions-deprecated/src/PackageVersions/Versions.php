@@ -256,7 +256,7 @@ final class Versions
   'symfony/dependency-injection' => 'v5.3.7@a665946279f566d94ed5eb98999cfa65c6fa5a78',
   'symfony/filesystem' => 'v5.3.4@343f4fe324383ca46792cae728a3b6e2f708fb32',
   'theseer/tokenizer' => '1.2.1@34a41e998c2183e22995f158c581e7b5e755ab9e',
-  'laravel/laravel' => 'dev-main@00407e8abde6ad59f4fb35d5ded26e5c7ab84178',
+  'laravel/laravel' => 'dev-main@4612cffeb6a20820fc3da0587301dca63934a3fc',
 );
 
     private function __construct()
