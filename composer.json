@@ -9,10 +9,6 @@
     "type": "project",
     "require": {
         "php": "^7.4|^8.0",
-        "ext-curl": "*",
-        "ext-json": "*",
-        "ext-sodium": "*",
-        "ext-zip": "*",
         "blade-ui-kit/blade-ui-kit": "^0.2.0",
         "botble/api": "*@dev",
         "botble/menu": "*@dev",
