@@ -7,7 +7,7 @@
     ),
     'aliases' => 
     array (
-      'Debugbar' => 'Barryvdh\\Debugbar\\Facade',
+      'Debugbar' => 'Barryvdh\\Debugbar\\Facades\\Debugbar',
     ),
   ),
   'barryvdh/laravel-dompdf' => 
@@ -26,13 +26,6 @@
     'providers' => 
     array (
       0 => 'Barryvdh\\LaravelIdeHelper\\IdeHelperServiceProvider',
-    ),
-  ),
-  'blade-ui-kit/blade-ui-kit' => 
-  array (
-    'providers' => 
-    array (
-      0 => 'BladeUIKit\\BladeUIKitServiceProvider',
     ),
   ),
   'botble/api' => 
@@ -299,6 +292,13 @@
     'providers' => 
     array (
       0 => 'Laravel\\Passport\\PassportServiceProvider',
+    ),
+  ),
+  'laravel/sail' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'Laravel\\Sail\\SailServiceProvider',
     ),
   ),
   'laravel/socialite' => 
