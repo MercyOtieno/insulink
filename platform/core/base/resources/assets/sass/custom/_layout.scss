@@ -52,6 +52,14 @@
     }
 }
 
+.page-sidebar-closed {
+    .form-actions {
+        &.form-actions-fixed-top {
+            left: 45px;
+        }
+    }
+}
+
 .top-menu {
     .dropdown-menu {
         .dropdown-menu-list {
@@ -151,7 +159,7 @@
     float: left;
 }
 
-.input-group-prepend {
+.input-group-text {
     .btn {
         width: 34px;
         text-align: center;

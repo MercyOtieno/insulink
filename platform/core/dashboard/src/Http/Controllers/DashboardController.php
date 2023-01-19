@@ -86,9 +86,10 @@ class DashboardController extends BaseController
             return !in_array($item->id, $availableWidgetIds);
         });
 
-        $userWidgets = collect($widgetData)->pluck('view')->all();
+        $statWidgets = collect($widgetData)->where('type', '!=', 'widget')->pluck('view')->all();
+        $userWidgets = collect($widgetData)->where('type', 'widget')->pluck('view')->all();
 
-        return view('core/dashboard::list', compact('widgets', 'userWidgets'));
+        return view('core/dashboard::list', compact('widgets', 'userWidgets', 'statWidgets'));
     }
 
     /**
@@ -108,13 +109,16 @@ class DashboardController extends BaseController
                     ->setError()
                     ->setMessage(trans('core/dashboard::dashboard.widget_not_exists'));
             }
+
             $widgetSetting = $this->widgetSettingRepository->firstOrCreate([
                 'widget_id' => $widget->id,
                 'user_id'   => $request->user()->getKey(),
             ]);
+
             $widgetSetting->settings = array_merge((array)$widgetSetting->settings, [
                 $request->input('setting_name') => $request->input('setting_value'),
             ]);
+
             $this->widgetSettingRepository->createOrUpdate($widgetSetting);
         } catch (Exception $exception) {
             return $response
@@ -162,6 +166,7 @@ class DashboardController extends BaseController
                 'widget_id' => $widget->id,
                 'user_id'   => $request->user()->getKey(),
             ]);
+
             $widgetSetting->status = 0;
             $widgetSetting->order = 99 + $widgetSetting->id;
             $this->widgetRepository->createOrUpdate($widgetSetting);
@@ -183,8 +188,10 @@ class DashboardController extends BaseController
                 'widget_id' => $widget->id,
                 'user_id'   => $request->user()->getKey(),
             ]);
-            if (array_key_exists($widget->name,
-                    $request->input('widgets', [])) && $request->input('widgets.' . $widget->name) == 1) {
+
+            if (array_key_exists($widget->name, $request->input('widgets', [])) &&
+                $request->input('widgets.' . $widget->name) == 1
+            ) {
                 $widgetSetting->status = 1;
                 $this->widgetRepository->createOrUpdate($widgetSetting);
             } else {

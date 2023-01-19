@@ -70,6 +70,7 @@ class MacroableModels
             }
 
             $closure = Closure::bind($models[$class], $this->getModel());
+
             return call_user_func($closure, ...$args);
         });
     }
@@ -99,6 +100,7 @@ class MacroableModels
             } else {
                 $this->syncMacros($name);
             }
+
             return true;
         }
 
@@ -113,6 +115,7 @@ class MacroableModels
     public function modelHasMacro($model, $name)
     {
         $this->checkModelSubclass($model);
+
         return (isset($this->macros[$name]) && isset($this->macros[$name][$model]));
     }
 
@@ -125,6 +128,7 @@ class MacroableModels
         if (!isset($this->macros[$name])) {
             return [];
         }
+
         return array_keys($this->macros[$name]);
     }
 

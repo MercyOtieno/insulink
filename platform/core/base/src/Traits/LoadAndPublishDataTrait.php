@@ -2,8 +2,10 @@
 
 namespace Botble\Base\Traits;
 
+use Botble\Base\Supports\Helper;
 use Exception;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
 use ReflectionClass;
 
 /**
@@ -64,7 +66,7 @@ trait LoadAndPublishDataTrait
     {
         $file = $this->getBasePath() . $this->getDashedNamespace() . '/config/' . $file . '.php';
 
-        if (!file_exists($file) && str_contains($file, plugin_path())) {
+        if (!file_exists($file) && Str::contains($file, plugin_path())) {
             $this->throwInvalidPluginError();
         }
 
@@ -132,7 +134,7 @@ trait LoadAndPublishDataTrait
     {
         $file = $this->getBasePath() . $this->getDashedNamespace() . '/routes/' . $file . '.php';
 
-        if (!file_exists($file) && str_contains($file, plugin_path())) {
+        if (!file_exists($file) && Str::contains($file, plugin_path())) {
             $this->throwInvalidPluginError();
         }
 
@@ -241,5 +243,15 @@ trait LoadAndPublishDataTrait
         if ($from != $to) {
             throw new Exception(sprintf('Plugin folder is invalid. Need to rename folder %s to %s', $from, $to));
         }
+    }
+
+    /**
+     * @return $this
+     */
+    public function loadHelpers(): self
+    {
+        Helper::autoload(base_path('platform/') . $this->getDashedNamespace() . '/helpers');
+
+        return $this;
     }
 }

@@ -385,7 +385,7 @@ abstract class TableAbstract extends DataTable
      */
     protected function getOperations(?string $edit, ?string $delete, $item, ?string $extra = null): string
     {
-        return table_actions($edit, $delete, $item, $extra);
+        return apply_filters('table_operation_buttons', table_actions($edit, $delete, $item, $extra), $item, $edit, $delete, $extra);
     }
 
     /**
@@ -396,7 +396,7 @@ abstract class TableAbstract extends DataTable
         return [
             'checkbox' => [
                 'width'      => '10px',
-                'class'      => 'text-left no-sort',
+                'class'      => 'text-start no-sort',
                 'title'      => Form::input('checkbox', null, null, [
                     'class'    => 'table-check-all',
                     'data-set' => '.dataTable .checkboxes',
@@ -658,7 +658,7 @@ abstract class TableAbstract extends DataTable
                 });
             }
 
-            $("[data-toggle=tooltip]").tooltip({
+            $("[data-bs-toggle=tooltip]").tooltip({
                 placement: "top"
             });
         ';
@@ -748,10 +748,18 @@ abstract class TableAbstract extends DataTable
         if ($request->has('filter_columns') && ($request->input('filter_table_id') == $this->getOption('id'))) {
             $requestFilters = [];
             foreach ($request->input('filter_columns') as $key => $item) {
+                $operator = $request->input('filter_operators.' . $key);
+
+                $value = $request->input('filter_values.' . $key);
+
+                if (is_array($operator) || is_array($value) || is_array($item)) {
+                    continue;
+                }
+
                 $requestFilters[] = [
                     'column'   => $item,
-                    'operator' => $request->input('filter_operators.' . $key),
-                    'value'    => $request->input('filter_values.' . $key),
+                    'operator' => $operator,
+                    'value'    => $value,
                 ];
             }
         }
@@ -835,6 +843,7 @@ abstract class TableAbstract extends DataTable
 
         switch ($type) {
             case 'select':
+            case 'customSelect':
                 $attributes['class'] = $attributes['class'] . ' select';
                 $attributes['placeholder'] = trans('core/table::table.select_option');
                 $html = Form::customSelect($inputName, $data, $value, $attributes)->toHtml();
@@ -926,7 +935,7 @@ abstract class TableAbstract extends DataTable
                 break;
         }
 
-        return $value;
+        return (string)$value;
     }
 
     /**
@@ -951,10 +960,19 @@ abstract class TableAbstract extends DataTable
         if ($request->input('filter_columns')) {
             $requestFilters = [];
             foreach ($request->input('filter_columns', []) as $key => $item) {
+
+                $operator = $request->input('filter_operators.' . $key);
+
+                $value = $request->input('filter_values.' . $key);
+
+                if (is_array($operator) || is_array($value) || is_array($item)) {
+                    continue;
+                }
+
                 $requestFilters[] = [
                     'column'   => $item,
-                    'operator' => $request->input('filter_operators.' . $key),
-                    'value'    => $request->input('filter_values.' . $key),
+                    'operator' => $operator,
+                    'value'    => $value,
                 ];
             }
         }

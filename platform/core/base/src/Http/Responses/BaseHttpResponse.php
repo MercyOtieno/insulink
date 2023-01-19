@@ -101,6 +101,10 @@ class BaseHttpResponse implements Responsable
      */
     public function setCode(int $code): self
     {
+        if ($code < 100 || $code >= 600) {
+            return $this;
+        }
+
         $this->code = $code;
 
         return $this;
@@ -120,7 +124,7 @@ class BaseHttpResponse implements Responsable
      */
     public function setMessage($message): self
     {
-        $this->message = $message;
+        $this->message = clean($message);
 
         return $this;
     }
@@ -177,12 +181,18 @@ class BaseHttpResponse implements Responsable
     public function toResponse($request)
     {
         if ($request->expectsJson()) {
+            $data = [
+                'error'   => $this->error,
+                'data'    => $this->data,
+                'message' => $this->message,
+            ];
+
+            if ($this->additional) {
+                $data = array_merge($data, ['additional' => $this->additional]);
+            }
+
             return response()
-                ->json([
-                    'error'   => $this->error,
-                    'data'    => $this->data,
-                    'message' => $this->message,
-                ], $this->code);
+                ->json($data, $this->code);
         }
 
         if ($request->input('submit') === 'save' && !empty($this->previousUrl)) {

@@ -146,11 +146,11 @@ class UserTable extends TableAbstract
         return [
             'username'   => [
                 'title' => trans('core/acl::users.username'),
-                'class' => 'text-left',
+                'class' => 'text-start',
             ],
             'email'      => [
                 'title' => trans('core/acl::users.email'),
-                'class' => 'text-left',
+                'class' => 'text-start',
             ],
             'role_name'  => [
                 'title'      => trans('core/acl::users.role'),
@@ -185,7 +185,7 @@ class UserTable extends TableAbstract
      */
     public function htmlDrawCallbackFunction(): ?string
     {
-        return parent::htmlDrawCallbackFunction() . '$(".editable").editable();';
+        return parent::htmlDrawCallbackFunction() . '$(".editable").editable({mode: "inline"});';
     }
 
     /**
@@ -225,7 +225,7 @@ class UserTable extends TableAbstract
             ],
             'status'     => [
                 'title'    => trans('core/base::tables.status'),
-                'type'     => 'select',
+                'type'     => 'customSelect',
                 'choices'  => UserStatusEnum::labels(),
                 'validate' => 'required|in:' . implode(',', UserStatusEnum::values()),
             ],
@@ -245,7 +245,7 @@ class UserTable extends TableAbstract
             'operations' => [
                 'title'      => trans('core/base::tables.operations'),
                 'width'      => '350px',
-                'class'      => 'text-right',
+                'class'      => 'text-end',
                 'orderable'  => false,
                 'searchable' => false,
                 'exportable' => false,

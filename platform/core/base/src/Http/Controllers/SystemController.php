@@ -5,6 +5,7 @@ namespace Botble\Base\Http\Controllers;
 use Arr;
 use Assets;
 use Botble\Base\Http\Responses\BaseHttpResponse;
+use Botble\Base\Supports\Core;
 use Botble\Base\Supports\Helper;
 use Botble\Base\Supports\Language;
 use Botble\Base\Supports\MembershipAuthorization;
@@ -159,5 +160,58 @@ class SystemController extends Controller
         $data = apply_filters(BASE_FILTER_MENU_ITEMS_COUNT, []);
 
         return $response->setData($data);
+    }
+
+    /**
+     * @return BaseHttpResponse
+     */
+    public function getCheckUpdate(BaseHttpResponse $response)
+    {
+        if (!config('core.base.general.enable_system_updater')) {
+            return $response;
+        }
+
+        $response->setData(['has_new_version' => false]);
+
+        $api = new Core;
+
+        $updateData = $api->checkUpdate();
+
+        if ($updateData['status']) {
+            $response
+                ->setData(['has_new_version' => true])
+                ->setMessage('A new version (' . $updateData['version'] . ' / released on ' . $updateData['release_date'] . ') is available to update');
+        }
+
+        return $response;
+    }
+
+    /**
+     * @return \Illuminate\Contracts\Foundation\Application|Factory|\Illuminate\Contracts\View\View
+     */
+    public function getUpdater()
+    {
+        if (!config('core.base.general.enable_system_updater')) {
+            abort(404);
+        }
+
+        header('Cache-Control: no-cache');
+
+        @ini_set('max_execution_time', -1);
+        @ini_set('memory_limit', -1);
+
+        page_title()->setTitle(trans('core/base::system.updater'));
+
+        $api = new Core;
+
+        $updateData = $api->checkUpdate();
+
+        if ($updateData['status']) {
+            $updateData['message'] = 'A new version (' . $updateData['version'] . ' / released on ' . $updateData['release_date'] . ') is available to update!';
+        } else {
+            $updateData['message'] = 'The system is up-to-date. There are no new versions to update!';
+        }
+
+        return view('core/base::system.updater', compact('api', 'updateData'));
     }
 }

@@ -15,7 +15,7 @@ class LicenseSettingRequest extends Request
     {
         return [
             'purchase_code'           => 'required',
-            'buyer'                   => 'required',
+            'buyer'                   => 'required|regex:/^[\pL\s\ \_\-0-9]+$/u',
             'license_rules_agreement' => 'accepted:1',
         ];
     }

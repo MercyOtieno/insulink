@@ -14,7 +14,6 @@ use Botble\ACL\Repositories\Eloquent\UserRepository;
 use Botble\ACL\Repositories\Interfaces\ActivationInterface;
 use Botble\ACL\Repositories\Interfaces\RoleInterface;
 use Botble\ACL\Repositories\Interfaces\UserInterface;
-use Botble\Base\Supports\Helper;
 use Botble\Base\Traits\LoadAndPublishDataTrait;
 use EmailHandler;
 use Exception;
@@ -49,8 +48,6 @@ class AclServiceProvider extends ServiceProvider
         $this->app->bind(RoleInterface::class, function () {
             return new RoleCacheDecorator(new RoleRepository(new Role));
         });
-
-        Helper::autoload(__DIR__ . '/../../helpers');
     }
 
     /**
@@ -62,6 +59,7 @@ class AclServiceProvider extends ServiceProvider
         $this->app->register(EventServiceProvider::class);
 
         $this->setNamespace('core/acl')
+            ->loadHelpers()
             ->loadAndPublishConfigurations(['general', 'permissions', 'email'])
             ->loadAndPublishViews()
             ->loadAndPublishTranslations()

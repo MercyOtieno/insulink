@@ -78,7 +78,7 @@ class UserController extends BaseController
     {
         page_title()->setTitle(trans('core/acl::users.users'));
 
-        Assets::addScripts(['bootstrap-editable'])
+        Assets::addScripts(['bootstrap-editable', 'jquery-ui'])
             ->addStyles(['bootstrap-editable']);
 
         return $dataTable->renderTable();
@@ -418,5 +418,17 @@ class UserController extends BaseController
         return $response
             ->setNextUrl(route('users.index'))
             ->setMessage(trans('core/base::system.supper_revoked'));
+    }
+
+    /**
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function toggleSidebarMenu(Request $request, BaseHttpResponse $response)
+    {
+        $status = $request->input('status') == 'true';
+        session()->put('sidebar-menu-toggle', $status ? now() : '');
+
+        return $response->setMessage($status);
     }
 }

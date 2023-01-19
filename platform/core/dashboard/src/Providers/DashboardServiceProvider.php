@@ -2,7 +2,6 @@
 
 namespace Botble\Dashboard\Providers;
 
-use Botble\Base\Supports\Helper;
 use Botble\Base\Traits\LoadAndPublishDataTrait;
 use Botble\Dashboard\Models\DashboardWidget;
 use Botble\Dashboard\Models\DashboardWidgetSetting;
@@ -36,13 +35,12 @@ class DashboardServiceProvider extends ServiceProvider
                 new DashboardWidgetSettingRepository(new DashboardWidgetSetting)
             );
         });
-
-        Helper::autoload(__DIR__ . '/../../helpers');
     }
 
     public function boot()
     {
         $this->setNamespace('core/dashboard')
+            ->loadHelpers()
             ->loadRoutes(['web'])
             ->loadAndPublishViews()
             ->loadAndPublishTranslations()

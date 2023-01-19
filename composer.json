@@ -30,12 +30,12 @@
         "fideloper/proxy": "^4.4",
         "fruitcake/laravel-cors": "^2.0",
         "guzzlehttp/guzzle": "^7.3",
-        "laravel/framework": "^8.0",
+        "laravel/framework": "^9.19",
         "javoscript/laravel-macroable-models": "^1.0",
         "lab404/laravel-impersonate": "^1.7",
         "laravel/helpers": "^1.5.0",
         "laravel/ui": "^3",
-        "league/flysystem-aws-s3-v3": "^1.0",
+        "league/flysystem-aws-s3-v3": "^1.0|^3.12.1",
         "wikimedia/composer-merge-plugin": "^2.0",
         "mehradsadeghi/laravel-filter-querystring": "^1.1",
         "monarobase/country-list": "^3.2",
@@ -44,19 +44,20 @@
         "tucker-eric/eloquentfilter": "^3.1.0"
     },
     "require-dev": {
-        "facade/ignition": "^2.14",
-        "fzaninotto/faker": "^1.9.1",
-        "laravel/sail": "^1.10",
-        "mockery/mockery": "^1.4",
-        "nunomaduro/collision": "^5.10",
-        "phpunit/phpunit": "^9.5",
-        "laravel/tinker": "^2.6",
+        "fakerphp/faker": "^1.9.1",
+        "laravel/pint": "^1.0",
+        "laravel/sail": "^1.0.1",
+        "mockery/mockery": "^1.4.4",
+        "nunomaduro/collision": "^6.1",
+        "phpunit/phpunit": "^9.5.10",
+        "laravel/tinker": "^2.7",
         "barryvdh/laravel-debugbar": "^3.6",
         "barryvdh/laravel-ide-helper": "^2.10",
         "botble/dev-tool": "*@dev",
         "botble/plugin-generator": "*@dev",
         "botble/theme-generator": "*@dev",
-        "botble/widget-generator": "*@dev"
+        "botble/widget-generator": "*@dev",
+        "spatie/laravel-ignition": "^1.0"
     },
     "autoload": {
         "psr-4": {

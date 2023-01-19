@@ -42,12 +42,12 @@ if (!function_exists('human_file_size')) {
 if (!function_exists('get_file_data')) {
     /**
      * @param string $file
-     * @param bool $convertToArray
+     * @param bool $toArray
      * @return bool|mixed
      */
-    function get_file_data($file, $convertToArray = true)
+    function get_file_data($file, $toArray = true)
     {
-        return BaseHelper::getFileData($file, $convertToArray);
+        return BaseHelper::getFileData($file, $toArray);
     }
 }
 

@@ -18,6 +18,7 @@ return [
         'cookie',
         'core',
         'app',
+        'bootstrap',
         'toastr',
         'pace',
         'custom-scrollbar',
@@ -51,6 +52,15 @@ return [
                 'location' => 'header',
                 'src'      => [
                     'local' => '/vendor/core/core/base/js/app.js',
+                ],
+            ],
+            'bootstrap'                => [
+                'use_cdn'  => false,
+                'location' => 'header',
+                'src'      => [
+                    'local' => [
+                        '/vendor/core/core/base/libraries/bootstrap.bundle.min.js',
+                    ],
                 ],
             ],
             'modernizr'          => [

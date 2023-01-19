@@ -8,7 +8,7 @@ Route::group(['namespace' => 'Botble\Base\Http\Controllers', 'middleware' => ['w
             Route::match(['GET', 'POST'], '', [
                 'as'         => 'system.info',
                 'uses'       => 'SystemController@getInfo',
-                'permission' => ACL_ROLE_SUPER_USER,
+                'permission' => 'superuser',
             ]);
         });
 
@@ -17,13 +17,13 @@ Route::group(['namespace' => 'Botble\Base\Http\Controllers', 'middleware' => ['w
             Route::get('', [
                 'as'         => 'system.cache',
                 'uses'       => 'SystemController@getCacheManagement',
-                'permission' => ACL_ROLE_SUPER_USER,
+                'permission' => 'superuser',
             ]);
 
             Route::post('clear', [
                 'as'         => 'system.cache.clear',
                 'uses'       => 'SystemController@postClearCache',
-                'permission' => ACL_ROLE_SUPER_USER,
+                'permission' => 'superuser',
                 'middleware' => 'preventDemo',
             ]);
         });
@@ -38,6 +38,25 @@ Route::group(['namespace' => 'Botble\Base\Http\Controllers', 'middleware' => ['w
             'as'         => 'menu-items-count',
             'uses'       => 'SystemController@getMenuItemsCount',
             'permission' => false,
+        ]);
+
+        Route::get('system/check-update', [
+            'as'         => 'system.check-update',
+            'uses'       => 'SystemController@getCheckUpdate',
+            'permission' => 'superuser',
+        ]);
+
+        Route::get('system/updater', [
+            'as'         => 'system.updater',
+            'uses'       => 'SystemController@getUpdater',
+            'permission' => 'superuser',
+        ]);
+
+        Route::post('system/updater', [
+            'as'         => 'system.updater.post',
+            'uses'       => 'SystemController@getUpdater',
+            'permission' => 'superuser',
+            'middleware' => 'preventDemo',
         ]);
     });
 

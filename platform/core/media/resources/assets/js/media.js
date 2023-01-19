@@ -65,18 +65,25 @@ class MediaManagement {
          */
         let $mediaDetailsCheckbox = $('#media_details_collapse');
         $mediaDetailsCheckbox.prop('checked', MediaConfig.hide_details_pane || false);
+
         setTimeout(() => {
             $('.rv-media-details').removeClass('hidden');
         }, 300);
+
         $mediaDetailsCheckbox.on('change', event => {
             event.preventDefault();
             MediaConfig.hide_details_pane = $(event.currentTarget).is(':checked');
             Helpers.storeConfig();
         });
 
-        $(document).off('click', 'button[data-dismiss-modal]').on('click', 'button[data-dismiss-modal]', event => {
-            let modal = $(event.currentTarget).data('dismiss-modal');
-            $(modal).modal('hide');
+        $(document).on('click', '.js-download-action', event => {
+            event.preventDefault();
+            $('#modal_download_url').modal('show');
+        });
+
+        $(document).on('click', '.js-create-folder-action', event => {
+            event.preventDefault();
+            $('#modal_add_folder').modal('show');
         });
     }
 
@@ -449,27 +456,27 @@ class MediaManagement {
     }
 
     bindIntegrateModalEvents() {
-        let $main_modal = $('#rv_media_modal');
+        let $mainModal = $('#rv_media_modal');
         let _self = this;
-        $main_modal.off('click', '.js-insert-to-editor').on('click', '.js-insert-to-editor', event => {
+        $mainModal.off('click', '.js-insert-to-editor').on('click', '.js-insert-to-editor', event => {
             event.preventDefault();
             let selectedFiles = Helpers.getSelectedFiles();
             if (_.size(selectedFiles) > 0) {
                 window.rvMedia.options.onSelectFiles(selectedFiles, window.rvMedia.$el);
                 if (_self.checkFileTypeSelect(selectedFiles)) {
-                    $main_modal.find('.close').trigger('click');
+                    $mainModal.find('.btn-close').trigger('click');
                 }
             }
         });
 
-        $main_modal.off('dblclick', '.js-media-list-title').on('dblclick', '.js-media-list-title', event => {
+        $mainModal.off('dblclick', '.js-media-list-title').on('dblclick', '.js-media-list-title', event => {
             event.preventDefault();
             if (Helpers.getConfigs().request_params.view_in !== 'trash') {
                 let selectedFiles = Helpers.getSelectedFiles();
                 if (_.size(selectedFiles) > 0) {
                     window.rvMedia.options.onSelectFiles(selectedFiles, window.rvMedia.$el);
                     if (_self.checkFileTypeSelect(selectedFiles)) {
-                        $main_modal.find('.close').trigger('click');
+                        $mainModal.find('.btn-close').trigger('click');
                     }
                 }
             } else {
@@ -485,7 +492,6 @@ class MediaManagement {
             }
         });
     }
-
 
     // Scroll get more media
     scrollGetMore() {

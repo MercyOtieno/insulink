@@ -9,7 +9,6 @@ class CKEditorUploadAdapter {
     constructor(loader, url, t) {
         /**
          * FileLoader instance to use during the upload.
-         *
          */
         this.loader = loader;
 
@@ -22,7 +21,6 @@ class CKEditorUploadAdapter {
 
         /**
          * Locale translation method.
-         *
          */
         this.t = t;
     }

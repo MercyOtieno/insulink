@@ -9,6 +9,6 @@ class SupportServiceProvider extends ServiceProvider
 {
     public function register()
     {
-        File::requireOnce(__DIR__ . '/../../helpers/common.php');
+        File::requireOnce(core_path('support/helpers/common.php'));
     }
 }

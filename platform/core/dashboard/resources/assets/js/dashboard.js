@@ -1,22 +1,41 @@
 import Vue from 'vue';
 import VerifyLicenseComponent from './components/VerifyLicenseComponent';
+import CheckUpdateComponent from "./components/CheckUpdateComponent";
 
 Vue.component('verify-license-component', VerifyLicenseComponent);
+Vue.component('check-update-component', CheckUpdateComponent);
 
 new Vue({
     el: '#dashboard-alerts',
 });
 
+let callbackWidgets = {};
+
 class BDashboard {
     static loadWidget(el, url, data, callback) {
+        const widgetItem = el.closest('.widget_item');
+        const widgetId = widgetItem.attr('id');
+        if (typeof (callback) !== 'undefined') {
+            callbackWidgets[widgetId] = callback;
+        }
+        const $collapseExpand = widgetItem.find('a.collapse-expand');
+        if ($collapseExpand.length && $collapseExpand.hasClass('collapse')) {
+            return;
+        }
+
         Botble.blockUI({
             target: el,
             iconOnly: true,
             overlayColor: 'none'
         });
 
-        if (typeof data === 'undefined') {
+        if (typeof data === 'undefined' || data == null) {
             data = {};
+        }
+
+        const predefinedRange = widgetItem.find('select[name=predefined_range]');
+        if (predefinedRange.length) {
+            data.predefined_range = predefinedRange.val();
         }
 
         $.ajax({
@@ -30,6 +49,10 @@ class BDashboard {
                     el.html(res.data);
                     if (typeof (callback) !== 'undefined') {
                         callback();
+                    } else {
+                        if (callbackWidgets[widgetId]) {
+                            callbackWidgets[widgetId]();
+                        }
                     }
                     if (el.find('.scroller').length !== 0) {
                         Botble.callScroll(el.find('.scroller'));
@@ -71,8 +94,8 @@ class BDashboard {
                 scrollSensitivity: 30, // px, how near the mouse must be to an edge to start scrolling.
                 scrollSpeed: 10, // px
 
-                // dragging ended
-                onEnd: () => {
+                // Changed sorting within list
+                onUpdate: () => {
                     let items = [];
                     $.each($('.widget_item'), (index, widget) => {
                         items.push($(widget).prop('id'));
@@ -109,38 +132,53 @@ class BDashboard {
             $('#hide_widget_modal').modal('show');
         });
 
-        list_widgets.on('click', '.page_next, .page_previous', event =>  {
-            event.preventDefault();
-            BDashboard.loadWidget($(event.currentTarget).closest('.portlet').find('.portlet-body'), $(event.currentTarget).prop('href'));
+        list_widgets.on('click', '.page_next, .page_previous', e =>  {
+            e.preventDefault();
+            const $this = $(e.currentTarget);
+            const href = $this.prop('href');
+            if (href) {
+                BDashboard.loadWidget($this.closest('.portlet').find('.portlet-body'), href);
+            }
         });
 
-        list_widgets.on('change', '.number_record .numb', event =>  {
-            event.preventDefault();
-            let paginate = $('.number_record .numb').val();
-            if (!isNaN(paginate)) {
-                BDashboard.loadWidget($(event.currentTarget).closest('.portlet').find('.portlet-body'), $(event.currentTarget).closest('.widget_item').attr('data-url'), {paginate: paginate});
+        list_widgets.on('change', '.number_record .numb', e =>  {
+            e.preventDefault();
+            const $this = $(e.currentTarget);
+            const numb = $this.closest('.number_record').find('.numb');
+            let paginate = numb.val();
+            if (!isNaN(paginate) && paginate > 0) {
+                BDashboard.loadWidget($this.closest('.portlet').find('.portlet-body'), $this.closest('.widget_item').attr('data-url'), {paginate: paginate});
             } else {
                 Botble.showError('Please input a number!')
             }
-
         });
 
-        list_widgets.on('click', '.btn_change_paginate', event =>  {
-            event.preventDefault();
-            let numb = $('.number_record .numb');
+        list_widgets.on('click', '.btn_change_paginate', e =>  {
+            e.preventDefault();
+            const $this = $(e.currentTarget);
+            const numb = $this.closest('.number_record').find('.numb');
+            const min = parseInt(numb.prop('min') || 5);
+            const max = parseInt(numb.prop('max') || 100);
+            const step = parseInt(numb.prop('step') || 5);
             let paginate = parseInt(numb.val());
-            if ($(event.currentTarget).hasClass('btn_up')) {
-                paginate += 5;
-            }
-            if ($(event.currentTarget).hasClass('btn_down')) {
-                if (paginate - 5 > 0) {
-                    paginate -= 5;
+            if ($this.hasClass('btn_up')) {
+                if (paginate < max) {
+                    paginate += step;
+                }
+            } else if ($this.hasClass('btn_down')) {
+                if (paginate - step > 0) {
+                    paginate -= step;
                 } else {
-                    paginate = 0;
+                    paginate = step;
+                }
+                if (paginate < min) {
+                    paginate = min;
                 }
             }
-            numb.val(paginate);
-            BDashboard.loadWidget($(event.currentTarget).closest('.portlet').find('.portlet-body'), $(event.currentTarget).closest('.widget_item').attr('data-url'), {paginate: paginate});
+
+            if (paginate != parseInt(numb.val())) {
+                numb.val(paginate).trigger('change');
+            }
         });
 
         $('#hide-widget-confirm-bttn').on('click', event =>  {
@@ -164,11 +202,7 @@ class BDashboard {
                         $(document).removeClass('page-portlet-fullscreen');
                     }
 
-                    portlet.find('.portlet-title .fullscreen').tooltip('destroy');
-                    portlet.find('.portlet-title .tools > .reload').tooltip('destroy');
-                    portlet.find('.portlet-title .tools > .remove').tooltip('destroy');
-                    portlet.find('.portlet-title .tools > .config').tooltip('destroy');
-                    portlet.find('.portlet-title .tools > .collapse, .portlet > .portlet-title .tools > .expand').tooltip('destroy');
+                    portlet.find('[data-bs-toggle=tooltip]').tooltip('destroy');
 
                     portlet.remove();
                 },
@@ -178,21 +212,22 @@ class BDashboard {
             });
         });
 
-        $(document).on('click', '.portlet:not(.widget-load-has-callback) > .portlet-title .tools > a.reload', event =>  {
-            event.preventDefault();
-            BDashboard.loadWidget($(event.currentTarget).closest('.portlet').find('.portlet-body'), $(event.currentTarget).closest('.widget_item').attr('data-url'));
+        $(document).on('click', '.portlet:not(.widget-load-has-callback) > .portlet-title .tools > a.reload', e =>  {
+            e.preventDefault();
+            const $this = $(e.currentTarget);
+            BDashboard.loadWidget($this.closest('.portlet').find('.portlet-body'), $this.closest('.widget_item').attr('data-url'));
         });
-
 
         $(document).on('click', '.portlet > .portlet-title .tools > .collapse, .portlet .portlet-title .tools > .expand', event =>  {
             event.preventDefault();
             let _self = $(event.currentTarget);
+            let $portlet = _self.closest('.portlet');
             let state = $.trim(_self.data('state'));
             if (state === 'expand') {
-                _self.closest('.portlet').find('.portlet-body').removeClass('collapse').addClass('expand');
-                BDashboard.loadWidget(_self.closest('.portlet').find('.portlet-body'), _self.closest('.widget_item').attr('data-url'));
+                $portlet.find('.portlet-body').removeClass('collapse').addClass('expand');
+                BDashboard.loadWidget($portlet.find('.portlet-body'), _self.closest('.widget_item').attr('data-url'));
             } else {
-                _self.closest('.portlet').find('.portlet-body').removeClass('expand').addClass('collapse');
+                $portlet.find('.portlet-body').removeClass('expand').addClass('collapse');
             }
 
             $.ajax({
@@ -207,14 +242,26 @@ class BDashboard {
                 success: () => {
                     if (state === 'collapse') {
                         _self.data('state', 'expand');
+                        $portlet.find('.predefined-ranges').addClass('d-none');
+                        $portlet.find('a.reload').addClass('d-none');
+                        $portlet.find('a.fullscreen').addClass('d-none');
                     } else {
                         _self.data('state', 'collapse');
+                        $portlet.find('.predefined-ranges').removeClass('d-none');
+                        $portlet.find('a.reload').removeClass('d-none');
+                        $portlet.find('a.fullscreen').removeClass('d-none');
                     }
                 },
                 error: data =>  {
                     Botble.handleError(data);
                 }
             });
+        });
+
+        $(document).on('change', '.portlet select[name=predefined_range]', e => {
+            e.preventDefault();
+            const $this = $(e.currentTarget);
+            BDashboard.loadWidget($this.closest('.portlet').find('.portlet-body'), $this.closest('.widget_item').attr('data-url'), {changed_predefined_range: 1});
         });
 
         let manage_widget_modal = $('#manage_widget_modal');

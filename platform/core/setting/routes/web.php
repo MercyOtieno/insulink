@@ -47,6 +47,13 @@ Route::group(['namespace' => 'Botble\Setting\Http\Controllers', 'middleware' => 
                 'permission' => 'settings.options',
             ]);
 
+            Route::post('license/reset', [
+                'as'         => 'settings.license.reset',
+                'uses'       => 'SettingController@resetLicense',
+                'middleware' => 'preventDemo',
+                'permission' => 'settings.options',
+            ]);
+
             Route::group(['prefix' => 'email', 'permission' => 'settings.email'], function () {
                 Route::get('', [
                     'as'   => 'settings.email',

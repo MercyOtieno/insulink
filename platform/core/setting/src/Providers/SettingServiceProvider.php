@@ -2,7 +2,6 @@
 
 namespace Botble\Setting\Providers;
 
-use Botble\Base\Supports\Helper;
 use Botble\Base\Traits\LoadAndPublishDataTrait;
 use Botble\Setting\Facades\SettingFacade;
 use Botble\Setting\Models\Setting as SettingModel;
@@ -50,7 +49,7 @@ class SettingServiceProvider extends ServiceProvider
             );
         });
 
-        Helper::autoload(__DIR__ . '/../../helpers');
+        $this->loadHelpers();
     }
 
     public function boot()

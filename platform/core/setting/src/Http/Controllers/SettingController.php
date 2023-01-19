@@ -3,6 +3,8 @@
 namespace Botble\Setting\Http\Controllers;
 
 use Assets;
+use Botble\Base\Http\Controllers\BaseController;
+use Botble\Base\Http\Responses\BaseHttpResponse;
 use Botble\Base\Supports\Core;
 use Botble\Base\Supports\Language;
 use Botble\Setting\Http\Requests\EmailTemplateRequest;
@@ -16,10 +18,8 @@ use EmailHandler;
 use Exception;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Contracts\View\Factory;
-use Illuminate\Support\Facades\File;
-use Botble\Base\Http\Controllers\BaseController;
-use Botble\Base\Http\Responses\BaseHttpResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
 use Illuminate\View\View;
 use Throwable;
 
@@ -49,7 +49,7 @@ class SettingController extends BaseController
         Assets::addScriptsDirectly('vendor/core/core/setting/js/setting.js');
         Assets::addStylesDirectly('vendor/core/core/setting/css/setting.css');
 
-        return view('core/setting::index', ['host' => request()->getHost()]);
+        return view('core/setting::index');
     }
 
     /**
@@ -104,7 +104,11 @@ class SettingController extends BaseController
     protected function saveSettings(array $data)
     {
         foreach ($data as $settingKey => $settingValue) {
-            setting()->set($settingKey, $settingValue);
+            if (is_array($settingValue)) {
+                $settingValue = json_encode(array_filter($settingValue));
+            }
+
+            setting()->set($settingKey, (string)$settingValue);
         }
 
         setting()->save();
@@ -290,7 +294,7 @@ class SettingController extends BaseController
             }
 
             $activatedAt = Carbon::createFromTimestamp(filectime($coreApi->getLicenseFilePath()));
-        } catch (Exception $exception) {
+        } catch (Throwable $exception) {
             $activatedAt = now();
             $result = ['message' => $exception->getMessage()];
         }
@@ -318,7 +322,7 @@ class SettingController extends BaseController
 
             return $response
                 ->setError(true)
-                ->setMessage(__('Envato username must not a URL. Please try with username ":username"!', compact('username')));
+                ->setMessage('Envato username must not a URL. Please try with username "' . $username . '"!');
         }
 
         try {
@@ -340,7 +344,7 @@ class SettingController extends BaseController
             ];
 
             return $response->setMessage($result['message'])->setData($data);
-        } catch (Exception $exception) {
+        } catch (Throwable $exception) {
             return $response->setError(true)->setMessage($exception->getMessage());
         }
     }
@@ -364,7 +368,30 @@ class SettingController extends BaseController
             $this->settingRepository->deleteBy(['key' => 'licensed_to']);
 
             return $response->setMessage($result['message']);
-        } catch (Exception $exception) {
+        } catch (Throwable $exception) {
+            return $response->setError(true)->setMessage($exception->getMessage());
+        }
+    }
+
+    /**
+     * @param LicenseSettingRequest $request
+     * @param BaseHttpResponse $response
+     * @param Core $coreApi
+     * @return BaseHttpResponse
+     */
+    public function resetLicense(LicenseSettingRequest $request, BaseHttpResponse $response, Core $coreApi)
+    {
+        try {
+            $result = $coreApi->deactivateLicense($request->input('purchase_code'), $request->input('buyer'));
+
+            if (!$result['status']) {
+                return $response->setError()->setMessage($result['message']);
+            }
+
+            $this->settingRepository->deleteBy(['key' => 'licensed_to']);
+
+            return $response->setMessage($result['message']);
+        } catch (Throwable $exception) {
             return $response->setError(true)->setMessage($exception->getMessage());
         }
     }

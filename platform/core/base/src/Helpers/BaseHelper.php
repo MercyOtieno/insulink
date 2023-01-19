@@ -5,6 +5,7 @@ namespace Botble\Base\Helpers;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Query\Builder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
 
 class BaseHelper
@@ -168,6 +169,14 @@ class BaseHelper
     /**
      * @return string
      */
+    public function getAdminMasterLayoutTemplate(): string
+    {
+        return apply_filters('base_filter_admin_master_layout_template', 'core/base::layouts.master');
+    }
+
+    /**
+     * @return string
+     */
     public function siteLanguageDirection()
     {
         return apply_filters(BASE_FILTER_SITE_LANGUAGE_DIRECTION, setting('locale_direction', 'ltr'));
@@ -180,15 +189,7 @@ class BaseHelper
     {
         $direction = session('admin_locale_direction', setting('admin_locale_direction', 'ltr'));
 
-        return apply_filters(BASE_FILTER_SITE_LANGUAGE_DIRECTION, $direction);
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getHomepageId()
-    {
-        return theme_option('homepage_id', setting('show_on_front'));
+        return apply_filters(BASE_FILTER_ADMIN_LANGUAGE_DIRECTION, $direction);
     }
 
     /**
@@ -200,6 +201,14 @@ class BaseHelper
         $homepageId = $this->getHomepageId();
 
         return $pageId && $homepageId && $pageId == $homepageId;
+    }
+
+    /**
+     * @return int
+     */
+    public function getHomepageId()
+    {
+        return theme_option('homepage_id', setting('show_on_front'));
     }
 
     /**
@@ -230,5 +239,96 @@ class BaseHelper
     public function getRichEditor(): string
     {
         return setting('rich_editor', config('core.base.general.editor.primary'));
+    }
+
+    /**
+     * @param string $url
+     * @param string|array $key
+     * @return false|mixed|string
+     */
+    public function removeQueryStringVars($url, $key)
+    {
+        if (!is_array($key)) {
+            $key = [$key];
+        }
+
+        foreach ($key as $item) {
+            $url = preg_replace('/(.*)(?|&)' . $item . '=[^&]+?(&)(.*)/i', '$1$2$4', $url . '&');
+            $url = substr($url, 0, -1);
+        }
+
+        return $url;
+    }
+
+    /**
+     * @param string $value
+     * @return string
+     */
+    public function cleanEditorContent($value): string
+    {
+        $value = str_replace('<span class="style-scope yt-formatted-string" dir="auto">', '', $value);
+
+        return htmlentities(clean($value));
+    }
+
+    /**
+     * @return string
+     */
+    public function getPhoneValidationRule(): string
+    {
+        return config('core.base.general.phone_validation_rule');
+    }
+
+    /**
+     * @param Collection $collection
+     * @param string $searchTerms
+     * @param string $column
+     * @return Collection
+     */
+    public function sortSearchResults($collection, $searchTerms, string $column)
+    {
+        if (!$collection instanceof Collection) {
+            $collection = collect($collection);
+        }
+
+        return $collection->sortByDesc(function ($item) use ($searchTerms, $column) {
+
+            $searchTerms = explode(' ', $searchTerms);
+
+            // The bigger the weight, the higher the record
+            $weight = 0;
+
+            // Iterate through search terms
+            foreach ($searchTerms as $term) {
+                if (strpos($item->{$column}, $term) !== false) {
+                    // Increase weight if the search term is found
+                    $weight += 1;
+                }
+            }
+
+            return $weight;
+        });
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getDateFormats(): array
+    {
+        $formats = [
+            'Y-m-d',
+            'Y-M-d',
+            'y-m-d',
+            'm-d-Y',
+            'M-d-Y',
+        ];
+
+        foreach ($formats as $format) {
+            $formats[] = str_replace('-', '/', $format);
+        }
+
+        $formats[] = 'M d, Y';
+
+        return $formats;
     }
 }

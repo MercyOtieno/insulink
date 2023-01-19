@@ -54,9 +54,8 @@ class BaseServiceProvider extends ServiceProvider
             return new CustomResourceRegistrar($app['router']);
         });
 
-        Helper::autoload(__DIR__ . '/../../helpers');
-
         $this->setNamespace('core/base')
+            ->loadHelpers()
             ->loadAndPublishConfigurations(['general']);
 
         $this->app->register(SettingServiceProvider::class);
@@ -106,7 +105,7 @@ class BaseServiceProvider extends ServiceProvider
 
     public function boot()
     {
-        $this->setNamespace('core/base')
+        $this
             ->loadAndPublishConfigurations(['permissions', 'assets'])
             ->loadAndPublishViews()
             ->loadAndPublishTranslations()
@@ -124,15 +123,16 @@ class BaseServiceProvider extends ServiceProvider
         $router->aliasMiddleware('preventDemo', DisableInDemoModeMiddleware::class);
         $router->middlewareGroup('core', [CoreMiddleware::class]);
 
-        if ($this->app->environment('demo')) {
+        $config = $this->app->make('config');
+
+        if ($this->app->environment('demo') || $config->get('core.base.general.disable_verify_csrf_token', false)) {
             $this->app->instance(VerifyCsrfToken::class, new BaseMiddleware);
         }
 
-        $this->app->booted(function () {
+        $this->app->booted(function () use ($config) {
             do_action(BASE_ACTION_INIT);
             add_action(BASE_ACTION_META_BOXES, [MetaBox::class, 'doMetaBoxes'], 8, 2);
 
-            $config = $this->app->make('config');
             $setting = $this->app->make(SettingStore::class);
             $timezone = $setting->get('time_zone', $config->get('app.timezone'));
             $locale = $setting->get('locale', $config->get('core.base.general.locale', $config->get('app.locale')));
@@ -164,14 +164,20 @@ class BaseServiceProvider extends ServiceProvider
 
         $forceSchema = $this->app->make('config')->get('core.base.general.force_schema');
         if (!empty($forceSchema)) {
+            $this->app['request']->server->set('HTTPS', 'on');
+
             URL::forceScheme($forceSchema);
         }
 
         $this->configureIni();
 
-        $config = $this->app->make('config');
-
-        $config->set(['purifier.settings.default' => $config->get('core.base.general.purifier')]);
+        $config->set([
+            'purifier.settings' => array_merge(
+                $config->get('purifier.settings'),
+                $config->get('core.base.general.purifier')
+            ),
+            'laravel-form-builder.defaults.wrapper_class' => 'form-group mb-3',
+        ]);
     }
 
     /**
@@ -207,6 +213,19 @@ class BaseServiceProvider extends ServiceProvider
                 'url'         => route('system.cache'),
                 'permissions' => [ACL_ROLE_SUPER_USER],
             ]);
+
+        if (config('core.base.general.enable_system_updater')) {
+            dashboard_menu()
+                ->registerItem([
+                    'id'          => 'cms-core-system-updater',
+                    'priority'    => 999,
+                    'parent_id'   => 'cms-core-platform-administration',
+                    'name'        => 'core/base::system.updater',
+                    'icon'        => null,
+                    'url'         => route('system.updater'),
+                    'permissions' => [ACL_ROLE_SUPER_USER],
+                ]);
+        }
     }
 
     /**
@@ -231,7 +250,7 @@ class BaseServiceProvider extends ServiceProvider
         // Set memory limits.
         $limitInt = Helper::convertHrToBytes($memoryLimit);
         if (-1 !== $currentLimitInt && (-1 === $limitInt || $limitInt > $currentLimitInt)) {
-            ini_set('memory_limit', $memoryLimit);
+            @ini_set('memory_limit', $memoryLimit);
         }
     }
 

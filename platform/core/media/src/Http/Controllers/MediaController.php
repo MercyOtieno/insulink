@@ -69,16 +69,11 @@ class MediaController extends Controller
     }
 
     /**
-     * @param Request $request
      * @return string
      */
-    public function getMedia(Request $request)
+    public function getMedia()
     {
         page_title()->setTitle(trans('core/media::media.menu_name'));
-
-        if ($request->input('media-action') === 'select-files') {
-            return view('core/media::popup');
-        }
 
         return view('core/media::index');
     }
@@ -133,13 +128,15 @@ class MediaController extends Controller
             $paramsFile['order_by'][$orderBy[0]] = $orderBy[1];
         }
 
-        if ($request->input('search')) {
+        $search = $request->input('search');
+
+        if ($search) {
             $paramsFolder['condition'] = [
-                ['media_folders.name', 'LIKE', '%' . $request->input('search') . '%',],
+                ['media_folders.name', 'LIKE', '%' . $search . '%',],
             ];
 
             $paramsFile['condition'] = [
-                ['media_files.name', 'LIKE', '%' . $request->input('search') . '%',],
+                ['media_files.name', 'LIKE', '%' . $search . '%',],
             ];
         }
 
@@ -379,9 +376,19 @@ class MediaController extends Controller
                     $id = $item['id'];
                     if ($item['is_folder'] == 'false') {
                         $file = $this->fileRepository->getFirstBy(['id' => $id]);
+
+                        if (!$file) {
+                            break;
+                        }
+
                         $this->copyFile($file);
                     } else {
                         $oldFolder = $this->folderRepository->getFirstBy(['id' => $id]);
+
+                        if (!$oldFolder) {
+                            break;
+                        }
+
                         $folderData = $oldFolder->replicate()->toArray();
 
                         $folderData['slug'] = $this->folderRepository->createSlug($oldFolder->name,
@@ -402,6 +409,10 @@ class MediaController extends Controller
                                  * @var MediaFolder $child
                                  */
                                 $folder = $this->folderRepository->getFirstBy(['id' => $parentId]);
+
+                                if (!$folder) {
+                                    break;
+                                }
 
                                 $folderData = $folder->replicate()->toArray();
 
@@ -588,6 +599,7 @@ class MediaController extends Controller
                 RvMedia::getRealPath($this->folderRepository->getFullPath($newFolderId)),
                 $file->url
             );
+
             $file->folder_id = $newFolderId;
         }
 
@@ -615,6 +627,7 @@ class MediaController extends Controller
                     if (!File::exists($filePath)) {
                         return RvMedia::responseError(trans('core/media::media.file_not_exists'));
                     }
+
                     return response()->download($filePath);
                 }
 
@@ -658,7 +671,11 @@ class MediaController extends Controller
                 }
             }
 
-            $zip->close();
+            if (version_compare(phpversion(), '8.0') >= 0) {
+                $zip = null;
+            } else {
+                $zip->close();
+            }
 
             if (File::exists($fileName)) {
                 return response()->download($fileName)->deleteFileAfterSend();

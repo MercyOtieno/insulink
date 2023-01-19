@@ -170,6 +170,7 @@ abstract class RepositoriesAbstract implements RepositoryInterface
         } else {
             $newModel = $model;
         }
+
         foreach ($where as $field => $value) {
             if (is_array($value)) {
                 [$field, $condition, $val] = $value;
@@ -188,6 +189,7 @@ abstract class RepositoriesAbstract implements RepositoryInterface
                 $newModel = $newModel->where($field, $value);
             }
         }
+
         if (!$model) {
             $this->model = $newModel;
         } else {
@@ -221,6 +223,7 @@ abstract class RepositoriesAbstract implements RepositoryInterface
             } else {
                 $item = $this->getFirstBy($condition);
             }
+
             if (empty($item)) {
                 $item = new $this->model;
             }
@@ -232,12 +235,11 @@ abstract class RepositoriesAbstract implements RepositoryInterface
             return false;
         }
 
+        $this->resetModel();
+
         if ($item->save()) {
-            $this->resetModel();
             return $item;
         }
-
-        $this->resetModel();
 
         return false;
     }
@@ -380,6 +382,7 @@ abstract class RepositoriesAbstract implements RepositoryInterface
             'select'    => ['*'],
             'with'      => [],
             'withCount' => [],
+            'withAvg' => [],
         ], $params);
 
         $this->applyConditions($params['condition']);
@@ -408,15 +411,21 @@ abstract class RepositoriesAbstract implements RepositoryInterface
             $data = $data->withCount($params['withCount']);
         }
 
+        if (!empty($params['withAvg'])) {
+            $data = $data->withAvg($params['withAvg'][0], $params['withAvg'][1]);
+        }
+
         if ($params['take'] == 1) {
             $result = $this->applyBeforeExecuteQuery($data, true)->first();
         } elseif ($params['take']) {
             $result = $this->applyBeforeExecuteQuery($data)->take((int)$params['take'])->get();
         } elseif ($params['paginate']['per_page']) {
             $paginateType = 'paginate';
+
             if (Arr::get($params, 'paginate.type') && method_exists($data, Arr::get($params, 'paginate.type'))) {
                 $paginateType = Arr::get($params, 'paginate.type');
             }
+
             $result = $this->applyBeforeExecuteQuery($data)
                 ->$paginateType(
                     (int)Arr::get($params, 'paginate.per_page', 10),

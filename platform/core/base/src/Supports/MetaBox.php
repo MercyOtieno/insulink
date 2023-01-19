@@ -182,12 +182,15 @@ class MetaBox
      */
     public function saveMetaBoxData($object, string $key, $value, $options = null)
     {
+        $key = apply_filters('stored_meta_box_key', $key, $object);
+
         try {
             $fieldMeta = $this->metaBoxRepository->getFirstBy([
                 'meta_key'       => $key,
                 'reference_id'   => $object->id,
                 'reference_type' => get_class($object),
             ]);
+
             if (!$fieldMeta) {
                 $fieldMeta = $this->metaBoxRepository->getModel();
                 $fieldMeta->reference_id = $object->id;
@@ -201,6 +204,7 @@ class MetaBox
 
             $fieldMeta->meta_value = [$value];
             $this->metaBoxRepository->createOrUpdate($fieldMeta);
+
             return true;
         } catch (Exception $exception) {
             return false;
@@ -241,6 +245,8 @@ class MetaBox
      */
     public function getMeta($object, string $key, $select = ['meta_value'])
     {
+        $key = apply_filters('stored_meta_box_key', $key, $object);
+
         return $this->metaBoxRepository->getFirstBy([
             'meta_key'       => $key,
             'reference_id'   => $object->id,
@@ -256,6 +262,8 @@ class MetaBox
      */
     public function deleteMetaData($object, string $key)
     {
+        $key = apply_filters('stored_meta_box_key', $key, $object);
+
         return $this->metaBoxRepository->deleteBy([
             'meta_key'       => $key,
             'reference_id'   => $object->id,

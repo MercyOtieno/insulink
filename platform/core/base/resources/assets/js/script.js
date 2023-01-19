@@ -318,19 +318,47 @@ class Botble {
     }
 
     static initResources() {
+
         if (jQuery().select2) {
-            $(document).find('.select-multiple').select2({
-                width: '100%',
-                allowClear: true,
+            $.each($(document).find('.select-multiple'), function (index, element) {
+                let options = {
+                    width: '100%',
+                    allowClear: true,
+                };
+
+                let parent = $(element).closest('.modal');
+                if (parent.length) {
+                    options.dropdownParent = parent;
+                }
+
+                $(element).select2(options);
             });
 
-            $(document).find('.select-search-full').select2({
-                width: '100%'
+            $.each($(document).find('.select-search-full'), function (index, element) {
+                let options = {
+                    width: '100%',
+                };
+
+                let parent = $(element).closest('.modal');
+                if (parent.length) {
+                    options.dropdownParent = parent;
+                }
+
+                $(element).select2(options);
             });
 
-            $(document).find('.select-full').select2({
-                width: '100%',
-                minimumResultsForSearch: -1
+            $.each($(document).find('.select-full'), function (index, element) {
+                let options = {
+                    width: '100%',
+                    minimumResultsForSearch: -1
+                };
+
+                let parent = $(element).closest('.modal');
+                if (parent.length) {
+                    options.dropdownParent = parent;
+                }
+
+                $(element).select2(options);
             });
 
             $('select[multiple].select-sorting').on('select2:select', function (evt) {
@@ -338,21 +366,20 @@ class Botble {
 
                 $element.detach();
                 $(this).append($element);
-                $(this).trigger("change");
+                $(this).trigger('change');
             });
 
-            $.each($(document).find('.select-search-ajax'), function (index, value) {
-                const $elSelect = $(value);
-                if ($elSelect.data('url')) {
-                    $elSelect.select2({
-                        placeholder: $elSelect.data('placeholder') || '--Select--',
-                        minimumInputLength: $elSelect.data('minimum-input') || 1,
+            $.each($(document).find('.select-search-ajax'), function (index, element) {
+                if ($(element).data('url')) {
+                    let options = {
+                        placeholder: $(element).data('placeholder') || '--Select--',
+                        minimumInputLength: $(element).data('minimum-input') || 1,
                         width: '100%',
                         delay: 250,
                         ajax: {
-                            url: $elSelect.data('url'),
+                            url: $(element).data('url'),
                             dataType: 'json',
-                            type: $(value).data('type') || 'GET',
+                            type: $(element).data('type') || 'GET',
                             quietMillis: 50,
                             data: function (params) {
                                 // Query parameters will be ?search=[term]&page=[page]
@@ -389,7 +416,14 @@ class Botble {
                             cache: true
                         },
                         allowClear: true
-                    });
+                    };
+
+                    let parent = $(element).closest('.modal');
+                    if (parent.length) {
+                        options.dropdownParent = parent;
+                    }
+
+                    $(element).select2(options);
                 }
             });
         }
@@ -415,15 +449,19 @@ class Botble {
         }
 
         if (jQuery().inputmask) {
-            $(document).find('.input-mask-number').inputmask({
-                alias: 'numeric',
-                rightAlign: false,
-                digits: 2,
-                groupSeparator: ',',
-                placeholder: '0',
-                autoGroup: true,
-                autoUnmask: true,
-                removeMaskOnSubmit: true,
+            $.each($(document).find('.input-mask-number'), function (index, element) {
+                $(element).inputmask({
+                    alias: 'numeric',
+                    rightAlign: false,
+                    digits: $(element).data('digits') ?? 5,
+                    groupSeparator: $(element).data('thousands-separator') ?? ',',
+                    radixPoint: $(element).data('decimal-separator') ?? '.',
+                    digitsOptional: true,
+                    placeholder: '0',
+                    autoGroup: true,
+                    autoUnmask: true,
+                    removeMaskOnSubmit: true,
+                });
             });
         }
 
@@ -475,6 +513,7 @@ class Botble {
                 overlayShow: true,
                 overlayOpacity: 0.7
             });
+
             $('.fancybox').fancybox({
                 openEffect: 'none',
                 closeEffect: 'none',
@@ -487,7 +526,7 @@ class Botble {
         }
 
         if (jQuery().tooltip) {
-            $('[data-toggle="tooltip"]').tooltip({placement: 'top', boundary: 'window'});
+            $('[data-bs-toggle="tooltip"]').tooltip({placement: 'top', boundary: 'window'});
         }
 
         if (jQuery().areYouSure) {
@@ -568,11 +607,8 @@ class Botble {
 
     static callScroll(obj) {
         obj.mCustomScrollbar({
-            axis: 'yx',
-            theme: 'minimal-dark',
-            scrollButtons: {
-                enable: true
-            },
+            theme: 'dark',
+            scrollInertia: 0,
             callbacks: {
                 whileScrolling: function () {
                     obj.find('.tableFloatingHeaderOriginal').css({
@@ -581,6 +617,7 @@ class Botble {
                 }
             }
         });
+
         obj.stickyTableHeaders({scrollableArea: obj, 'fixedOffset': 2});
     }
 
@@ -588,7 +625,7 @@ class Botble {
         if ($('#waypoint').length > 0) {
             new Waypoint({
                 element: document.getElementById('waypoint'),
-                handler: (direction) => {
+                handler: direction => {
                     if (direction === 'down') {
                         $('.form-actions-fixed-top').removeClass('hidden');
                     } else {
@@ -663,7 +700,7 @@ class Botble {
                             case 'select-image':
                                 let firstImage = _.first(files);
                                 $el.closest('.image-box').find('.image-data').val(firstImage.url);
-                                $el.closest('.image-box').find('.preview_image').attr('src', firstImage.thumb);
+                                $el.closest('.image-box').find('.preview_image').attr('src', firstImage.thumb ? firstImage.thumb : firstImage.full_url);
                                 $el.closest('.image-box').find('.preview-image-wrapper').show();
                                 break;
                             case 'attachment':
@@ -817,6 +854,11 @@ class Botble {
                 el.slideDown(200);
             }
         });
+
+        $(document).on('click', '.btn-update-new-version', event => {
+            let _self = $(event.currentTarget);
+            _self.find('span').text(_self.data('updating-text'));
+        });
     }
 
     static initCodeEditor(id, type = 'css') {
@@ -866,7 +908,9 @@ class Botble {
                 success: res => {
                     if (!res.error) {
                         res.data.map(x => {
-                            $('.menu-item-count.' + x.key).text(x.value).show().removeClass('hidden');
+                            if (x.value > 0) {
+                                $('.menu-item-count.' + x.key).text(x.value).show().removeClass('hidden');
+                            }
                         });
                     }
                 },

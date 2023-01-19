@@ -1,12 +1,13 @@
-@extends('core/base::layouts.master')
+@extends(BaseHelper::getAdminMasterLayoutTemplate())
 @section('content')
-    {{-- <div id="main-settings">
+    <div id="main-settings">
         <license-component
             verify-url="{{ route('settings.license.verify') }}"
             activate-license-url="{{ route('settings.license.activate') }}"
             deactivate-license-url="{{ route('settings.license.deactivate') }}"
+            reset-license-url="{{ route('settings.license.reset') }}"
         ></license-component>
-    </div> --}}
+    </div>
     {!! Form::open(['route' => ['settings.edit']]) !!}
         <div class="max-width-1200">
             <div class="flexbox-annotated-section">
@@ -23,15 +24,15 @@
                 <div class="flexbox-annotated-section-content">
                     <div class="wrapper-content pd-all-20">
                         @php $maxEmailCount = 4 @endphp
-                        <div class="form-group" id="admin_email_wrapper" data-emails="{{ json_encode(get_admin_email()) }}" data-max="{{ $maxEmailCount }}">
+                        <div class="form-group mb-3" id="admin_email_wrapper" data-emails="{{ json_encode(get_admin_email()) }}" data-max="{{ $maxEmailCount }}">
                             <label class="text-title-field"
                                    for="admin_email">{{ trans('core/setting::setting.general.admin_email') }}</label>
-                            <a id="add" class="link" data-placeholder="email{{ '@' . $host }}"><small>+ {{ trans('core/setting::setting.email_add_more') }}</small></a>
+                            <a id="add" class="link" data-placeholder="email{{ '@' . request()->getHost() }}"><small>+ {{ trans('core/setting::setting.email_add_more') }}</small></a>
 
                             {{ Form::helper(trans('core/setting::setting.emails_warning', ['count' => $maxEmailCount])) }}
                         </div>
 
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             <label class="text-title-field"
                                    for="time_zone">{{ trans('core/setting::setting.general.time_zone') }}
                             </label>
@@ -47,7 +48,7 @@
                             </div>
                         </div>
 
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             <label class="text-title-field"
                                    for="locale">{{ trans('core/setting::setting.general.locale') }}
                             </label>
@@ -69,25 +70,25 @@
                             </div>
                         </div>
 
-                        <div class="form-group">
+                        <div class="form-group mb-3">
 
                             <label class="text-title-field"
                                    for="locale_direction">{{ trans('core/setting::setting.general.locale_direction') }}
                             </label>
-                            <label class="hrv-label">
-                                <input type="radio" name="locale_direction" class="hrv-radio" value="ltr"
+                            <label class="me-2">
+                                <input type="radio" name="locale_direction" value="ltr"
                                        @if (setting('locale_direction', 'ltr') == 'ltr') checked @endif>{{ trans('core/setting::setting.locale_direction_ltr') }}
                             </label>
-                            <label class="hrv-label">
-                                <input type="radio" name="locale_direction" class="hrv-radio" value="rtl"
+                            <label>
+                                <input type="radio" name="locale_direction" value="rtl"
                                        @if (setting('locale_direction', 'ltr') == 'rtl') checked @endif>{{ trans('core/setting::setting.locale_direction_rtl') }}
                             </label>
                         </div>
 
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             <input type="hidden" name="enable_send_error_reporting_via_email" value="0">
                             <label>
-                                <input type="checkbox" class="hrv-checkbox" value="1" @if (setting('enable_send_error_reporting_via_email')) checked @endif name="enable_send_error_reporting_via_email">
+                                <input type="checkbox"  value="1" @if (setting('enable_send_error_reporting_via_email')) checked @endif name="enable_send_error_reporting_via_email">
                                 {{ trans('core/setting::setting.general.enable_send_error_reporting_via_email') }}
                             </label>
                         </div>
@@ -110,7 +111,7 @@
 
                 <div class="flexbox-annotated-section-content">
                     <div class="wrapper-content pd-all-20">
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             <label class="text-title-field"
                                    for="admin-logo">{{ trans('core/setting::setting.general.admin_logo') }}
                             </label>
@@ -118,7 +119,7 @@
                                 {!! Form::mediaImage('admin_logo', setting('admin_logo'), ['allow_thumb' => false]) !!}
                             </div>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             <label class="text-title-field"
                                    for="admin-favicon">{{ trans('core/setting::setting.general.admin_favicon') }}
                             </label>
@@ -127,53 +128,53 @@
                             </div>
                         </div>
 
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             <label class="text-title-field"
                                    for="admin-login-screen-backgrounds">{{ trans('core/setting::setting.general.admin_login_screen_backgrounds') }}
                             </label>
                             <div class="admin-login-screen-backgrounds-setting">
-                                {!! Form::mediaImages('login_screen_backgrounds[]', setting('login_screen_backgrounds')) !!}
+                                {!! Form::mediaImages('login_screen_backgrounds[]', is_array(setting('login_screen_backgrounds', '')) ? setting('login_screen_backgrounds', '') : json_decode(setting('login_screen_backgrounds', ''), true)) !!}
                             </div>
                         </div>
 
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             <label class="text-title-field"
                                    for="admin_title">{{ trans('core/setting::setting.general.admin_title') }}</label>
                             <input data-counter="120" type="text" class="next-input" name="admin_title" id="admin_title"
                                    value="{{ setting('admin_title', config('app.name')) }}">
                         </div>
 
-                        <div class="form-group">
+                        <div class="form-group mb-3">
 
                             <label class="text-title-field"
                                    for="admin_locale_direction">{{ trans('core/setting::setting.general.admin_locale_direction') }}
                             </label>
-                            <label class="hrv-label">
-                                <input type="radio" name="admin_locale_direction" class="hrv-radio" value="ltr"
+                            <label class="me-2">
+                                <input type="radio" name="admin_locale_direction" value="ltr"
                                        @if (setting('admin_locale_direction', 'ltr') == 'ltr') checked @endif>{{ trans('core/setting::setting.locale_direction_ltr') }}
                             </label>
-                            <label class="hrv-label">
-                                <input type="radio" name="admin_locale_direction" class="hrv-radio" value="rtl"
+                            <label>
+                                <input type="radio" name="admin_locale_direction" value="rtl"
                                        @if (setting('admin_locale_direction', 'ltr') == 'rtl') checked @endif>{{ trans('core/setting::setting.locale_direction_rtl') }}
                             </label>
                         </div>
 
-                        <div class="form-group">
+                        <div class="form-group mb-3">
 
                             <label class="text-title-field"
                                    for="rich_editor">{{ trans('core/setting::setting.general.rich_editor') }}
                             </label>
-                            <label class="hrv-label">
-                                <input type="radio" name="rich_editor" class="hrv-radio" value="ckeditor"
+                            <label class="me-2">
+                                <input type="radio" name="rich_editor" value="ckeditor"
                                        @if (BaseHelper::getRichEditor() == 'ckeditor') checked @endif>CKEditor
                             </label>
-                            <label class="hrv-label">
-                                <input type="radio" name="rich_editor" class="hrv-radio" value="tinymce"
+                            <label>
+                                <input type="radio" name="rich_editor" value="tinymce"
                                        @if (BaseHelper::getRichEditor() == 'tinymce') checked @endif>TinyMCE
                             </label>
                         </div>
 
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             <label class="text-title-field"
                                    for="default_admin_theme">{{ trans('core/setting::setting.general.default_admin_theme') }}
                             </label>
@@ -192,9 +193,9 @@
                         </div>
 
                         @if (count(Assets::getThemes()) > 1)
-                            <div class="form-group">
+                            <div class="form-group mb-3">
                                     <input type="hidden" name="enable_change_admin_theme" value="0">
-                                    <label><input type="checkbox" class="hrv-checkbox" value="1"
+                                    <label><input type="checkbox"  value="1"
                                                   @if (setting('enable_change_admin_theme')) checked @endif name="enable_change_admin_theme"> {{ trans('core/setting::setting.general.enable_change_admin_theme') }} </label>
                             </div>
                         @endif
@@ -215,37 +216,37 @@
                 <div class="flexbox-annotated-section-content">
                     <div class="wrapper-content pd-all-20">
 
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             <label class="text-title-field"
                                    for="enable_cache">{{ trans('core/setting::setting.general.enable_cache') }}
                             </label>
-                            <label class="hrv-label">
-                                <input type="radio" name="enable_cache" class="hrv-radio" value="1" @if (setting('enable_cache')) checked @endif>
+                            <label class="me-2">
+                                <input type="radio" name="enable_cache" value="1" @if (setting('enable_cache')) checked @endif>
                                 {{ trans('core/setting::setting.general.yes') }}
                             </label>
-                            <label class="hrv-label">
-                                <input type="radio" name="enable_cache" class="hrv-radio" value="0" @if (!setting('enable_cache')) checked @endif>
+                            <label>
+                                <input type="radio" name="enable_cache" value="0" @if (!setting('enable_cache')) checked @endif>
                                 {{ trans('core/setting::setting.general.no') }}
                             </label>
                         </div>
 
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             <label class="text-title-field"
                                    for="cache_time">{{ trans('core/setting::setting.general.cache_time') }}</label>
                             <input type="number" class="next-input" name="cache_time" id="cache_time"
                                    value="{{ setting('cache_time', 10) }}">
                         </div>
 
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             <label class="text-title-field"
                                    for="enable_cache">{{ trans('core/setting::setting.general.cache_admin_menu') }}
                             </label>
-                            <label class="hrv-label">
-                                <input type="radio" name="cache_admin_menu_enable" class="hrv-radio" value="1" @if (setting('cache_admin_menu_enable')) checked @endif>
+                            <label class="me-2">
+                                <input type="radio" name="cache_admin_menu_enable" value="1" @if (setting('cache_admin_menu_enable')) checked @endif>
                                 {{ trans('core/setting::setting.general.yes') }}
                             </label>
-                            <label class="hrv-label">
-                                <input type="radio" name="cache_admin_menu_enable" class="hrv-radio" value="0" @if (!setting('cache_admin_menu_enable')) checked @endif>
+                            <label>
+                                <input type="radio" name="cache_admin_menu_enable" value="0" @if (!setting('cache_admin_menu_enable')) checked @endif>
                                 {{ trans('core/setting::setting.general.no') }}
                             </label>
                         </div>

@@ -9,7 +9,6 @@ use Illuminate\Http\Request;
 
 class Authenticate extends BaseAuthenticate
 {
-
     /**
      * Handle an incoming request.
      *
@@ -37,6 +36,7 @@ class Authenticate extends BaseAuthenticate
                 if ($request->expectsJson()) {
                     return response()->json(['message' => 'Unauthenticated.'], 401);
                 }
+
                 return redirect()->route('dashboard.index');
             }
         }

@@ -105,17 +105,25 @@ class ThumbnailService
     }
 
     /**
-     * @param int $width
-     * @param int $height
+     * @param int|string $width
+     * @param int|string $height
      * @return ThumbnailService
      */
-    public function setSize($width, $height = null)
+    public function setSize($width, $height = 'auto')
     {
         $this->thumbWidth = $width;
         $this->thumbHeight = $height;
 
-        if (empty($height)) {
-            $this->thumbHeight = $this->thumbWidth * $this->thumbRate;
+        if (!$height || $height == 'auto') {
+            $this->thumbHeight = 0;
+        } elseif ($height == 'rate') {
+            $this->thumbHeight = (int)($this->thumbWidth * $this->thumbRate);
+        }
+
+        if (!$width || $width == 'auto') {
+            $this->thumbWidth = 0;
+        } elseif ($width == 'rate') {
+            $this->thumbWidth = (int)($this->thumbHeight * $this->thumbRate);
         }
 
         return $this;
@@ -196,15 +204,41 @@ class ThumbnailService
 
         $thumbImage = $this->imageManager->make($this->imagePath);
 
+        if ($this->thumbWidth && !$this->thumbHeight) {
+            $type = 'width';
+        } elseif ($this->thumbHeight && !$this->thumbWidth) {
+            $type = 'height';
+        }
+
         switch ($type) {
+            case 'width':
+                $thumbImage->resize($this->thumbWidth, null, function ($constraint) {
+                    $constraint->aspectRatio();
+                    $constraint->upsize();
+                });
+                break;
+
+            case 'height':
+                $thumbImage->resize(null, $this->thumbHeight, function ($constraint) {
+                    $constraint->aspectRatio();
+                    $constraint->upsize();
+                });
+                break;
+
             case 'resize':
                 $thumbImage->resize($this->thumbWidth, $this->thumbHeight);
                 break;
+
             case 'crop':
                 $thumbImage->crop($this->thumbWidth, $this->thumbHeight, $this->xCoordinate, $this->yCoordinate);
                 break;
+
             case 'fit':
-                $thumbImage->fit($this->thumbWidth, $this->thumbHeight, null, $this->fitPosition);
+            default:
+                $thumbImage
+                    ->orientate()
+                    ->fit($this->thumbWidth, $this->thumbHeight, null, $this->fitPosition);
+                break;
         }
 
         try {

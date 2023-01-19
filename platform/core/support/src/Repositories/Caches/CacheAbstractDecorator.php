@@ -56,7 +56,7 @@ abstract class CacheAbstractDecorator implements RepositoryInterface
                 get_class($this) .
                 $function .
                 serialize(request()->input()) . serialize(url()->current()) .
-                serialize(func_get_args())
+                serialize(json_encode($args))
             );
 
             if ($this->cache->has($cacheKey)) {

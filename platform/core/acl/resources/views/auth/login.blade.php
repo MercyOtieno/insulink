@@ -4,19 +4,19 @@
     <p>{{ trans('core/acl::auth.sign_in_below') }}:</p>
 
     {!! Form::open(['route' => 'access.login', 'class' => 'login-form']) !!}
-        <div class="form-group" id="emailGroup">
+        <div class="form-group mb-3" id="emailGroup">
             <label>{{ trans('core/acl::auth.login.username') }}</label>
             {!! Form::text('username', request()->input('email', old('username', app()->environment('demo') ? config('core.base.general.demo.account.username', 'botble') : null)), ['class' => 'form-control', 'placeholder' => trans('core/acl::auth.login.username')]) !!}
         </div>
 
-        <div class="form-group" id="passwordGroup">
+        <div class="form-group mb-3" id="passwordGroup">
             <label>{{ trans('core/acl::auth.login.password') }}</label>
             {!! Form::input('password', 'password', request()->input('email') ? null : (app()->environment('demo') ? config('core.base.general.demo.account.password', '159357') : null), ['class' => 'form-control', 'placeholder' => trans('core/acl::auth.login.password')]) !!}
         </div>
 
         <div>
             <label>
-                {!! Form::checkbox('remember', '1', true, ['class' => 'hrv-checkbox']) !!} {{ trans('core/acl::auth.login.remember') }}
+                {!! Form::checkbox('remember', '1', true) !!} {{ trans('core/acl::auth.login.remember') }}
             </label>
         </div>
         <br>
