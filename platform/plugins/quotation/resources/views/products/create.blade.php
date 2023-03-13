@@ -65,7 +65,7 @@
                         </div>
                         <div class="form-group">
                             <label for="">Product/Cover Description</label>
-                            <textarea name="product_description"  class="form-control tinymce-editor" cols="40" rows="5">{{$product->product_description}}</textarea>
+                            <textarea name="product_description"  class="form-control tinymce-editor" cols="40" rows="5"></textarea>
                         </div>
 
                         <div class="form-group">

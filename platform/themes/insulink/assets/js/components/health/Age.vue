@@ -6,7 +6,7 @@
       >
         You can save more by Providing Accurate data
       </h2>
-    
+
 
       <div class="row justify-content-center my-6">
         <div class="col-sm-8">
@@ -14,23 +14,23 @@
           <el-card class="box-card">
             <div class="form-group">
               <label for="">Select your Age Bracket below </label>
-              <el-radio-group v-model="age" >
-                  <el-radio :label="1" border>18 years - 30 years </el-radio>
-                  <el-radio :label="2" border>31 years - 40 years </el-radio>
-                  <el-radio :label="3" border>41 years - 50 years </el-radio>
-                  <el-radio :label="4" border>51 years - 60 years </el-radio>
-                  <el-radio :label="5" border>61 years - 70 years </el-radio>
-                  <el-radio :label="6" border>71 years - above</el-radio>
-              </el-radio-group>
+                <select v-model="age" id="age" class="form-control">
+                    <option value="1">18 years - 30 years </option>
+                    <option value="2">31 years - 40 years </option>
+                    <option value="3">41 years - 50 years </option>
+                    <option value="4">51 years - 60 years </option>
+                    <option value="5">61 years - 70 years </option>
+                    <option value="6">71 years - above</option>
+                </select>
           </div>
           </el-card>
-          
+
         </div>
       </div>
       <div class="row justify-content-center my-6" v-if="this.age === 1 || this.age === 2 || this.age === 3 || this.age === 4 || this.age === 5 ">
         <div class="col-sm-8">
            <div class="card">
-             
+
             <div class="card-body">
               <h4 class="card-title">
                Cover Details
@@ -70,7 +70,7 @@
         :default-value="min"
         :disabled-date="disabledBeforeTodayAndAfterAWeek"
       ></date-picker>
-               
+
               </div>
             </div>
            </div>
@@ -219,7 +219,7 @@ export default {
           value: '50000',
           label: 'Kes 50,000'
         }],
-      
+
         dob: maxDate,
         min:maxDate
     };

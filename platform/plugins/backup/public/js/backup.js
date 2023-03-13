@@ -1,1 +1,127 @@
-(()=>{function e(e,t){for(var o=0;o<t.length;o++){var r=t[o];r.enumerable=r.enumerable||!1,r.configurable=!0,"value"in r&&(r.writable=!0),Object.defineProperty(e,r.key,r)}}var t=function(){function t(){!function(e,t){if(!(e instanceof t))throw new TypeError("Cannot call a class as a function")}(this,t)}var o,r,a;return o=t,(r=[{key:"init",value:function(){var e=$("#table-backups");e.on("click",".deleteDialog",(function(e){e.preventDefault(),$(".delete-crud-entry").data("section",$(e.currentTarget).data("section")),$(".modal-confirm-delete").modal("show")})),e.on("click",".restoreBackup",(function(e){e.preventDefault(),$("#restore-backup-button").data("section",$(e.currentTarget).data("section")),$("#restore-backup-modal").modal("show")})),$(".delete-crud-entry").on("click",(function(t){t.preventDefault(),$(".modal-confirm-delete").modal("hide");var o=$(t.currentTarget).data("section");$.ajax({url:o,type:"DELETE",success:function(t){t.error?Botble.showError(t.message):(e.find('a[data-section="'+o+'"]').closest("tr").remove(),Botble.showSuccess(t.message))},error:function(e){Botble.handleError(e)}})})),$("#restore-backup-button").on("click",(function(e){e.preventDefault();var t=$(e.currentTarget);t.addClass("button-loading"),$.ajax({url:t.data("section"),type:"GET",success:function(e){t.removeClass("button-loading"),t.closest(".modal").modal("hide"),e.error?Botble.showError(e.message):(Botble.showSuccess(e.message),window.location.reload())},error:function(e){t.removeClass("button-loading"),Botble.handleError(e)}})})),$(document).on("click","#generate_backup",(function(e){e.preventDefault(),$("#name").val(""),$("#description").val(""),$("#create-backup-modal").modal("show")})),$("#create-backup-modal").on("click","#create-backup-button",(function(t){t.preventDefault();var o=$(t.currentTarget);o.addClass("button-loading");var r=$("#name").val(),a=$("#description").val(),n=!1;""!==r&&null!==r||(n=!0,Botble.showError("Backup name is required!")),""!==a&&null!==a||(n=!0,Botble.showError("Backup description is required!")),n?o.removeClass("button-loading"):$.ajax({url:$("div[data-route-create]").data("route-create"),type:"POST",data:{name:r,description:a},success:function(t){o.removeClass("button-loading"),o.closest(".modal").modal("hide"),t.error?Botble.showError(t.message):(e.find(".no-backup-row").remove(),e.find("tbody").append(t.data),Botble.showSuccess(t.message))},error:function(e){o.removeClass("button-loading"),Botble.handleError(e)}})}))}}])&&e(o.prototype,r),a&&e(o,a),Object.defineProperty(o,"prototype",{writable:!1}),t}();$(document).ready((function(){(new t).init()}))})();
+/******/ (() => { // webpackBootstrap
+var __webpack_exports__ = {};
+/*!***************************************************************!*\
+  !*** ./platform/plugins/backup/resources/assets/js/backup.js ***!
+  \***************************************************************/
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
+var BackupManagement = /*#__PURE__*/function () {
+  function BackupManagement() {
+    _classCallCheck(this, BackupManagement);
+  }
+  _createClass(BackupManagement, [{
+    key: "init",
+    value: function init() {
+      var table_backup = $('#table-backups');
+      table_backup.on('click', '.deleteDialog', function (event) {
+        event.preventDefault();
+        $('.delete-crud-entry').data('section', $(event.currentTarget).data('section'));
+        $('.modal-confirm-delete').modal('show');
+      });
+      table_backup.on('click', '.restoreBackup', function (event) {
+        event.preventDefault();
+        $('#restore-backup-button').data('section', $(event.currentTarget).data('section'));
+        $('#restore-backup-modal').modal('show');
+      });
+      $('.delete-crud-entry').on('click', function (event) {
+        event.preventDefault();
+        $('.modal-confirm-delete').modal('hide');
+        var deleteURL = $(event.currentTarget).data('section');
+        $.ajax({
+          url: deleteURL,
+          type: 'DELETE',
+          success: function success(data) {
+            if (data.error) {
+              Botble.showError(data.message);
+            } else {
+              table_backup.find('a[data-section="' + deleteURL + '"]').closest('tr').remove();
+              Botble.showSuccess(data.message);
+            }
+          },
+          error: function error(data) {
+            Botble.handleError(data);
+          }
+        });
+      });
+      $('#restore-backup-button').on('click', function (event) {
+        event.preventDefault();
+        var _self = $(event.currentTarget);
+        _self.addClass('button-loading');
+        $.ajax({
+          url: _self.data('section'),
+          type: 'GET',
+          success: function success(data) {
+            _self.removeClass('button-loading');
+            _self.closest('.modal').modal('hide');
+            if (data.error) {
+              Botble.showError(data.message);
+            } else {
+              Botble.showSuccess(data.message);
+              window.location.reload();
+            }
+          },
+          error: function error(data) {
+            _self.removeClass('button-loading');
+            Botble.handleError(data);
+          }
+        });
+      });
+      $(document).on('click', '#generate_backup', function (event) {
+        event.preventDefault();
+        $('#name').val('');
+        $('#description').val('');
+        $('#create-backup-modal').modal('show');
+      });
+      $('#create-backup-modal').on('click', '#create-backup-button', function (event) {
+        event.preventDefault();
+        var _self = $(event.currentTarget);
+        _self.addClass('button-loading');
+        var name = $('#name').val();
+        var description = $('#description').val();
+        var error = false;
+        if (name === '' || name === null) {
+          error = true;
+          Botble.showError('Backup name is required!');
+        }
+        if (description === '' || description === null) {
+          error = true;
+          Botble.showError('Backup description is required!');
+        }
+        if (!error) {
+          $.ajax({
+            url: $('div[data-route-create]').data('route-create'),
+            type: 'POST',
+            data: {
+              name: name,
+              description: description
+            },
+            success: function success(data) {
+              _self.removeClass('button-loading');
+              _self.closest('.modal').modal('hide');
+              if (data.error) {
+                Botble.showError(data.message);
+              } else {
+                table_backup.find('.no-backup-row').remove();
+                table_backup.find('tbody').append(data.data);
+                Botble.showSuccess(data.message);
+              }
+            },
+            error: function error(data) {
+              _self.removeClass('button-loading');
+              Botble.handleError(data);
+            }
+          });
+        } else {
+          _self.removeClass('button-loading');
+        }
+      });
+    }
+  }]);
+  return BackupManagement;
+}();
+$(document).ready(function () {
+  new BackupManagement().init();
+});
+/******/ })()
+;
