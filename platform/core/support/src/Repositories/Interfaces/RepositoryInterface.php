@@ -2,10 +2,12 @@
 
 namespace Botble\Support\Repositories\Interfaces;
 
+use Botble\Base\Models\BaseQueryBuilder;
 use Eloquent;
 use Exception;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 
@@ -14,9 +16,9 @@ interface RepositoryInterface
     /**
      * @param Builder|Model $data
      * @param bool $isSingle
-     * @return Builder
+     * @return Builder|BaseQueryBuilder
      */
-    public function applyBeforeExecuteQuery($data, $isSingle = false);
+    public function applyBeforeExecuteQuery($data, bool $isSingle = false);
 
     /**
      * Runtime override of the model.
@@ -24,11 +26,11 @@ interface RepositoryInterface
      * @param string $model
      * @return $this
      */
-    public function setModel($model);
+    public function setModel(string $model);
 
     /**
      * Get empty model.
-     * @return Eloquent|Model
+     * @return Eloquent|Model|SoftDeletes
      */
     public function getModel();
 
@@ -37,7 +39,7 @@ interface RepositoryInterface
      *
      * @return string
      */
-    public function getTable();
+    public function getTable(): string;
 
     /**
      * Make a new instance of the entity to query on.
@@ -59,14 +61,14 @@ interface RepositoryInterface
     /**
      * Retrieve model by id regardless of status.
      *
-     * @param int $id
+     * @param int|string $id
      * @param array $with
      * @return mixed
      */
     public function findById($id, array $with = []);
 
     /**
-     * @param int $id
+     * @param int|string $id
      * @param array $with
      * @return mixed
      */
@@ -78,13 +80,13 @@ interface RepositoryInterface
      * @param array $condition
      * @return array
      */
-    public function pluck($column, $key = null, array $condition = []);
+    public function pluck(string $column, $key = null, array $condition = []);
 
     /**
      * Get all models.
      *
      * @param array $with Eager load related models
-     * @return Model
+     * @return Collection
      */
     public function all(array $with = []);
 
@@ -121,7 +123,7 @@ interface RepositoryInterface
      * @return bool
      * @throws Exception
      */
-    public function delete(Model $model);
+    public function delete(Model $model): bool;
 
     /**
      * @param array $data
@@ -155,7 +157,7 @@ interface RepositoryInterface
      * @param array $condition
      * @return int
      */
-    public function count(array $condition = []);
+    public function count(array $condition = []): int;
 
     /**
      * @param $column
@@ -195,7 +197,7 @@ interface RepositoryInterface
      * @param array $data
      * @return bool
      */
-    public function insert(array $data);
+    public function insert(array $data): bool;
 
     /**
      * @param array $condition

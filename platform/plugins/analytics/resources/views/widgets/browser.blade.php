@@ -12,7 +12,7 @@
                 @foreach ($browsers as $browser)
                     <tr>
                         <td>{{ $loop->index + 1 }}</td>
-                        <td class="text-left">{{ $browser['browser'] }}</td>
+                        <td class="text-start">{{ $browser['browser'] }}</td>
                         <td>{{ $browser['sessions'] }} ({{ trans('plugins/analytics::analytics.sessions') }})</td>
                     </tr>
                 @endforeach

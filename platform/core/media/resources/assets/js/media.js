@@ -65,18 +65,25 @@ class MediaManagement {
          */
         let $mediaDetailsCheckbox = $('#media_details_collapse');
         $mediaDetailsCheckbox.prop('checked', MediaConfig.hide_details_pane || false);
+
         setTimeout(() => {
             $('.rv-media-details').removeClass('hidden');
         }, 300);
+
         $mediaDetailsCheckbox.on('change', event => {
             event.preventDefault();
             MediaConfig.hide_details_pane = $(event.currentTarget).is(':checked');
             Helpers.storeConfig();
         });
 
-        $(document).off('click', 'button[data-dismiss-modal]').on('click', 'button[data-dismiss-modal]', event => {
-            let modal = $(event.currentTarget).data('dismiss-modal');
-            $(modal).modal('hide');
+        $(document).on('click', '.js-download-action', event => {
+            event.preventDefault();
+            $('#modal_download_url').modal('show');
+        });
+
+        $(document).on('click', '.js-create-folder-action', event => {
+            event.preventDefault();
+            $('#modal_add_folder').modal('show');
         });
     }
 
@@ -213,6 +220,10 @@ class MediaManagement {
 
                 MediaConfig.request_params[data.type] = data.value;
 
+                if (window.rvMedia.options) {
+                    window.rvMedia.options.view_in = data.value;
+                }
+
                 if (data.type === 'view_in') {
                     MediaConfig.request_params.folder_id = 0;
                     if (data.value === 'trash') {
@@ -339,15 +350,42 @@ class MediaManagement {
 
     handleModals() {
         let _self = this;
+
         /*Rename files*/
         _self.$body.on('show.bs.modal', '#modal_rename_items', () => {
             ActionsService.renderRenameItems();
+        });
+
+        _self.$body.on('show.bs.modal', '#modal_alt_text_items', () => {
+            ActionsService.renderAltTextItems();
+        });
+
+        _self.$body.on('show.bs.modal', '#modal_crop_image', () => {
+            ActionsService.renderCropImage();
         });
 
         _self.$body.on('hidden.bs.modal', '#modal_download_url', () => {
             let $el = $('#modal_download_url');
             $el.find('textarea').val('');
             $el.find('#modal-notice').empty();
+        })
+
+        _self.$body.off('submit', '#modal_crop_image .form-crop').on('submit', '#modal_crop_image .form-crop', event => {
+            event.preventDefault()
+
+            const $form = $(event.currentTarget);
+            const imageId = $form.find('input[name="image_id"]').val()
+            const cropData = $form.find('input[name="crop_data"]').val()
+            ActionsService.processAction({
+                action: $form.data('action'),
+                imageId,
+                cropData
+            }, response => {
+                if (! response.error) {
+                    $form.closest('.modal').modal('hide');
+                    _self.MediaService.getMedia(true);
+                }
+            })
         })
 
         _self.$body.off('submit', '#modal_rename_items .form-rename').on('submit', '#modal_rename_items .form-rename', event => {
@@ -381,6 +419,39 @@ class MediaManagement {
                 }
             });
         });
+
+        _self.$body.off('submit', '#modal_alt_text_items .form-alt-text').on('submit', '#modal_alt_text_items .form-alt-text', event => {
+            event.preventDefault()
+
+            let items = [];
+            let $form = $(event.currentTarget);
+
+            $('#modal_alt_text_items .form-control').each((index, el) => {
+                let $current = $(el);
+                let data = $current.closest('.form-group').data();
+                data.alt = $current.val();
+                items.push(data);
+            });
+
+            ActionsService.processAction({
+                action: $form.data('action'),
+                selected: items
+            }, res => {
+                if (!res.error) {
+                    $form.closest('.modal').modal('hide');
+                    _self.MediaService.getMedia(true);
+                } else {
+                    $('#modal_alt_text_items .form-group').each((index, el) => {
+                        let $current = $(el);
+                        if (_.includes(res.data, $current.data('id'))) {
+                            $current.addClass('has-error');
+                        } else {
+                            $current.removeClass('has-error');
+                        }
+                    });
+                }
+            });
+        })
 
         /*Delete files*/
         _self.$body.off('submit', '.form-delete-items').on('submit', '.form-delete-items', event => {
@@ -449,27 +520,27 @@ class MediaManagement {
     }
 
     bindIntegrateModalEvents() {
-        let $main_modal = $('#rv_media_modal');
+        let $mainModal = $('#rv_media_modal');
         let _self = this;
-        $main_modal.off('click', '.js-insert-to-editor').on('click', '.js-insert-to-editor', event => {
+        $mainModal.off('click', '.js-insert-to-editor').on('click', '.js-insert-to-editor', event => {
             event.preventDefault();
             let selectedFiles = Helpers.getSelectedFiles();
             if (_.size(selectedFiles) > 0) {
                 window.rvMedia.options.onSelectFiles(selectedFiles, window.rvMedia.$el);
                 if (_self.checkFileTypeSelect(selectedFiles)) {
-                    $main_modal.find('.close').trigger('click');
+                    $mainModal.find('.btn-close').trigger('click');
                 }
             }
         });
 
-        $main_modal.off('dblclick', '.js-media-list-title').on('dblclick', '.js-media-list-title', event => {
+        $mainModal.off('dblclick', '.js-media-list-title').on('dblclick', '.js-media-list-title', event => {
             event.preventDefault();
             if (Helpers.getConfigs().request_params.view_in !== 'trash') {
                 let selectedFiles = Helpers.getSelectedFiles();
                 if (_.size(selectedFiles) > 0) {
                     window.rvMedia.options.onSelectFiles(selectedFiles, window.rvMedia.$el);
                     if (_self.checkFileTypeSelect(selectedFiles)) {
-                        $main_modal.find('.close').trigger('click');
+                        $mainModal.find('.btn-close').trigger('click');
                     }
                 }
             } else {
@@ -485,7 +556,6 @@ class MediaManagement {
             }
         });
     }
-
 
     // Scroll get more media
     scrollGetMore() {

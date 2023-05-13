@@ -3,6 +3,10 @@
 namespace Botble\Menu;
 
 use Botble\Base\Enums\BaseStatusEnum;
+use Botble\Base\Events\CreatedContentEvent;
+use Botble\Base\Events\UpdatedContentEvent;
+use Botble\Base\Models\BaseModel;
+use Botble\Menu\Models\MenuNode;
 use Botble\Menu\Repositories\Eloquent\MenuRepository;
 use Botble\Menu\Repositories\Interfaces\MenuInterface;
 use Botble\Menu\Repositories\Interfaces\MenuNodeInterface;
@@ -11,166 +15,120 @@ use Collective\Html\HtmlBuilder;
 use Exception;
 use Illuminate\Cache\CacheManager;
 use Illuminate\Config\Repository;
-use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Theme;
-use Throwable;
 
 class Menu
 {
-    /**
-     * @var MenuInterface
-     */
-    protected $menuRepository;
+    protected Cache $cache;
 
-    /**
-     * @var HtmlBuilder
-     */
-    protected $html;
+    protected array $menuOptionModels = [];
 
-    /**
-     * @var MenuNodeInterface
-     */
-    protected $menuNodeRepository;
+    protected Collection|array $data = [];
 
-    /**
-     * @var Cache
-     */
-    protected $cache;
+    protected bool $loaded = false;
 
-    /**
-     * @var Repository
-     */
-    protected $config;
-
-    /**
-     * @var array
-     */
-    protected $menuOptionModels = [];
-
-    /**
-     * @var Collection
-     */
-    protected $data = [];
-
-    /**
-     * Whether the settings data are loaded.
-     *
-     * @var boolean
-     */
-    protected $loaded = false;
-
-    /**
-     * Menu constructor.
-     * @param MenuInterface $menuRepository
-     * @param HtmlBuilder $html
-     * @param MenuNodeInterface $menuNodeRepository
-     * @param CacheManager $cache
-     * @param Repository $config
-     */
     public function __construct(
-        MenuInterface $menuRepository,
-        HtmlBuilder $html,
-        MenuNodeInterface $menuNodeRepository,
+        protected MenuInterface $menuRepository,
+        protected HtmlBuilder $html,
+        protected MenuNodeInterface $menuNodeRepository,
         CacheManager $cache,
-        Repository $config
+        protected Repository $config
     ) {
-        $this->config = $config;
-        $this->menuRepository = $menuRepository;
-        $this->html = $html;
-        $this->menuNodeRepository = $menuNodeRepository;
         $this->cache = new Cache($cache, MenuRepository::class);
-        $this->data = collect([]);
+        $this->data = collect();
     }
 
-    /**
-     * @param string $slug
-     * @param bool $active
-     * @return bool
-     */
-    public function hasMenu($slug, $active)
+    public function hasMenu(string $slug, bool $active): bool
     {
         return $this->menuRepository->findBySlug($slug, $active);
     }
 
-    /**
-     * @param array $menuNodes
-     * @param int $menuId
-     * @param int $parentId
-     */
-    public function recursiveSaveMenu($menuNodes, $menuId, $parentId)
+    public function recursiveSaveMenu(array $menuNodes, int|string $menuId, int|string $parentId): array
     {
         try {
-            foreach ($menuNodes as $row) {
+            foreach ($menuNodes as &$row) {
                 $child = Arr::get($row, 'children', []);
-                $hasChild = 0;
-                if (!empty($child)) {
-                    $hasChild = 1;
+
+                foreach ($child as $index => $item) {
+                    $child[$index]['menuItem']['position'] = $index;
                 }
-                $parent = $this->saveMenuNode($row, $menuId, $parentId, $hasChild);
-                if (!empty($parent)) {
-                    $this->recursiveSaveMenu($child, $menuId, $parent);
+
+                $hasChild = ! empty($child);
+
+                $row['menuItem'] = $this->saveMenuNode($row['menuItem'], $menuId, $parentId, $hasChild);
+
+                if (! empty($child)) {
+                    $this->recursiveSaveMenu($child, $menuId, $row['menuItem']['id']);
                 }
             }
-        } catch (Exception $ex) {
-            info($ex->getMessage());
+
+            return $menuNodes;
+        } catch (Exception) {
+            return [];
         }
     }
 
-    /**
-     * @param array $menuItem
-     * @param int $menuId
-     * @param int $parentId
-     * @param int $hasChild
-     * @return int
-     */
-    protected function saveMenuNode($menuItem, $menuId, $parentId, $hasChild = 0)
+    protected function saveMenuNode(array $menuItem, int|string $menuId, int|string $parentId, bool $hasChild = false): array
     {
         $item = $this->menuNodeRepository->findById(Arr::get($menuItem, 'id'));
 
-        if (!$item) {
+        $created = false;
+
+        if (! $item) {
             $item = $this->menuNodeRepository->getModel();
+            $created = true;
         }
 
-        $item->title = Arr::get($menuItem, 'title');
-        $item->css_class = Arr::get($menuItem, 'class');
-        $item->position = Arr::get($menuItem, 'position');
-        $item->icon_font = Arr::get($menuItem, 'iconFont');
-        $item->target = Arr::get($menuItem, 'target');
+        $item->fill($menuItem);
         $item->menu_id = $menuId;
         $item->parent_id = $parentId;
         $item->has_child = $hasChild;
 
-        switch (Arr::get($menuItem, 'referenceType')) {
-            case 'custom-link':
-            case '':
-                $item->reference_id = 0;
-                $item->reference_type = null;
-                $item->url = Arr::get($menuItem, 'customUrl');
-                break;
-            default:
-                $item->reference_id = (int)Arr::get($menuItem, 'referenceId');
-                $item->reference_type = Arr::get($menuItem, 'referenceType');
-                if (class_exists($item->reference_type)) {
-                    $reference = $item->reference_type::find($item->reference_id);
-                    if ($reference) {
-                        $item->url = str_replace(url(''), '', $reference->url);
-                    }
-                }
-                break;
-        }
+        $item = $this->getReferenceMenuNode($menuItem, $item);
 
         $this->menuNodeRepository->createOrUpdate($item);
 
-        return $item->id;
+        $menuItem['id'] = $item->id;
+
+        if ($created) {
+            event(new CreatedContentEvent(MENU_NODE_MODULE_SCREEN_NAME, request(), $item));
+        } else {
+            event(new UpdatedContentEvent(MENU_NODE_MODULE_SCREEN_NAME, request(), $item));
+        }
+
+        return $menuItem;
     }
 
-    /**
-     * @param string $location
-     * @param string $description
-     * @return $this
-     */
+    public function getReferenceMenuNode(array $item, MenuNode $menuNode): MenuNode
+    {
+        switch (Arr::get($item, 'reference_type')) {
+            case 'custom-link':
+            case '':
+                $menuNode->reference_id = 0;
+                $menuNode->reference_type = null;
+                $menuNode->url = str_replace('&amp;', '&', Arr::get($item, 'url'));
+
+                break;
+
+            default:
+                $menuNode->reference_id = (int)Arr::get($item, 'reference_id');
+                $menuNode->reference_type = Arr::get($item, 'reference_type');
+
+                if (class_exists($menuNode->reference_type)) {
+                    $reference = $menuNode->reference_type::find($menuNode->reference_id);
+                    if ($reference) {
+                        $menuNode->url = str_replace(url(''), '', $reference->url);
+                    }
+                }
+
+                break;
+        }
+
+        return $menuNode;
+    }
+
     public function addMenuLocation(string $location, string $description): self
     {
         $locations = $this->getMenuLocations();
@@ -181,18 +139,11 @@ class Menu
         return $this;
     }
 
-    /**
-     * @return array
-     */
     public function getMenuLocations(): array
     {
         return $this->config->get('packages.menu.general.locations', []);
     }
 
-    /**
-     * @param string $location
-     * @return $this
-     */
     public function removeMenuLocation(string $location): self
     {
         $locations = $this->getMenuLocations();
@@ -203,21 +154,14 @@ class Menu
         return $this;
     }
 
-    /**
-     * @param string $location
-     * @param array $attributes
-     * @return string
-     * @throws Throwable
-     */
     public function renderMenuLocation(string $location, array $attributes = []): string
     {
-
         $this->load();
 
         $html = '';
 
         foreach ($this->data as $menu) {
-            if (!in_array($location, $menu->locations->pluck('location')->all())) {
+            if (! in_array($location, $menu->locations->pluck('location')->all())) {
                 continue;
             }
 
@@ -228,33 +172,40 @@ class Menu
         return $html;
     }
 
-    /**
-     * Make sure data is loaded.
-     *
-     * @param boolean $force Force a reload of data. Default false.
-     */
-    public function load($force = false)
+    public function isLocationHasMenu(string $location): bool
     {
-        if (!$this->loaded || $force) {
+        $this->load();
+
+        foreach ($this->data as $menu) {
+            if (in_array($location, $menu->locations->pluck('location')->all())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function load(bool $force = false): void
+    {
+        if (! $this->loaded || $force) {
             $this->data = $this->read();
             $this->loaded = true;
         }
     }
 
-    /**
-     * @return Collection
-     */
-    protected function read()
+    protected function read(): Collection
     {
-        return $this->menuRepository->allBy(['status' => BaseStatusEnum::PUBLISHED], ['menuNodes', 'locations']);
+        $with = [
+            'menuNodes',
+            'menuNodes.child',
+            'menuNodes.metadata',
+            'locations',
+        ];
+
+        return $this->menuRepository->allBy(['status' => BaseStatusEnum::PUBLISHED], $with);
     }
 
-    /**
-     * @param array $args
-     * @return mixed|null|string
-     * @throws Throwable
-     */
-    public function generateMenu(array $args = [])
+    public function generateMenu(array $args = []): ?string
     {
         $this->load();
 
@@ -264,21 +215,21 @@ class Menu
         $menu = Arr::get($args, 'menu');
 
         $slug = Arr::get($args, 'slug');
-        if (!$menu && !$slug) {
+        if (! $menu && ! $slug) {
             return null;
         }
 
         $parentId = Arr::get($args, 'parent_id', 0);
 
-        if (!$menu) {
+        if (! $menu) {
             $menu = $this->data->where('slug', $slug)->first();
         }
 
-        if (!$menu) {
+        if (! $menu) {
             return null;
         }
 
-        if (!Arr::has($args, 'menu_nodes')) {
+        if (! Arr::has($args, 'menu_nodes')) {
             $menuNodes = $menu->menuNodes->where('parent_id', $parentId);
         } else {
             $menuNodes = Arr::get($args, 'menu_nodes', []);
@@ -286,10 +237,12 @@ class Menu
 
         if ($menuNodes instanceof Collection) {
             $menuNodes = $menuNodes->sortBy('position');
+        } else {
+            $menuNodes->loadMissing('reference');
         }
 
         $data = [
-            'menu'       => $menu,
+            'menu' => $menu,
             'menu_nodes' => $menuNodes,
         ];
 
@@ -306,16 +259,10 @@ class Menu
         return view('packages/menu::partials.default', $data)->render();
     }
 
-    /**
-     * @param string $model
-     * @param string $name
-     * @throws FileNotFoundException
-     * @throws Throwable
-     */
-    public function registerMenuOptions(string $model, string $name)
+    public function registerMenuOptions(string $model, string $name): void
     {
         $options = Menu::generateSelect([
-            'model'   => new $model,
+            'model' => new $model(),
             'options' => [
                 'class' => 'list-item',
             ],
@@ -324,22 +271,20 @@ class Menu
         echo view('packages/menu::menu-options', compact('options', 'name'));
     }
 
-    /**
-     * @param array $args
-     * @return mixed|null|string
-     * @throws FileNotFoundException
-     * @throws Throwable
-     */
-    public function generateSelect(array $args = [])
+    public function generateSelect(array $args = []): ?string
     {
+        /**
+         * @var BaseModel $model
+         */
         $model = Arr::get($args, 'model');
 
         $options = $this->html->attributes(Arr::get($args, 'options', []));
 
-        if (!Arr::has($args, 'items')) {
+        if (! Arr::has($args, 'items')) {
             if (method_exists($model, 'children')) {
-                $items = $model->where('parent_id', Arr::get($args, 'parent_id', 0))
-                    ->with('children')
+                $items = $model
+                    ->where('parent_id', Arr::get($args, 'parent_id', 0))
+                    ->with(['children', 'children.children'])
                     ->orderBy('name', 'asc');
             } else {
                 $items = $model->orderBy('name');
@@ -361,10 +306,6 @@ class Menu
         return view('packages/menu::partials.select', compact('items', 'model', 'options'))->render();
     }
 
-    /**
-     * @param string $model
-     * @return $this
-     */
     public function addMenuOptionModel(string $model): self
     {
         $this->menuOptionModels[] = $model;
@@ -372,18 +313,11 @@ class Menu
         return $this;
     }
 
-    /**
-     * @return array
-     */
     public function getMenuOptionModels(): array
     {
         return $this->menuOptionModels;
     }
 
-    /**
-     * @param array $models
-     * @return $this
-     */
     public function setMenuOptionModels(array $models): self
     {
         $this->menuOptionModels = $models;
@@ -391,19 +325,16 @@ class Menu
         return $this;
     }
 
-    /**
-     * @return $this
-     */
     public function clearCacheMenuItems(): self
     {
         try {
-            $nodes = $this->menuNodeRepository->all(['reference']);
+            $nodes = $this->menuNodeRepository->all();
 
             foreach ($nodes as $node) {
-                if (!$node->reference_type ||
-                    !class_exists($node->reference_type) ||
-                    !$node->reference_id ||
-                    !$node->reference
+                if (! $node->reference_type ||
+                    ! class_exists($node->reference_type) ||
+                    ! $node->reference_id ||
+                    ! $node->reference
                 ) {
                     continue;
                 }

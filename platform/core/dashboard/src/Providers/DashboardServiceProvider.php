@@ -2,7 +2,6 @@
 
 namespace Botble\Dashboard\Providers;
 
-use Botble\Base\Supports\Helper;
 use Botble\Base\Traits\LoadAndPublishDataTrait;
 use Botble\Dashboard\Models\DashboardWidget;
 use Botble\Dashboard\Models\DashboardWidgetSetting;
@@ -13,7 +12,6 @@ use Botble\Dashboard\Repositories\Eloquent\DashboardWidgetSettingRepository;
 use Botble\Dashboard\Repositories\Interfaces\DashboardWidgetInterface;
 use Botble\Dashboard\Repositories\Interfaces\DashboardWidgetSettingInterface;
 use Illuminate\Routing\Events\RouteMatched;
-use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -23,41 +21,40 @@ class DashboardServiceProvider extends ServiceProvider
 {
     use LoadAndPublishDataTrait;
 
-    public function register()
+    public function register(): void
     {
         $this->app->bind(DashboardWidgetInterface::class, function () {
             return new DashboardWidgetCacheDecorator(
-                new DashboardWidgetRepository(new DashboardWidget)
+                new DashboardWidgetRepository(new DashboardWidget())
             );
         });
 
         $this->app->bind(DashboardWidgetSettingInterface::class, function () {
             return new DashboardWidgetSettingCacheDecorator(
-                new DashboardWidgetSettingRepository(new DashboardWidgetSetting)
+                new DashboardWidgetSettingRepository(new DashboardWidgetSetting())
             );
         });
-
-        Helper::autoload(__DIR__ . '/../../helpers');
     }
 
-    public function boot()
+    public function boot(): void
     {
         $this->setNamespace('core/dashboard')
-            ->loadRoutes(['web'])
+            ->loadHelpers()
+            ->loadRoutes()
             ->loadAndPublishViews()
             ->loadAndPublishTranslations()
             ->publishAssets()
             ->loadMigrations();
 
-        Event::listen(RouteMatched::class, function () {
+        $this->app['events']->listen(RouteMatched::class, function () {
             dashboard_menu()
                 ->registerItem([
-                    'id'          => 'cms-core-dashboard',
-                    'priority'    => 0,
-                    'parent_id'   => null,
-                    'name'        => 'core/base::layouts.dashboard',
-                    'icon'        => 'fa fa-home',
-                    'url'         => route('dashboard.index'),
+                    'id' => 'cms-core-dashboard',
+                    'priority' => 0,
+                    'parent_id' => null,
+                    'name' => 'core/base::layouts.dashboard',
+                    'icon' => 'fa fa-home',
+                    'url' => route('dashboard.index'),
                     'permissions' => [],
                 ]);
         });

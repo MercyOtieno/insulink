@@ -2,13 +2,13 @@
 
 namespace Botble\SeoHelper\Helpers;
 
+use BaseHelper;
 use Botble\SeoHelper\Contracts\Helpers\MetaContract;
 use Botble\SeoHelper\Exceptions\InvalidArgumentException;
 use Illuminate\Support\Str;
 
 class Meta implements MetaContract
 {
-
     /**
      * Meta prefix name.
      *
@@ -93,7 +93,7 @@ class Meta implements MetaContract
      */
     protected function checkNameProperty(&$nameProperty)
     {
-        if (!is_string($nameProperty)) {
+        if (! is_string($nameProperty)) {
             throw new InvalidArgumentException(
                 'The meta name property is must be a string value, ' . gettype($nameProperty) . ' is given.'
             );
@@ -102,7 +102,7 @@ class Meta implements MetaContract
         $name = Str::slug($nameProperty);
         $allowed = ['charset', 'http-equiv', 'itemprop', 'name', 'property'];
 
-        if (!in_array($name, $allowed)) {
+        if (! in_array($name, $allowed)) {
             throw new InvalidArgumentException(
                 'The meta name property [' . $name . '] is not supported, ' .
                 'the allowed name properties are ["' . implode("', '", $allowed) . '"].'
@@ -207,7 +207,7 @@ class Meta implements MetaContract
      *
      * @return string
      */
-    protected function getName($prefixed = true)
+    protected function getName(bool $prefixed = true)
     {
         $name = $this->name;
 
@@ -227,7 +227,7 @@ class Meta implements MetaContract
      */
     protected function setName($name)
     {
-        $name = trim(strip_tags($name));
+        $name = trim(strip_tags((string)$name));
         $this->name = str_replace([' '], '-', $name);
 
         return $this;
@@ -242,7 +242,7 @@ class Meta implements MetaContract
      */
     public function clean($value)
     {
-        return e(strip_tags($value));
+        return BaseHelper::html(strip_tags((string)$value));
     }
 
     /**
@@ -250,7 +250,7 @@ class Meta implements MetaContract
      *
      * @return string
      */
-    protected function getContent()
+    public function getContent()
     {
         return $this->clean($this->content);
     }
@@ -292,6 +292,6 @@ class Meta implements MetaContract
      */
     public function isValid()
     {
-        return !empty($this->content);
+        return ! empty($this->content);
     }
 }

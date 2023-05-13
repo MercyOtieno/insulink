@@ -4,7 +4,6 @@ namespace Botble\Slug\Providers;
 
 use BaseHelper;
 use Botble\Base\Models\BaseModel;
-use Botble\Base\Supports\Helper;
 use Botble\Base\Traits\LoadAndPublishDataTrait;
 use Botble\Page\Models\Page;
 use Botble\Slug\Models\Slug;
@@ -12,7 +11,7 @@ use Botble\Slug\Repositories\Caches\SlugCacheDecorator;
 use Botble\Slug\Repositories\Eloquent\SlugRepository;
 use Botble\Slug\Repositories\Interfaces\SlugInterface;
 use Botble\Slug\SlugHelper;
-use Illuminate\Support\Facades\Event;
+use Botble\Slug\SlugCompiler;
 use Illuminate\Routing\Events\RouteMatched;
 use Illuminate\Support\ServiceProvider;
 use MacroableModels;
@@ -21,60 +20,66 @@ class SlugServiceProvider extends ServiceProvider
 {
     use LoadAndPublishDataTrait;
 
-    /**
-     * This provider is deferred and should be lazy loaded.
-     *
-     * @var boolean
-     */
-    protected $defer = true;
+    protected bool $defer = true;
 
-    public function register()
+    public function register(): void
     {
         $this->app->bind(SlugInterface::class, function () {
-            return new SlugCacheDecorator(new SlugRepository(new Slug));
+            return new SlugCacheDecorator(new SlugRepository(new Slug()));
         });
 
         $this->app->singleton(SlugHelper::class, function () {
-            return new SlugHelper;
+            return new SlugHelper(new SlugCompiler());
         });
 
-        Helper::autoload(__DIR__ . '/../../helpers');
+        $this->setNamespace('packages/slug')
+            ->loadHelpers();
     }
 
-    public function boot()
+    public function boot(): void
     {
-        $this->setNamespace('packages/slug')
+        $this
             ->loadAndPublishConfigurations(['general'])
             ->loadAndPublishViews()
-            ->loadRoutes(['web'])
+            ->loadRoutes()
             ->loadAndPublishTranslations()
             ->loadMigrations()
             ->publishAssets();
 
-        $this->app->register(FormServiceProvider::class);
         $this->app->register(EventServiceProvider::class);
         $this->app->register(CommandServiceProvider::class);
 
-        Event::listen(RouteMatched::class, function () {
+        $this->app['events']->listen(RouteMatched::class, function () {
             dashboard_menu()
                 ->registerItem([
-                    'id'          => 'cms-packages-slug-permalink',
-                    'priority'    => 5,
-                    'parent_id'   => 'cms-core-settings',
-                    'name'        => 'packages/slug::slug.permalink_settings',
-                    'icon'        => null,
-                    'url'         => route('slug.settings'),
+                    'id' => 'cms-packages-slug-permalink',
+                    'priority' => 5,
+                    'parent_id' => 'cms-core-settings',
+                    'name' => 'packages/slug::slug.permalink_settings',
+                    'icon' => null,
+                    'url' => route('slug.settings'),
                     'permissions' => ['setting.options'],
                 ]);
         });
 
         $this->app->booted(function () {
+            $this->app->register(FormServiceProvider::class);
+
             foreach (array_keys($this->app->make(SlugHelper::class)->supportedModels()) as $item) {
+                if (! class_exists($item)) {
+                    continue;
+                }
+
                 /**
                  * @var BaseModel $item
                  */
                 $item::resolveRelationUsing('slugable', function ($model) {
-                    return $model->morphOne(Slug::class, 'reference');
+                    return $model->morphOne(Slug::class, 'reference')->select([
+                        'key',
+                        'reference_type',
+                        'reference_id',
+                        'prefix',
+                    ]);
                 });
 
                 MacroableModels::addMacro($item, 'getSlugAttribute', function () {
@@ -91,16 +96,15 @@ class SlugServiceProvider extends ServiceProvider
                     return $this->slugable ? $this->slugable->id : '';
                 });
 
-                MacroableModels::addMacro($item,
+                MacroableModels::addMacro(
+                    $item,
                     'getUrlAttribute',
                     function () {
                         /**
                          * @var BaseModel $this
                          */
-                        $prefix = $this->slugable ? $this->slugable->prefix : null;
-                        $prefix = apply_filters(FILTER_SLUG_PREFIX, $prefix);
 
-                        if (!$this->slug) {
+                        if (! $this->slug) {
                             return url('');
                         }
 
@@ -108,20 +112,24 @@ class SlugServiceProvider extends ServiceProvider
                             return url('');
                         }
 
-                        return url($prefix ? $prefix . '/' . $this->slug : $this->slug);
-                    });
+                        $prefix = $this->slugable ? $this->slugable->prefix : null;
+                        $prefix = apply_filters(FILTER_SLUG_PREFIX, $prefix);
+
+                        $prefix = \SlugHelper::getTranslator()->compile($prefix, $this);
+
+                        return apply_filters(
+                            'slug_filter_url',
+                            url($prefix ? $prefix . '/' . $this->slug : $this->slug)
+                        );
+                    }
+                );
             }
 
             $this->app->register(HookServiceProvider::class);
         });
     }
 
-    /**
-     * Which IoC bindings the provider provides.
-     *
-     * @return array
-     */
-    public function provides()
+    public function provides(): array
     {
         return [
             SlugHelper::class,

@@ -2,7 +2,6 @@
 
 namespace Botble\Shortcode\Providers;
 
-use Botble\Base\Supports\Helper;
 use Botble\Base\Traits\LoadAndPublishDataTrait;
 use Botble\Shortcode\Compilers\ShortcodeCompiler;
 use Botble\Shortcode\Shortcode;
@@ -13,13 +12,7 @@ class ShortcodeServiceProvider extends ServiceProvider
 {
     use LoadAndPublishDataTrait;
 
-    /**
-     * Register the service provider.
-     *
-     * @return void
-     * @since 2.1
-     */
-    public function register()
+    public function register(): void
     {
         $this->app->singleton('shortcode.compiler', ShortcodeCompiler::class);
 
@@ -39,12 +32,16 @@ class ShortcodeServiceProvider extends ServiceProvider
             // for great testable, flexible composers for the application developer.
             $env->setContainer($app);
             $env->share('app', $app);
+
             return $env;
         });
 
-        Helper::autoload(__DIR__ . '/../../helpers');
+        $this->app['blade.compiler']->directive('shortcode', function ($expression) {
+            return do_shortcode($expression);
+        });
 
         $this->setNamespace('packages/shortcode')
-            ->loadRoutes();
+            ->loadRoutes()
+            ->loadHelpers();
     }
 }

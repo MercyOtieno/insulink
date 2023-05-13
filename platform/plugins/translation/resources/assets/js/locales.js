@@ -17,7 +17,8 @@ $(document).ready(function () {
 
         $.ajax({
             url: deleteURL,
-            type: 'DELETE',
+            type: 'POST',
+            data: {'_method': 'DELETE'},
             success: data => {
                 if (data.error) {
                     Botble.showError(data.message);
@@ -66,4 +67,64 @@ $(document).ready(function () {
             }
         });
     });
+
+    let $availableRemoteLocales = $('#available-remote-locales');
+
+    if ($availableRemoteLocales.length) {
+        let getRemoteLocales = () => {
+            $.ajax({
+                url: $availableRemoteLocales.data('url'),
+                type: 'GET',
+                success: res => {
+                    if (res.error) {
+                        Botble.showError(res.message);
+                    } else {
+                        languageTable.load(window.location.href + ' .table-language > *');
+                        $availableRemoteLocales.html(res.data);
+                    }
+                },
+                error: res => {
+                    Botble.handleError(res);
+                }
+            });
+        };
+
+        getRemoteLocales();
+
+        $(document).on('click', '.btn-import-remote-locale', function (event) {
+            event.preventDefault();
+
+            $('.button-confirm-import-locale').data('url', $(this).data('url'));
+            $('.modal-confirm-import-locale').modal('show');
+        });
+
+        $('.button-confirm-import-locale').on('click', event => {
+            event.preventDefault();
+            let _self = $(event.currentTarget);
+
+            _self.addClass('button-loading');
+
+            let url = _self.data('url');
+
+            $.ajax({
+                url: url,
+                type: 'POST',
+                success: res => {
+                    if (res.error) {
+                        Botble.showError(res.message);
+                    } else {
+                        Botble.showSuccess(res.message);
+                        getRemoteLocales();
+                    }
+
+                    _self.closest('.modal').modal('hide');
+                    _self.removeClass('button-loading');
+                },
+                error: data => {
+                    Botble.handleError(data);
+                    _self.removeClass('button-loading');
+                }
+            });
+        });
+    }
 });

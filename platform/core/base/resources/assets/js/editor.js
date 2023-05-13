@@ -7,7 +7,12 @@ class EditorManagement {
     }
 
     initCkEditor(element, extraConfig) {
+        if (this.CKEDITOR[element] || !$('#' + element).is(':visible')) {
+            return false;
+        }
+
         const editor = document.querySelector('#' + element);
+
         ClassicEditor
             .create(editor, {
                 fontSize: {
@@ -33,12 +38,14 @@ class EditorManagement {
                     onEdit: (shortcode, name = () => {
                     }) => {
                         let description = null;
-                        this.shortcodes.forEach(function (item) {
-                            if (item.key === name) {
-                                description = item.description;
-                                return true;
-                            }
-                        });
+                        if (this.shortcodes.length) {
+                            this.shortcodes.forEach(function (item) {
+                                if (item.key === name) {
+                                    description = item.description;
+                                    return true;
+                                }
+                            });
+                        }
 
                         this.shortcodeCallback({
                             key: name,
@@ -47,14 +54,16 @@ class EditorManagement {
                                 code: shortcode,
                             },
                             description: description,
+                            previewImage: '',
                             update: true
                         })
                     },
-                    shortcodes: this.getShortcodesAvailable(editor),
+                    shortcodes: this.getShortcodesAvailable(editor) || [],
                     onCallback: (shortcode, options) => {
                         this.shortcodeCallback({
                             key: shortcode,
-                            href: options.url
+                            href: options.url,
+                            previewImage: ''
                         });
                     }
                 },
@@ -86,6 +95,7 @@ class EditorManagement {
                         'numberedList',
                         '|',
                         'alignment',
+                        'direction',
                         'shortcode',
                         'outdent',
                         'indent',
@@ -103,7 +113,11 @@ class EditorManagement {
                         'codeBlock',
                     ]
                 },
-                language: 'en',
+                language: {
+                    ui: window.siteEditorLocale || 'en',
+
+                    content: window.siteEditorLocale || 'en',
+                },
                 image: {
                     toolbar: [
                         'imageTextAlternative',
@@ -112,6 +126,28 @@ class EditorManagement {
                         'imageStyle:side',
                         'toggleImageCaption',
                         'ImageResize',
+                    ],
+                    upload: {
+                        types: ['jpeg', 'png', 'gif', 'bmp', 'webp', 'tiff', 'svg+xml']
+                    }
+                },
+                codeBlock: {
+                    languages: [
+                        {language: 'plaintext', label: 'Plain text'},
+                        {language: 'c', label: 'C'},
+                        {language: 'cs', label: 'C#'},
+                        {language: 'cpp', label: 'C++'},
+                        {language: 'css', label: 'CSS'},
+                        {language: 'diff', label: 'Diff'},
+                        {language: 'html', label: 'HTML'},
+                        {language: 'java', label: 'Java'},
+                        {language: 'javascript', label: 'JavaScript'},
+                        {language: 'php', label: 'PHP'},
+                        {language: 'python', label: 'Python'},
+                        {language: 'ruby', label: 'Ruby'},
+                        {language: 'typescript', label: 'TypeScript'},
+                        {language: 'xml', label: 'XML'},
+                        {language: 'dart', label: 'Dart', class: 'language-dart'},
                     ]
                 },
                 link: {
@@ -136,57 +172,16 @@ class EditorManagement {
                         'tableProperties'
                     ]
                 },
-                extraPlugins: [
-                    function (editor) {
-                        // Allow <iframe> elements in the model.
-                        editor.model.schema.register('iframe', {
-                            allowWhere: '$text',
-                            allowContentOf: '$block'
-                        });
-                        // Allow <iframe> elements in the model to have all attributes.
-                        editor.model.schema.addAttributeCheck(context => {
-                            if (context.endsWith('iframe')) {
-                                return true;
-                            }
-                        });
-                        // View-to-model converter converting a view <iframe> with all its attributes to the model.
-                        editor.conversion.for('upcast').elementToElement({
-                            view: 'iframe',
-                            model: (viewElement, modelWriter) => {
-                                return modelWriter.writer.createElement('iframe', viewElement.getAttributes());
-                            }
-                        });
-
-                        // Model-to-view converter for the <iframe> element (attributes are converted separately).
-                        editor.conversion.for('downcast').elementToElement({
-                            model: 'iframe',
-                            view: 'iframe'
-                        });
-
-                        // Model-to-view converter for <iframe> attributes.
-                        // Note that a lower-level, event-based API is used here.
-                        editor.conversion.for('downcast').add(dispatcher => {
-                            dispatcher.on('attribute', (evt, data, conversionApi) => {
-                                // Convert <iframe> attributes only.
-                                if (data.item.name !== 'iframe') {
-                                    return;
-                                }
-
-                                const viewWriter = conversionApi.writer;
-                                const viewIframe = conversionApi.mapper.toViewElement(data.item);
-
-                                // In the model-to-view conversion we convert changes.
-                                // An attribute can be added or removed or changed.
-                                // The below code handles all 3 cases.
-                                if (data.attributeNewValue) {
-                                    viewWriter.setAttribute(data.attributeKey, data.attributeNewValue, viewIframe);
-                                } else {
-                                    viewWriter.removeAttribute(data.attributeKey, viewIframe);
-                                }
-                            });
-                        });
-                    },
-                ],
+                htmlSupport: {
+                    allow: [
+                        {
+                            name: /.*/,
+                            attributes: true,
+                            classes: true,
+                            styles: true
+                        }
+                    ]
+                },
                 ...extraConfig,
             })
             .then(editor => {
@@ -241,7 +236,7 @@ class EditorManagement {
         const $dropdown = $(editor).parents('.form-group').find('.add_shortcode_btn_trigger')?.next('.dropdown-menu');
         const lists = [];
 
-        if ($dropdown) {
+        if ($dropdown && $dropdown.find('> li').length) {
             $dropdown.find('> li').each(function () {
                 let item = $(this).find('> a');
                 lists.push({
@@ -288,7 +283,7 @@ class EditorManagement {
             selector: '#' + element,
             min_height: $('#' + element).prop('rows') * 110,
             resize: 'vertical',
-            plugins: 'code autolink advlist visualchars link image media table charmap hr pagebreak nonbreaking hanbiroclip anchor insertdatetime lists textcolor wordcount imagetools  contextmenu  visualblocks',
+            plugins: 'code autolink advlist visualchars link image media table charmap hr pagebreak nonbreaking anchor insertdatetime lists wordcount imagetools visualblocks',
             extended_valid_elements: 'input[id|name|value|type|class|style|required|placeholder|autocomplete|onclick]',
             toolbar: 'formatselect | bold italic strikethrough forecolor backcolor | link image table | alignleft aligncenter alignright alignjustify  | numlist bullist indent  |  visualblocks code',
             convert_urls: false,
@@ -334,8 +329,8 @@ class EditorManagement {
     }
 
     init() {
-        let $ckEditor = $('.editor-ckeditor');
-        let $tinyMce = $('.editor-tinymce');
+        let $ckEditor = $(document).find('.editor-ckeditor');
+        let $tinyMce = $(document).find('.editor-tinymce');
         let current = this;
         if ($ckEditor.length > 0) {
             current.initEditor($ckEditor, {}, 'ckeditor');
@@ -378,6 +373,7 @@ class EditorManagement {
             description = null,
             data = {},
             update = false,
+            previewImage = null
         } = params;
         $('.short-code-admin-config').html('');
 
@@ -389,15 +385,21 @@ class EditorManagement {
             $addShortcodeButton.text($addShortcodeButton.data('add-text'));
         }
 
-        if (description !== '' && description != null) {
+        if (description != null) {
             $('.short_code_modal .modal-title strong').text(description);
+        }
+
+        if (previewImage != null && previewImage !== '') {
+            $('.short_code_modal .shortcode-preview-image-link').attr('href', previewImage).show();
+        } else {
+            $('.short_code_modal .shortcode-preview-image-link').hide();
         }
 
         $('.short_code_modal').modal('show');
         $('.half-circle-spinner').show();
 
         $.ajax({
-            type: 'GET',
+            type: 'POST',
             data: data,
             url: href,
             success: res => {
@@ -430,6 +432,7 @@ class EditorManagement {
                     href: $(this).prop('href'),
                     key: $(this).data('key'),
                     description: $(this).data('description'),
+                    previewImage: $(this).data('preview-image'),
                 });
 
             } else {
@@ -439,7 +442,7 @@ class EditorManagement {
 
                 if ($('.editor-ckeditor').length > 0) {
                     self.CKEDITOR[editorInstance].commands.execute('shortcode', shortcode);
-                } else {
+                } else if ($('.editor-tinymce').length > 0) {
                     tinymce.get(editorInstance).execCommand('mceInsertContent', false, shortcode);
                 }
             }
@@ -473,11 +476,8 @@ class EditorManagement {
                 let shortcodeAttribute = element.data('shortcode-attribute');
                 if ((!shortcodeAttribute || shortcodeAttribute !== 'content') && value) {
                     name = name.replace('[]', '');
-                    if (Array.isArray(value)) {
-                        value.map(function (i, e) {
-                            attributes += ' ' + name + '_' + (e + 1) + '="' + i + '"';
-                        });
-                    } else {
+                    if (element.data('shortcode-attribute') !== 'content') {
+                        name = name.replace('[]', '');
                         attributes += ' ' + name + '="' + value + '"';
                     }
                 }
@@ -497,8 +497,11 @@ class EditorManagement {
 
             if ($('.editor-ckeditor').length > 0) {
                 self.CKEDITOR[editorInstance].commands.execute('shortcode', shortcode);
-            } else {
+            } else if ($('.editor-tinymce').length > 0) {
                 tinymce.get(editorInstance).execCommand('mceInsertContent', false, shortcode);
+            } else {
+                const coreInsertShortCodeEvent = new CustomEvent('core-insert-shortcode', { detail: { shortcode: shortcode } })
+                document.dispatchEvent(coreInsertShortCodeEvent)
             }
 
             $(this).closest('.modal').modal('hide');

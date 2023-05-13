@@ -1,4 +1,4 @@
-@extends('core/base::layouts.master')
+@extends(BaseHelper::getAdminMasterLayoutTemplate())
 @section('content')
     @if ($showStart)
         {!! Form::open(Arr::except($formOptions, ['template'])) !!}
@@ -20,7 +20,7 @@
                             @endif
                             @if (!in_array($field->getName(), $exclude))
                                 {!! $field->render() !!}
-                                @if ($field->getName() == 'name' && defined('BASE_FILTER_SLUG_AREA'))
+                                @if (defined('BASE_FILTER_SLUG_AREA') && $field->getName() == SlugHelper::getColumnNameToGenerateSlug($form->getModel()))
                                     {!! apply_filters(BASE_FILTER_SLUG_AREA, null, $form->getModel()) !!}
                                 @endif
                             @endif
@@ -42,14 +42,18 @@
 
             @foreach ($fields as $field)
                 @if (!in_array($field->getName(), $exclude))
-                    <div class="widget meta-boxes">
-                        <div class="widget-title">
-                            <h4>{!! Form::customLabel($field->getName(), $field->getOption('label'), $field->getOption('label_attr')) !!}</h4>
+                    @if ($field->getType() == 'hidden')
+                        {!! $field->render() !!}
+                    @else
+                        <div class="widget meta-boxes">
+                            <div class="widget-title">
+                                <h4>{!! Form::customLabel($field->getName(), $field->getOption('label'), $field->getOption('label_attr')) !!}</h4>
+                            </div>
+                            <div class="widget-body">
+                                {!! $field->render([], in_array($field->getType(), ['radio', 'checkbox'])) !!}
+                            </div>
                         </div>
-                        <div class="widget-body">
-                            {!! $field->render([], in_array($field->getType(), ['radio', 'checkbox'])) !!}
-                        </div>
-                    </div>
+                    @endif
                 @endif
             @endforeach
 

@@ -1,6 +1,6 @@
 jQuery(document).ready(($) => {
 
-    $('.editable').editable().on('hidden', (e, reason) => {
+    $('.editable').editable({mode: 'inline'}).on('hidden', (e, reason) => {
         let locale = $(event.currentTarget).data('locale');
         if (reason === 'save') {
             $(event.currentTarget).removeClass('status-0').addClass('status-1');
@@ -20,16 +20,6 @@ jQuery(document).ready(($) => {
         } else {
             window.location.href = route('translations.index');
         }
-    });
-
-    $('a.delete-key').click(event => {
-        event.preventDefault();
-        let row = $(event.currentTarget).closest('tr');
-        let url = $(event.currentTarget).attr('href');
-        let id = row.attr('id');
-        $.post(url, {id: id}, () => {
-            row.remove();
-        });
     });
 
     $('.box-translation').on('click', '.button-import-groups', event => {

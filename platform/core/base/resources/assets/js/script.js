@@ -16,15 +16,15 @@ class Botble {
 
     static blockUI(options) {
         options = $.extend(true, {}, options);
-        let html = '';
+        let html;
         if (options.animate) {
             html = '<div class="loading-message ' + (options.boxed ? 'loading-message-boxed' : '') + '">' + '<div class="block-spinner-bar"><div class="bounce1"></div><div class="bounce2"></div><div class="bounce3"></div></div>' + '</div>';
         } else if (options.iconOnly) {
-            html = '<div class="loading-message ' + (options.boxed ? 'loading-message-boxed' : '') + '"><img src="/vendor/core/core/base/images/loading-spinner-blue.gif" alt="loading"></div>';
+            html = '<div class="loading-message ' + (options.boxed ? 'loading-message-boxed' : '') + '"><img src="' + window.siteUrl + '/vendor/core/core/base/images/loading-spinner-blue.gif" alt="loading"></div>';
         } else if (options.textOnly) {
             html = '<div class="loading-message ' + (options.boxed ? 'loading-message-boxed' : '') + '"><span>&nbsp;&nbsp;' + (options.message ? options.message : 'LOADING...') + '</span></div>';
         } else {
-            html = '<div class="loading-message ' + (options.boxed ? 'loading-message-boxed' : '') + '"><img src="/vendor/core/core/base/images/loading-spinner-blue.gif" alt="loading"><span>&nbsp;&nbsp;' + (options.message ? options.message : 'LOADING...') + '</span></div>';
+            html = '<div class="loading-message ' + (options.boxed ? 'loading-message-boxed' : '') + '"><img src="' + window.siteUrl + '/vendor/core/core/base/images/loading-spinner-blue.gif" alt="loading"><span>&nbsp;&nbsp;' + (options.message ? options.message : 'LOADING...') + '</span></div>';
         }
 
         if (options.target) { // element blocking
@@ -302,35 +302,65 @@ class Botble {
     }
 
     static initDatePicker(element) {
-        if (jQuery().bootstrapDP) {
-            let format = $(document).find(element).data('date-format');
-            if (!format) {
-                format = 'yyyy-mm-dd';
+        if (jQuery().flatpickr) {
+            let format = $(document).find(element).find('input').data('date-format');
+
+            if (! format) {
+                format = 'Y-m-d';
             }
-            $(document).find(element).bootstrapDP({
-                maxDate: 0,
-                changeMonth: true,
-                changeYear: true,
-                autoclose: true,
+
+            $(document).find(element).flatpickr({
                 dateFormat: format,
+                wrap: true
             });
         }
     }
 
     static initResources() {
+
         if (jQuery().select2) {
-            $(document).find('.select-multiple').select2({
-                width: '100%',
-                allowClear: true,
+            $.each($(document).find('.select-multiple'), function (index, element) {
+                let options = {
+                    width: '100%',
+                    allowClear: true,
+                };
+
+                let parent = $(element).closest('div[data-select2-dropdown-parent]') || $(element).closest('.modal');
+                if (parent.length) {
+                    options.dropdownParent = parent;
+                    options.width = '100%';
+                    options.minimumResultsForSearch = -1;
+                }
+
+                $(element).select2(options);
             });
 
-            $(document).find('.select-search-full').select2({
-                width: '100%'
+            $.each($(document).find('.select-search-full'), function (index, element) {
+                let options = {
+                    width: '100%',
+                };
+
+                let parent = $(element).closest('div[data-select2-dropdown-parent]') || $(element).closest('.modal');
+                if (parent.length) {
+                    options.dropdownParent = parent;
+                    options.minimumResultsForSearch = -1;
+                }
+
+                $(element).select2(options);
             });
 
-            $(document).find('.select-full').select2({
-                width: '100%',
-                minimumResultsForSearch: -1
+            $.each($(document).find('.select-full'), function (index, element) {
+                let options = {
+                    width: '100%',
+                    minimumResultsForSearch: -1
+                };
+
+                let parent = $(element).closest('div[data-select2-dropdown-parent]') || $(element).closest('.modal');
+                if (parent.length) {
+                    options.dropdownParent = parent;
+                }
+
+                $(element).select2(options);
             });
 
             $('select[multiple].select-sorting').on('select2:select', function (evt) {
@@ -338,21 +368,20 @@ class Botble {
 
                 $element.detach();
                 $(this).append($element);
-                $(this).trigger("change");
+                $(this).trigger('change');
             });
 
-            $.each($(document).find('.select-search-ajax'), function (index, value) {
-                const $elSelect = $(value);
-                if ($elSelect.data('url')) {
-                    $elSelect.select2({
-                        placeholder: $elSelect.data('placeholder') || '--Select--',
-                        minimumInputLength: $elSelect.data('minimum-input') || 1,
+            $.each($(document).find('.select-search-ajax'), function (index, element) {
+                if ($(element).data('url')) {
+                    let options = {
+                        placeholder: $(element).data('placeholder') || '--Select--',
+                        minimumInputLength: $(element).data('minimum-input') || 1,
                         width: '100%',
                         delay: 250,
                         ajax: {
-                            url: $elSelect.data('url'),
+                            url: $(element).data('url'),
                             dataType: 'json',
-                            type: $(value).data('type') || 'GET',
+                            type: $(element).data('type') || 'GET',
                             quietMillis: 50,
                             data: function (params) {
                                 // Query parameters will be ?search=[term]&page=[page]
@@ -389,7 +418,14 @@ class Botble {
                             cache: true
                         },
                         allowClear: true
-                    });
+                    };
+
+                    let parent = $(element).closest('div[data-select2-dropdown-parent]') || $(element).closest('.modal');
+                    if (parent.length) {
+                        options.dropdownParent = parent;
+                    }
+
+                    $(element).select2(options);
                 }
             });
         }
@@ -415,53 +451,59 @@ class Botble {
         }
 
         if (jQuery().inputmask) {
-            $(document).find('.input-mask-number').inputmask({
-                alias: 'numeric',
-                rightAlign: false,
-                digits: 2,
-                groupSeparator: ',',
-                placeholder: '0',
-                autoGroup: true,
-                autoUnmask: true,
-                removeMaskOnSubmit: true,
+            $.each($(document).find('.input-mask-number'), function (index, element) {
+                $(element).inputmask({
+                    alias: 'numeric',
+                    rightAlign: false,
+                    digits: $(element).data('digits') ?? 5,
+                    groupSeparator: $(element).data('thousands-separator') ?? ',',
+                    radixPoint: $(element).data('decimal-separator') ?? '.',
+                    digitsOptional: true,
+                    placeholder: $(element).data('placeholder') ?? '0',
+                    autoGroup: true,
+                    autoUnmask: true,
+                    removeMaskOnSubmit: true,
+                });
             });
         }
 
         if (jQuery().colorpicker) {
-            $('.color-picker').colorpicker({
-                inline: false,
-                container: true,
-                format: 'hex',
-                extensions: [
-                    {
-                        name: 'swatches',
-                        options: {
-                            colors: {
-                                'tetrad1': '#000000',
-                                'tetrad2': '#000000',
-                                'tetrad3': '#000000',
-                                'tetrad4': '#000000'
-                            },
-                            namesAsValues: false
+            $.each($(document).find('.color-picker'), function (index, element) {
+                $(element).colorpicker({
+                    inline: false,
+                    container: true,
+                    format: 'hex',
+                    extensions: [
+                        {
+                            name: 'swatches',
+                            options: {
+                                colors: {
+                                    'tetrad1': '#000000',
+                                    'tetrad2': '#000000',
+                                    'tetrad3': '#000000',
+                                    'tetrad4': '#000000'
+                                },
+                                namesAsValues: false
+                            }
                         }
-                    }
-                ]
-            })
-                .on('colorpickerChange colorpickerCreate', function (e) {
-                    var colors = e.color.generate('tetrad');
+                    ]
+                })
+                    .on('colorpickerChange colorpickerCreate', function (e) {
+                        let colors = e.color.generate('tetrad');
 
-                    colors.forEach(function (color, i) {
-                        var colorStr = color.string(),
-                            swatch = e.colorpicker.picker
-                                .find('.colorpicker-swatch[data-name="tetrad' + (i + 1) + '"]');
+                        colors.forEach(function (color, i) {
+                            let colorStr = color.string(),
+                                swatch = e.colorpicker.picker
+                                    .find('.colorpicker-swatch[data-name="tetrad' + (i + 1) + '"]');
 
-                        swatch
-                            .attr('data-value', colorStr)
-                            .attr('title', colorStr)
-                            .find('> i')
-                            .css('background-color', colorStr);
+                            swatch
+                                .attr('data-value', colorStr)
+                                .attr('title', colorStr)
+                                .find('> i')
+                                .css('background-color', colorStr);
+                        });
                     });
-                });
+            });
         }
 
         if (jQuery().fancybox) {
@@ -475,6 +517,7 @@ class Botble {
                 overlayShow: true,
                 overlayOpacity: 0.7
             });
+
             $('.fancybox').fancybox({
                 openEffect: 'none',
                 closeEffect: 'none',
@@ -487,11 +530,11 @@ class Botble {
         }
 
         if (jQuery().tooltip) {
-            $('[data-toggle="tooltip"]').tooltip({placement: 'top', boundary: 'window'});
+            $('[data-bs-toggle="tooltip"]').tooltip({placement: 'top', boundary: 'window'});
         }
 
         if (jQuery().areYouSure) {
-            $('form').areYouSure();
+            $('form.dirty-check').areYouSure();
         }
 
         Botble.initDatePicker('.datepicker');
@@ -504,17 +547,31 @@ class Botble {
         }
 
         $('.select2_google_fonts_picker').each(function (i, obj) {
-            if (!$(obj).hasClass('select2-hidden-accessible')){
-                $(obj).select2({
+            if (!$(obj).hasClass('select2-hidden-accessible')) {
+                let options = {
                     templateResult: function (opt) {
                         if (!opt.id) {
                             return opt.text;
                         }
+
                         return $('<span style="font-family:\'' + opt.id + '\';"> ' + opt.text + '</span>');
                     },
-                })
+                };
+
+                let parent = $(obj).closest('div[data-select2-dropdown-parent]') || $(obj).closest('.modal');
+                if (parent.length) {
+                    options.dropdownParent = parent;
+                    options.width = '100%';
+                    options.minimumResultsForSearch = -1;
+                }
+
+                $(obj).select2(options);
             }
         });
+
+        $(document).on('submit', '.js-base-form', (event) => {
+            $(event.currentTarget).find('button[type=submit]').addClass('disabled');
+        })
 
         document.dispatchEvent(new CustomEvent('core-init-resources'));
     }
@@ -568,11 +625,8 @@ class Botble {
 
     static callScroll(obj) {
         obj.mCustomScrollbar({
-            axis: 'yx',
-            theme: 'minimal-dark',
-            scrollButtons: {
-                enable: true
-            },
+            theme: 'dark',
+            scrollInertia: 0,
             callbacks: {
                 whileScrolling: function () {
                     obj.find('.tableFloatingHeaderOriginal').css({
@@ -581,6 +635,7 @@ class Botble {
                 }
             }
         });
+
         obj.stickyTableHeaders({scrollableArea: obj, 'fixedOffset': 2});
     }
 
@@ -588,7 +643,7 @@ class Botble {
         if ($('#waypoint').length > 0) {
             new Waypoint({
                 element: document.getElementById('waypoint'),
-                handler: (direction) => {
+                handler: direction => {
                     if (direction === 'down') {
                         $('.form-actions-fixed-top').removeClass('hidden');
                     } else {
@@ -614,6 +669,29 @@ class Botble {
 
         if (jQuery().rvMedia) {
 
+            Botble.gallerySelectImageTemplate = `<div class="list-photo-hover-overlay">
+                <ul class="photo-overlay-actions">
+                    <li>
+                        <a class="mr10 btn-trigger-edit-gallery-image" data-bs-toggle="tooltip" data-placement="top"
+                        data-bs-original-title="${RV_MEDIA_CONFIG.translations.change_image}">
+                            <i class="fa fa-edit"></i>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="mr10 btn-trigger-remove-gallery-image" data-bs-toggle="tooltip" data-placement="top"
+                        data-bs-original-title="${RV_MEDIA_CONFIG.translations.delete_image}">
+                            <i class="fa fa-trash"></i>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <div class="custom-image-box image-box">
+                <input type="hidden" name="__name__" value="" class="image-data">
+                    <div class="preview-image-wrapper">
+                    <img src="${RV_MEDIA_CONFIG.default_image}" alt="${RV_MEDIA_CONFIG.translations.preview_image}" class="preview_image">
+                </div>
+            </div>`;
+
             $('[data-type="rv-media-standard-alone-button"]').rvMedia({
                 multiple: false,
                 onSelectFiles: (files, $el) => {
@@ -634,9 +712,10 @@ class Botble {
                                     let link = file.full_url;
                                     if (file.type === 'youtube') {
                                         link = link.replace('watch?v=', 'embed/');
-                                        content += '<iframe width="420" height="315" src="' + link + '" frameborder="0" allowfullscreen></iframe><br />';
+                                        content += '<iframe width="420" height="315" src="' + link + '" frameborder="0" allowfullscreen loading="lazy"></iframe><br />';
                                     } else if (file.type === 'image') {
-                                        content += '<img src="' + link + '" alt="' + file.name + '" /><br />';
+                                        const alt = file.alt ? file.alt : file.name;
+                                        content += '<img src="' + link + '" alt="' + alt + '" loading="lazy"/><br />';
                                     } else {
                                         content += '<a href="' + link + '">' + file.name + '</a><br />';
                                     }
@@ -651,9 +730,10 @@ class Botble {
                                     let link = file.full_url;
                                     if (file.type === 'youtube') {
                                         link = link.replace('watch?v=', 'embed/');
-                                        html += '<iframe width="420" height="315" src="' + link + '" frameborder="0" allowfullscreen></iframe><br />';
+                                        html += '<iframe width="420" height="315" src="' + link + '" frameborder="0" allowfullscreen loading="lazy"></iframe><br />';
                                     } else if (file.type === 'image') {
-                                        html += '<img src="' + link + '" alt="' + file.name + '" /><br />';
+                                        const alt = file.alt ? file.alt : file.name;
+                                        html += '<img src="' + link + '" alt="' + alt + '" loading="lazy"/><br />';
                                     } else {
                                         html += '<a href="' + link + '">' + file.name + '</a><br />';
                                     }
@@ -662,15 +742,20 @@ class Botble {
                                 break;
                             case 'select-image':
                                 let firstImage = _.first(files);
-                                $el.closest('.image-box').find('.image-data').val(firstImage.url);
-                                $el.closest('.image-box').find('.preview_image').attr('src', firstImage.thumb);
-                                $el.closest('.image-box').find('.preview-image-wrapper').show();
+                                const $imageBox = $el.closest('.image-box');
+                                const allowThumb = $el.data('allow-thumb');
+                                $imageBox.find('.image-data').val(firstImage.url).trigger('change');
+                                $imageBox.find('.preview_image').attr('src', allowThumb && firstImage.thumb ? firstImage.thumb : firstImage.full_url);
+                                $imageBox.find('.preview-image-wrapper').show();
                                 break;
                             case 'attachment':
                                 let firstAttachment = _.first(files);
                                 $el.closest('.attachment-wrapper').find('.attachment-url').val(firstAttachment.url);
                                 $el.closest('.attachment-wrapper').find('.attachment-details').html('<a href="' + firstAttachment.full_url + '" target="_blank">' + firstAttachment.url + '</a>');
                                 break;
+                            default:
+                                const coreInsertMediaEvent = new CustomEvent('core-insert-media', { detail: { files: files, element: $el } })
+                                document.dispatchEvent(coreInsertMediaEvent)
                         }
                     }
                 });
@@ -678,8 +763,9 @@ class Botble {
 
             $(document).on('click', '.btn_remove_image', event => {
                 event.preventDefault();
-                $(event.currentTarget).closest('.image-box').find('.preview-image-wrapper').hide();
-                $(event.currentTarget).closest('.image-box').find('.image-data').val('');
+                let $imageBox = $(event.currentTarget).closest('.image-box');
+                $imageBox.find('.preview-image-wrapper img').prop('src', $imageBox.find('.preview-image-wrapper img').data('default'));
+                $imageBox.find('.image-data').val('').trigger('change');
             });
 
             $(document).on('click', '.btn_remove_attachment', event => {
@@ -687,6 +773,26 @@ class Botble {
                 $(event.currentTarget).closest('.attachment-wrapper').find('.attachment-details a').remove();
                 $(event.currentTarget).closest('.attachment-wrapper').find('.attachment-url').val('');
             });
+
+            const gallerySelectImages = function (files, $currentBoxList, excludeIndexes = []) {
+                let template = Botble.gallerySelectImageTemplate;
+                const allowThumb = $currentBoxList.data('allow-thumb');
+                _.forEach(files, (file, index) => {
+                    if (_.includes(excludeIndexes, index)) {
+                        return;
+                    }
+                    let imageBox = template.replace(/__name__/gi, $currentBoxList.data('name'));
+
+                    let $template = $('<li class="gallery-image-item-handler">' + imageBox + '</li>');
+
+                    $template.find('.image-data').val(file.url).trigger('change');
+                    $template.find('.preview_image').attr('src', allowThumb ? file.thumb : file.full_url).show();
+                    if (!allowThumb) {
+                        $template.find('.preview-image-wrapper').addClass('preview-image-wrapper-not-allow-thumb');
+                    }
+                    $currentBoxList.append($template);
+                });
+            }
 
             new RvMediaStandAlone('.js-btn-trigger-add-image', {
                 filter: 'image',
@@ -698,19 +804,7 @@ class Botble {
 
                     $('.default-placeholder-gallery-image').addClass('hidden');
 
-                    _.forEach(files, file => {
-                        let template = $(document).find('#gallery_select_image_template').html();
-
-                        let imageBox = template
-                            .replace(/__name__/gi, $el.attr('data-name'));
-
-                        let $template = $('<li class="gallery-image-item-handler">' + imageBox + '</li>');
-
-                        $template.find('.image-data').val(file.url);
-                        $template.find('.preview_image').attr('src', file.thumb).show();
-
-                        $currentBoxList.append($template);
-                    });
+                    gallerySelectImages(files, $currentBoxList);
                 }
             });
 
@@ -722,34 +816,22 @@ class Botble {
 
                     let $currentBox = $el.closest('.gallery-image-item-handler').find('.image-box');
                     let $currentBoxList = $el.closest('.list-gallery-media-images');
+                    const allowThumb = $currentBoxList.data('allow-thumb');
 
-                    $currentBox.find('.image-data').val(firstItem.url);
-                    $currentBox.find('.preview_image').attr('src', firstItem.thumb).show();
+                    $currentBox.find('.image-data').val(firstItem.url).trigger('change');
+                    $currentBox.find('.preview_image').attr('src', allowThumb ? firstItem.thumb : firstItem.full_url).show();
 
-                    _.forEach(files, (file, index) => {
-                        if (!index) {
-                            return;
-                        }
-                        let template = $(document).find('#gallery_select_image_template').html();
-
-                        let imageBox = template
-                            .replace(/__name__/gi, $currentBox.find('.image-data').attr('name'));
-
-                        let $template = $('<li class="gallery-image-item-handler">' + imageBox + '</li>');
-
-                        $template.find('.image-data').val(file.url);
-                        $template.find('.preview_image').attr('src', file.thumb).show();
-
-                        $currentBoxList.append($template);
-                    });
+                    gallerySelectImages(files, $currentBoxList, [0]);
                 }
             });
 
-            $(document).on('click', '.btn-trigger-remove-gallery-image', event => {
-                event.preventDefault();
-                $(event.currentTarget).closest('.gallery-image-item-handler').remove();
-                if ($('.list-gallery-media-images').find('.gallery-image-item-handler').length === 0) {
-                    $('.default-placeholder-gallery-image').removeClass('hidden');
+            $(document).on('click', '.btn-trigger-remove-gallery-image', e => {
+                e.preventDefault();
+                const $this = $(e.currentTarget);
+                const $list = $this.closest('.list-gallery-media-images');
+                $this.closest('.gallery-image-item-handler').remove();
+                if ($list.find('.gallery-image-item-handler').length === 0) {
+                    $list.closest('.list-images').find('.default-placeholder-gallery-image').removeClass('hidden');
                 }
             });
 
@@ -817,6 +899,11 @@ class Botble {
                 el.slideDown(200);
             }
         });
+
+        $(document).on('click', '.btn-update-new-version', event => {
+            let _self = $(event.currentTarget);
+            _self.find('span').text(_self.data('updating-text'));
+        });
     }
 
     static initCodeEditor(id, type = 'css') {
@@ -866,7 +953,9 @@ class Botble {
                 success: res => {
                     if (!res.error) {
                         res.data.map(x => {
-                            $('.menu-item-count.' + x.key).text(x.value).show().removeClass('hidden');
+                            if (x.value > 0) {
+                                $('.menu-item-count.' + x.key).text(x.value).show().removeClass('hidden');
+                            }
                         });
                     }
                 },
@@ -876,10 +965,6 @@ class Botble {
             });
         }
     }
-}
-
-if (jQuery().datepicker && jQuery().datepicker.noConflict) {
-    $.fn.bootstrapDP = $.fn.datepicker.noConflict();
 }
 
 $(document).ready(() => {

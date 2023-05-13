@@ -3,66 +3,129 @@
 namespace Botble\SocialLogin\Http\Controllers;
 
 use Assets;
-use Botble\Member\Repositories\Interfaces\MemberInterface;
 use Botble\Base\Http\Controllers\BaseController;
 use Botble\Base\Http\Responses\BaseHttpResponse;
 use Botble\Setting\Supports\SettingStore;
 use Botble\SocialLogin\Http\Requests\SocialLoginRequest;
+use Carbon\Carbon;
 use Exception;
+use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Laravel\Socialite\AbstractUser;
 use RvMedia;
 use Socialite;
+use SocialService;
 
 class SocialLoginController extends BaseController
 {
-
-    /**
-     * Redirect the user to the {provider} authentication page.
-     *
-     * @param string $provider
-     * @return mixed
-     */
-    public function redirectToProvider($provider)
+    public function redirectToProvider(string $provider, Request $request, BaseHttpResponse $response)
     {
+        $guard = $this->guard($request);
+
+        if (! $guard) {
+            return $response
+                ->setError()
+                ->setNextUrl(route('public.index'));
+        }
+
+        $this->setProvider($provider);
+
+        session(['social_login_guard_current' => $guard]);
+
         return Socialite::driver($provider)->redirect();
     }
 
-    /**
-     * Obtain the user information from {provider}.
-     * @param string $provider
-     * @param BaseHttpResponse $response
-     * @return BaseHttpResponse
-     */
-    public function handleProviderCallback($provider, BaseHttpResponse $response)
+    protected function guard(Request $request = null)
     {
-        try {
-            /**
-             * @var \Laravel\Socialite\AbstractUser $oAuth
-             */
-            $oAuth = Socialite::driver($provider)->user();
-        } catch (Exception $ex) {
-            return $response
-                ->setError()
-                ->setNextUrl(route('public.member.login'))
-                ->setMessage($ex->getMessage());
+        if ($request) {
+            $guard = $request->input('guard');
+        } else {
+            $guard = session('social_login_guard_current');
         }
 
-        if (!$oAuth->getEmail()) {
+        if (! $guard) {
+            $guard = array_key_first(SocialService::supportedModules());
+        }
+
+        if (! $guard || ! SocialService::isSupportedModuleByKey($guard) || Auth::guard($guard)->check()) {
+            return false;
+        }
+
+        return $guard;
+    }
+
+    protected function setProvider(string $provider): bool
+    {
+        config()->set([
+            'services.' . $provider => [
+                'client_id' => SocialService::setting($provider . '_app_id'),
+                'client_secret' => SocialService::setting($provider . '_app_secret'),
+                'redirect' => route('auth.social.callback', $provider),
+            ],
+        ]);
+
+        return true;
+    }
+
+    public function handleProviderCallback(string $provider, BaseHttpResponse $response)
+    {
+        $guard = $this->guard();
+
+        if (! $guard) {
             return $response
                 ->setError()
-                ->setNextUrl(route('public.member.login'))
+                ->setNextUrl(route('public.index'))
+                ->setMessage(__('An error occurred while trying to login'));
+        }
+
+        $this->setProvider($provider);
+
+        $providerData = Arr::get(SocialService::supportedModules(), $guard);
+
+        try {
+            /**
+             * @var AbstractUser $oAuth
+             */
+            $oAuth = Socialite::driver($provider)->user();
+        } catch (Exception $exception) {
+            $message = $exception->getMessage();
+
+            if (in_array($provider, ['github', 'facebook'])) {
+                $message = json_encode($message);
+            }
+
+            if (! $message) {
+                $message = __('An error occurred while trying to login');
+            }
+
+            return $response
+                ->setError()
+                ->setNextUrl($providerData['login_url'])
+                ->setMessage($message);
+        }
+
+        if (! $oAuth->getEmail()) {
+            return $response
+                ->setError()
+                ->setNextUrl($providerData['login_url'])
                 ->setMessage(__('Cannot login, no email provided!'));
         }
 
-        $account = app(MemberInterface::class)->getFirstBy(['email' => $oAuth->getEmail()]);
+        $model = new $providerData['model']();
 
-        if (!$account) {
+        $account = $model->where('email', $oAuth->getEmail())->first();
+
+        if (! $account) {
             $avatarId = null;
+
             try {
                 $url = $oAuth->getAvatar();
                 if ($url) {
-                    $result = RvMedia::uploadFromUrl($url, 0, 'accounts', 'image/png');
-                    if (!$result['error']) {
+                    $result = RvMedia::uploadFromUrl($url, 0, $model->upload_folder ?: 'accounts', 'image/png');
+                    if (! $result['error']) {
                         $avatarId = $result['data']->id;
                     }
                 }
@@ -70,28 +133,28 @@ class SocialLoginController extends BaseController
                 info($exception->getMessage());
             }
 
-            $firstName = implode(' ', explode(' ', $oAuth->getName(), -1));
+            $data = [
+                'name' => $oAuth->getName() ?: $oAuth->getEmail(),
+                'email' => $oAuth->getEmail(),
+                'password' => Hash::make(Str::random(36)),
+                'avatar_id' => $avatarId,
+            ];
 
-            $account = app(MemberInterface::class)->createOrUpdate([
-                'first_name'  => $firstName,
-                'last_name'   => trim(str_replace($firstName, '', $oAuth->getName())),
-                'email'       => $oAuth->getEmail(),
-                'verified_at' => now(),
-                'password'    => bcrypt(Str::random(36)),
-                'avatar_id'   => $avatarId,
-            ]);
+            $data = apply_filters('social_login_before_saving_account', $data, $oAuth, $providerData);
+
+            $account = $model;
+            $account->fill($data);
+            $account->confirmed_at = Carbon::now();
+            $account->save();
         }
 
-        auth('member')->login($account, true);
+        Auth::guard($guard)->login($account, true);
 
         return $response
-            ->setNextUrl(route('public.member.dashboard'))
+            ->setNextUrl($providerData['redirect_url'] ?: route('public.index'))
             ->setMessage(trans('core/acl::auth.login.success'));
     }
 
-    /**
-     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
-     */
     public function getSettings()
     {
         page_title()->setTitle(trans('plugins/social-login::social-login.settings.title'));
@@ -101,16 +164,24 @@ class SocialLoginController extends BaseController
         return view('plugins/social-login::settings');
     }
 
-    /**
-     * @param SocialLoginRequest $request
-     * @param BaseHttpResponse $response
-     * @param SettingStore $setting
-     * @return BaseHttpResponse
-     */
     public function postSettings(SocialLoginRequest $request, BaseHttpResponse $response, SettingStore $setting)
     {
-        foreach ($request->except(['_token']) as $settingKey => $settingValue) {
-            $setting->set($settingKey, $settingValue);
+        $prefix = 'social_login_';
+
+        $setting->set($prefix . 'enable', $request->input($prefix . 'enable'));
+
+        foreach (SocialService::getProviders() as $provider => $item) {
+            $prefix = 'social_login_' . $provider . '_';
+
+            $setting->set($prefix . 'enable', $request->input($prefix . 'enable'));
+
+            foreach ($item['data'] as $input) {
+                if (! in_array(app()->environment(), SocialService::getEnvDisableData()) ||
+                    ! in_array($input, Arr::get($item, 'disable', []))
+                ) {
+                    $setting->set($prefix . $input, $request->input($prefix . $input));
+                }
+            }
         }
 
         $setting->save();

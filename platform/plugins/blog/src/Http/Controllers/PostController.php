@@ -2,7 +2,12 @@
 
 namespace Botble\Blog\Http\Controllers;
 
+use Botble\ACL\Models\User;
 use Botble\Base\Events\BeforeEditContentEvent;
+use Botble\Base\Events\BeforeUpdateContentEvent;
+use Botble\Base\Events\CreatedContentEvent;
+use Botble\Base\Events\DeletedContentEvent;
+use Botble\Base\Events\UpdatedContentEvent;
 use Botble\Base\Forms\FormBuilder;
 use Botble\Base\Http\Controllers\BaseController;
 use Botble\Base\Http\Responses\BaseHttpResponse;
@@ -12,60 +17,25 @@ use Botble\Blog\Http\Requests\PostRequest;
 use Botble\Blog\Models\Post;
 use Botble\Blog\Repositories\Interfaces\CategoryInterface;
 use Botble\Blog\Repositories\Interfaces\PostInterface;
-use Botble\Blog\Tables\PostTable;
 use Botble\Blog\Repositories\Interfaces\TagInterface;
 use Botble\Blog\Services\StoreCategoryService;
 use Botble\Blog\Services\StoreTagService;
+use Botble\Blog\Tables\PostTable;
 use Exception;
-use Illuminate\Contracts\View\Factory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Botble\Base\Events\CreatedContentEvent;
-use Botble\Base\Events\DeletedContentEvent;
-use Botble\Base\Events\UpdatedContentEvent;
-use Illuminate\View\View;
-use Throwable;
 
 class PostController extends BaseController
 {
-
     use HasDeleteManyItemsTrait;
 
-    /**
-     * @var PostInterface
-     */
-    protected $postRepository;
-
-    /**
-     * @var TagInterface
-     */
-    protected $tagRepository;
-
-    /**
-     * @var CategoryInterface
-     */
-    protected $categoryRepository;
-
-    /**
-     * @param PostInterface $postRepository
-     * @param TagInterface $tagRepository
-     * @param CategoryInterface $categoryRepository
-     */
     public function __construct(
-        PostInterface $postRepository,
-        TagInterface $tagRepository,
-        CategoryInterface $categoryRepository
+        protected PostInterface $postRepository,
+        protected TagInterface $tagRepository,
+        protected CategoryInterface $categoryRepository
     ) {
-        $this->postRepository = $postRepository;
-        $this->tagRepository = $tagRepository;
-        $this->categoryRepository = $categoryRepository;
     }
 
-    /**
-     * @param PostTable $dataTable
-     * @return Factory|View
-     * @throws Throwable
-     */
     public function index(PostTable $dataTable)
     {
         page_title()->setTitle(trans('plugins/blog::posts.menu_name'));
@@ -73,10 +43,6 @@ class PostController extends BaseController
         return $dataTable->renderTable();
     }
 
-    /**
-     * @param FormBuilder $formBuilder
-     * @return string
-     */
     public function create(FormBuilder $formBuilder)
     {
         page_title()->setTitle(trans('plugins/blog::posts.create'));
@@ -84,13 +50,6 @@ class PostController extends BaseController
         return $formBuilder->create(PostForm::class)->renderForm();
     }
 
-    /**
-     * @param PostRequest $request
-     * @param StoreTagService $tagService
-     * @param StoreCategoryService $categoryService
-     * @param BaseHttpResponse $response
-     * @return BaseHttpResponse
-     */
     public function store(
         PostRequest $request,
         StoreTagService $tagService,
@@ -100,11 +59,16 @@ class PostController extends BaseController
         /**
          * @var Post $post
          */
-        $post = $this->postRepository->createOrUpdate(array_merge($request->input(), [
-            'author_id' => Auth::user()->getKey(),
-        ]));
+        $post = $this->postRepository->createOrUpdate(
+            array_merge($request->input(), [
+                'author_id' => Auth::id(),
+                'author_type' => User::class,
+            ])
+        );
 
         event(new CreatedContentEvent(POST_MODULE_SCREEN_NAME, $request, $post));
+
+        $request->request->remove('seo_meta');
 
         $tagService->execute($request, $post);
 
@@ -116,31 +80,17 @@ class PostController extends BaseController
             ->setMessage(trans('core/base::notices.create_success_message'));
     }
 
-    /**
-     * @param int $id
-     * @param FormBuilder $formBuilder
-     * @param Request $request
-     * @return string
-     */
-    public function edit($id, FormBuilder $formBuilder, Request $request)
+    public function edit(int|string $id, FormBuilder $formBuilder, Request $request)
     {
         $post = $this->postRepository->findOrFail($id);
 
         event(new BeforeEditContentEvent($request, $post));
 
-        page_title()->setTitle(trans('plugins/blog::posts.edit') . ' "' . $post->name . '"');
+        page_title()->setTitle(trans('core/base::forms.edit_item', ['name' => $post->name]));
 
         return $formBuilder->create(PostForm::class, ['model' => $post])->renderForm();
     }
 
-    /**
-     * @param int $id
-     * @param PostRequest $request
-     * @param StoreTagService $tagService
-     * @param StoreCategoryService $categoryService
-     * @param BaseHttpResponse $response
-     * @return BaseHttpResponse
-     */
     public function update(
         $id,
         PostRequest $request,
@@ -149,6 +99,8 @@ class PostController extends BaseController
         BaseHttpResponse $response
     ) {
         $post = $this->postRepository->findOrFail($id);
+
+        event(new BeforeUpdateContentEvent($request, $post));
 
         $post->fill($request->input());
 
@@ -165,12 +117,7 @@ class PostController extends BaseController
             ->setMessage(trans('core/base::notices.update_success_message'));
     }
 
-    /**
-     * @param int $id
-     * @param Request $request
-     * @return BaseHttpResponse
-     */
-    public function destroy($id, Request $request, BaseHttpResponse $response)
+    public function destroy(int|string $id, Request $request, BaseHttpResponse $response)
     {
         try {
             $post = $this->postRepository->findOrFail($id);
@@ -187,30 +134,24 @@ class PostController extends BaseController
         }
     }
 
-    /**
-     * @param Request $request
-     * @param BaseHttpResponse $response
-     * @return BaseHttpResponse
-     * @throws Exception
-     */
     public function deletes(Request $request, BaseHttpResponse $response)
     {
         return $this->executeDeleteItems($request, $response, $this->postRepository, POST_MODULE_SCREEN_NAME);
     }
 
-    /**
-     * @param Request $request
-     * @param BaseHttpResponse $response
-     * @return BaseHttpResponse
-     * @throws Throwable
-     */
     public function getWidgetRecentPosts(Request $request, BaseHttpResponse $response)
     {
-        $limit = $request->input('paginate', 10);
-        $posts = $this->postRepository->getModel()
-            ->orderBy('posts.created_at', 'desc')
-            ->with('slugable')
-            ->paginate($limit);
+        $limit = (int)$request->input('paginate', 10);
+        $limit = $limit > 0 ? $limit : 10;
+
+        $posts = $this->postRepository->advancedGet([
+            'with' => ['slugable'],
+            'order_by' => ['created_at' => 'desc'],
+            'paginate' => [
+                'per_page' => $limit,
+                'current_paged' => (int)$request->input('page', 1),
+            ],
+        ]);
 
         return $response
             ->setData(view('plugins/blog::posts.widgets.posts', compact('posts', 'limit'))->render());

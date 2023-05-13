@@ -4,8 +4,11 @@ namespace Botble\Contact\Tables;
 
 use BaseHelper;
 use Botble\Contact\Exports\ContactExport;
-use Botble\Contact\Models\Contact;
 use Html;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Database\Query\Builder as QueryBuilder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Botble\Contact\Enums\ContactStatusEnum;
 use Botble\Contact\Repositories\Interfaces\ContactInterface;
@@ -16,53 +19,34 @@ use Yajra\DataTables\DataTables;
 
 class ContactTable extends TableAbstract
 {
-
-    /**
-     * @var bool
-     */
     protected $hasActions = true;
 
-    /**
-     * @var bool
-     */
     protected $hasFilter = true;
 
-    /**
-     * @var string
-     */
-    protected $exportClass = ContactExport::class;
+    protected string $exportClass = ContactExport::class;
 
-    /**
-     * ContactTable constructor.
-     * @param DataTables $table
-     * @param UrlGenerator $urlGenerator
-     * @param ContactInterface $contactRepository
-     */
     public function __construct(DataTables $table, UrlGenerator $urlGenerator, ContactInterface $contactRepository)
     {
-        $this->repository = $contactRepository;
-        $this->setOption('id', 'table-contacts');
         parent::__construct($table, $urlGenerator);
 
-        if (!Auth::user()->hasAnyPermission(['contacts.edit', 'contacts.destroy'])) {
+        $this->repository = $contactRepository;
+
+        if (! Auth::user()->hasAnyPermission(['contacts.edit', 'contacts.destroy'])) {
             $this->hasOperations = false;
             $this->hasActions = false;
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function ajax()
+    public function ajax(): JsonResponse
     {
         $data = $this->table
             ->eloquent($this->query())
             ->editColumn('name', function ($item) {
-                if (!Auth::user()->hasPermission('contacts.edit')) {
-                    return $item->name;
+                if (! Auth::user()->hasPermission('contacts.edit')) {
+                    return BaseHelper::clean($item->name);
                 }
 
-                return Html::link(route('contacts.edit', $item->id), $item->name);
+                return Html::link(route('contacts.edit', $item->id), BaseHelper::clean($item->name));
             })
             ->editColumn('checkbox', function ($item) {
                 return $this->getCheckbox($item->id);
@@ -72,127 +56,93 @@ class ContactTable extends TableAbstract
             })
             ->editColumn('status', function ($item) {
                 return $item->status->toHtml();
-            });
-
-        return apply_filters(BASE_FILTER_GET_LIST_DATA, $data, $this->repository->getModel())
+            })
             ->addColumn('operations', function ($item) {
                 return $this->getOperations('contacts.edit', 'contacts.destroy', $item);
-            })
-            ->escapeColumns([])
-            ->make(true);
+            });
+
+        return $this->toJson($data);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function query()
+    public function query(): Relation|Builder|QueryBuilder
     {
-        $model = $this->repository->getModel();
-        $select = [
-            'contacts.id',
-            'contacts.name',
-            'contacts.phone',
-            'contacts.email',
-            'contacts.created_at',
-            'contacts.status',
-        ];
+        $query = $this->repository->getModel()->select([
+            'id',
+            'name',
+            'phone',
+            'email',
+            'created_at',
+            'status',
+        ]);
 
-        $query = $model->select($select);
-
-        return $this->applyScopes(apply_filters(BASE_FILTER_TABLE_QUERY, $query, $model, $select));
+        return $this->applyScopes($query);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function columns()
+    public function columns(): array
     {
         return [
-            'id'         => [
-                'name'  => 'contacts.id',
+            'id' => [
                 'title' => trans('core/base::tables.id'),
                 'width' => '20px',
             ],
-            'name'       => [
-                'name'  => 'contacts.name',
+            'name' => [
                 'title' => trans('core/base::tables.name'),
-                'class' => 'text-left',
+                'class' => 'text-start',
             ],
-            'email'      => [
-                'name'  => 'contacts.email',
+            'email' => [
                 'title' => trans('plugins/contact::contact.tables.email'),
-                'class' => 'text-left',
+                'class' => 'text-start',
             ],
-            'phone'      => [
-                'name'  => 'contacts.phone',
+            'phone' => [
                 'title' => trans('plugins/contact::contact.tables.phone'),
             ],
             'created_at' => [
-                'name'  => 'contacts.created_at',
                 'title' => trans('core/base::tables.created_at'),
                 'width' => '100px',
             ],
-            'status'    => [
-                'name'  => 'contacts.status',
+            'status' => [
                 'title' => trans('core/base::tables.status'),
                 'width' => '100px',
             ],
         ];
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function buttons()
-    {
-        return apply_filters(BASE_FILTER_TABLE_BUTTONS, [], Contact::class);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     public function bulkActions(): array
     {
         return $this->addDeleteAction(route('contacts.deletes'), 'contacts.destroy', parent::bulkActions());
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function getBulkChanges(): array
     {
         return [
-            'contacts.name'       => [
-                'title'    => trans('core/base::tables.name'),
-                'type'     => 'text',
+            'name' => [
+                'title' => trans('core/base::tables.name'),
+                'type' => 'text',
                 'validate' => 'required|max:120',
             ],
-            'contacts.email'      => [
-                'title'    => trans('core/base::tables.email'),
-                'type'     => 'text',
+            'email' => [
+                'title' => trans('core/base::tables.email'),
+                'type' => 'text',
                 'validate' => 'required|max:120',
             ],
-            'contacts.phone'      => [
-                'title'    => trans('plugins/contact::contact.sender_phone'),
-                'type'     => 'text',
+            'phone' => [
+                'title' => trans('plugins/contact::contact.sender_phone'),
+                'type' => 'text',
                 'validate' => 'required|max:120',
             ],
-            'contacts.status'    => [
-                'title'    => trans('core/base::tables.status'),
-                'type'     => 'select',
-                'choices'  => ContactStatusEnum::labels(),
+            'status' => [
+                'title' => trans('core/base::tables.status'),
+                'type' => 'customSelect',
+                'choices' => ContactStatusEnum::labels(),
                 'validate' => 'required|' . Rule::in(ContactStatusEnum::values()),
             ],
-            'contacts.created_at' => [
+            'created_at' => [
                 'title' => trans('core/base::tables.created_at'),
-                'type'  => 'date',
+                'type' => 'datePicker',
             ],
         ];
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function getDefaultButtons(): array
     {
         return [

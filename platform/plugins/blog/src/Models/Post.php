@@ -2,67 +2,31 @@
 
 namespace Botble\Blog\Models;
 
-use Botble\ACL\Models\User;
-use Botble\Base\Traits\EnumCastable;
+use Botble\Base\Casts\SafeContent;
 use Botble\Base\Enums\BaseStatusEnum;
-use Botble\Revision\RevisionableTrait;
-use Botble\Slug\Traits\SlugTrait;
 use Botble\Base\Models\BaseModel;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Botble\Revision\RevisionableTrait;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Post extends BaseModel
 {
     use RevisionableTrait;
-    use SlugTrait;
-    use EnumCastable;
 
-    /**
-     * The database table used by the model.
-     *
-     * @var string
-     */
     protected $table = 'posts';
 
-    /**
-     * @var mixed
-     */
-    protected $revisionEnabled = true;
+    protected bool $revisionEnabled = true;
 
-    /**
-     * @var mixed
-     */
-    protected $revisionCleanup = true;
+    protected bool $revisionCleanup = true;
 
-    /**
-     * @var int
-     */
-    protected $historyLimit = 20;
+    protected int $historyLimit = 20;
 
-    /**
-     * @var array
-     */
-    protected $dontKeepRevisionOf = [
+    protected array $dontKeepRevisionOf = [
         'content',
         'views',
     ];
 
-    /**
-     * The date fields for the model.clear
-     *
-     * @var array
-     */
-    protected $dates = [
-        'created_at',
-        'updated_at',
-    ];
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
     protected $fillable = [
         'name',
         'description',
@@ -75,44 +39,37 @@ class Post extends BaseModel
         'author_type',
     ];
 
-    /**
-     * @var array
-     */
     protected $casts = [
         'status' => BaseStatusEnum::class,
+        'content' => SafeContent::class,
+        'name' => SafeContent::class,
+        'description' => SafeContent::class,
     ];
 
-    /**
-     * @deprecated
-     * @return BelongsTo
-     */
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class)->withDefault();
-    }
-
-    /**
-     * @return BelongsToMany
-     */
     public function tags(): BelongsToMany
     {
         return $this->belongsToMany(Tag::class, 'post_tags');
     }
 
-    /**
-     * @return BelongsToMany
-     */
     public function categories(): BelongsToMany
     {
         return $this->belongsToMany(Category::class, 'post_categories');
     }
 
-    /**
-     * @return MorphTo
-     */
+    protected function firstCategory(): Attribute
+    {
+        return Attribute::make(
+            get: function (): ?Category {
+                $this->loadMissing('categories');
+
+                return $this->categories->first();
+            }
+        );
+    }
+
     public function author(): MorphTo
     {
-        return $this->morphTo();
+        return $this->morphTo()->withDefault();
     }
 
     protected static function boot()

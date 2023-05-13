@@ -3,23 +3,17 @@
 namespace Botble\PluginManagement\Http\Controllers;
 
 use Assets;
+use BaseHelper;
 use Botble\Base\Http\Responses\BaseHttpResponse;
 use Botble\PluginManagement\Services\PluginService;
 use Exception;
-use File;
-use Illuminate\Contracts\Foundation\Application;
-use Illuminate\Contracts\View\Factory;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Arr;
-use Illuminate\View\View;
+use Illuminate\Support\Facades\File;
 
 class PluginManagementController extends Controller
 {
-    /**
-     * Show all plugins in system
-     * @return Application|Factory|View
-     */
     public function index()
     {
         page_title()->setTitle(trans('packages/plugin-management::plugin.plugins'));
@@ -33,8 +27,8 @@ class PluginManagementController extends Controller
             File::delete(plugin_path('.DS_Store'));
         }
 
-        $plugins = scan_folder(plugin_path());
-        if (!empty($plugins)) {
+        $plugins = BaseHelper::scanFolder(plugin_path());
+        if (! empty($plugins)) {
             $installed = get_active_plugins();
             foreach ($plugins as $plugin) {
                 if (File::exists(plugin_path($plugin . '/.DS_Store'))) {
@@ -42,13 +36,13 @@ class PluginManagementController extends Controller
                 }
 
                 $pluginPath = plugin_path($plugin);
-                if (!File::isDirectory($pluginPath) || !File::exists($pluginPath . '/plugin.json')) {
+                if (! File::isDirectory($pluginPath) || ! File::exists($pluginPath . '/plugin.json')) {
                     continue;
                 }
 
-                $content = get_file_data($pluginPath . '/plugin.json');
-                if (!empty($content)) {
-                    if (!is_array($installed) || !in_array($plugin, $installed)) {
+                $content = BaseHelper::getFileData($pluginPath . '/plugin.json');
+                if (! empty($content)) {
+                    if (! in_array($plugin, $installed)) {
                         $content['status'] = 0;
                     } else {
                         $content['status'] = 1;
@@ -56,9 +50,15 @@ class PluginManagementController extends Controller
 
                     $content['path'] = $plugin;
                     $content['image'] = null;
-                    if (File::exists($pluginPath . '/screenshot.png')) {
-                        $content['image'] = base64_encode(File::get($pluginPath . '/screenshot.png'));
+
+                    $screenshot = 'vendor/core/plugins/' . $plugin . '/screenshot.png';
+
+                    if (File::exists(public_path($screenshot))) {
+                        $content['image'] = asset($screenshot);
+                    } elseif (File::exists($pluginPath . '/screenshot.png')) {
+                        $content['image'] = 'data:image/png;base64,' . base64_encode(File::get($pluginPath . '/screenshot.png'));
                     }
+
                     $list[] = (object)$content;
                 }
             }
@@ -67,19 +67,11 @@ class PluginManagementController extends Controller
         return view('packages/plugin-management::index', compact('list'));
     }
 
-    /**
-     * Activate or Deactivate plugin
-     *
-     * @param Request $request
-     * @param BaseHttpResponse $response
-     * @param PluginService $pluginService
-     * @return BaseHttpResponse
-     */
     public function update(Request $request, BaseHttpResponse $response, PluginService $pluginService)
     {
         $plugin = strtolower($request->input('name'));
 
-        $content = get_file_data(plugin_path($plugin . '/plugin.json'));
+        $content = BaseHelper::getFileData(plugin_path($plugin . '/plugin.json'));
         if (empty($content)) {
             return $response
                 ->setError()
@@ -88,8 +80,8 @@ class PluginManagementController extends Controller
 
         try {
             $activatedPlugins = get_active_plugins();
-            if (!in_array($plugin, $activatedPlugins)) {
-                if (!empty(Arr::get($content, 'require'))) {
+            if (! in_array($plugin, $activatedPlugins)) {
+                if (! empty(Arr::get($content, 'require'))) {
                     if (count(array_intersect($content['require'], $activatedPlugins)) != count($content['require'])) {
                         return $response
                             ->setError()
@@ -100,6 +92,32 @@ class PluginManagementController extends Controller
                 }
 
                 $result = $pluginService->activate($plugin);
+
+                $migrator = app('migrator');
+                $migrator->run(database_path('migrations'));
+
+                $paths = [
+                    core_path(),
+                    package_path(),
+                ];
+
+                foreach ($paths as $path) {
+                    foreach (BaseHelper::scanFolder($path) as $module) {
+                        if ($path == plugin_path() && ! is_plugin_active($module)) {
+                            continue;
+                        }
+
+                        $modulePath = $path . '/' . $module;
+
+                        if (! File::isDirectory($modulePath)) {
+                            continue;
+                        }
+
+                        if (File::isDirectory($modulePath . '/database/migrations')) {
+                            $migrator->run($modulePath . '/database/migrations');
+                        }
+                    }
+                }
             } else {
                 $result = $pluginService->deactivate($plugin);
             }
@@ -116,15 +134,7 @@ class PluginManagementController extends Controller
         }
     }
 
-    /**
-     * Remove plugin
-     *
-     * @param string $plugin
-     * @param BaseHttpResponse $response
-     * @param PluginService $pluginService
-     * @return BaseHttpResponse
-     */
-    public function destroy($plugin, BaseHttpResponse $response, PluginService $pluginService)
+    public function destroy(string $plugin, BaseHttpResponse $response, PluginService $pluginService)
     {
         $plugin = strtolower($plugin);
 

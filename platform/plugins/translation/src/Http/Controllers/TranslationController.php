@@ -2,43 +2,31 @@
 
 namespace Botble\Translation\Http\Controllers;
 
-use App;
 use Assets;
+use BaseHelper;
 use Botble\Base\Http\Controllers\BaseController;
 use Botble\Base\Http\Responses\BaseHttpResponse;
 use Botble\Base\Supports\Language;
+use Botble\Base\Supports\PclZip as Zip;
 use Botble\Translation\Http\Requests\LocaleRequest;
 use Botble\Translation\Http\Requests\TranslationRequest;
 use Botble\Translation\Manager;
-use DB;
-use File;
-use Illuminate\Http\Request;
 use Botble\Translation\Models\Translation;
+use Illuminate\Support\Facades\File;
+use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
-use Schema;
+use Illuminate\Support\Facades\DB;
+use RvMedia;
 use Theme;
+use ZipArchive;
 
 class TranslationController extends BaseController
 {
-    /**
-     * @var Manager
-     */
-    protected $manager;
-
-    /**
-     * TranslationController constructor.
-     * @param Manager $manager
-     */
-    public function __construct(Manager $manager)
+    public function __construct(protected Manager $manager)
     {
-        $this->manager = $manager;
     }
 
-    /**
-     * @param Request $request
-     * @return string
-     */
     public function getIndex(Request $request)
     {
         page_title()->setTitle(trans('plugins/translation::translation.translations'));
@@ -64,7 +52,7 @@ class TranslationController extends BaseController
         $groups = ['' => trans('plugins/translation::translation.choose_a_group')] + $groups;
         $numChanged = Translation::where('group', $group)->where('status', Translation::STATUS_CHANGED)->count();
 
-        $allTranslations = Translation::where('group', $group)->orderBy('key', 'asc')->get();
+        $allTranslations = Translation::where('group', $group)->orderBy('key')->get();
         $numTranslations = count($allTranslations);
         $translations = [];
         foreach ($allTranslations as $translation) {
@@ -78,14 +66,10 @@ class TranslationController extends BaseController
             ->with('group', $group)
             ->with('numTranslations', $numTranslations)
             ->with('numChanged', $numChanged)
-            ->with('editUrl', route('translations.group.edit', ['group' => $group]))
-            ->with('deleteEnabled', $this->manager->getConfig('delete_enabled'));
+            ->with('editUrl', route('translations.group.edit', ['group' => $group]));
     }
 
-    /**
-     * @return Collection
-     */
-    protected function loadLocales()
+    protected function loadLocales(): array
     {
         // Set the default locale as the first one.
         $locales = Translation::groupBy('locale')
@@ -101,24 +85,19 @@ class TranslationController extends BaseController
         return array_unique($locales);
     }
 
-    /**
-     * @param Request $request
-     * @param BaseHttpResponse $response
-     * @return BaseHttpResponse
-     */
     public function update(TranslationRequest $request, BaseHttpResponse $response)
     {
         $group = $request->input('group');
 
-        if (!in_array($group, $this->manager->getConfig('exclude_groups'))) {
+        if (! in_array($group, $this->manager->getConfig('exclude_groups'))) {
             $name = $request->input('name');
             $value = $request->input('value');
 
             [$locale, $key] = explode('|', $name, 2);
             $translation = Translation::firstOrNew([
                 'locale' => $locale,
-                'group'  => $group,
-                'key'    => $key,
+                'group' => $group,
+                'key' => $key,
             ]);
             $translation->value = (string)$value ?: null;
             $translation->status = Translation::STATUS_CHANGED;
@@ -128,109 +107,81 @@ class TranslationController extends BaseController
         return $response;
     }
 
-    /**
-     * @param Request $request
-     * @param BaseHttpResponse $response
-     * @return BaseHttpResponse
-     */
     public function postImport(Request $request, BaseHttpResponse $response)
     {
-        $counter = $this->manager->importTranslations($request->get('replace', false));
+        $counter = $this->manager->importTranslations($request->input('replace', false));
 
         return $response->setMessage(trans('plugins/translation::translation.import_done', compact('counter')));
     }
 
-    /**
-     * @param Request $request
-     * @param BaseHttpResponse $response
-     * @return BaseHttpResponse
-     * @throws \Symfony\Component\VarExporter\Exception\ExceptionInterface
-     */
     public function postPublish(Request $request, BaseHttpResponse $response)
     {
+        if (! File::isWritable(lang_path()) || ! File::isWritable(lang_path('vendor'))) {
+            return $response
+                ->setError()
+                ->setMessage(trans('plugins/translation::translation.folder_is_not_writeable', ['lang_path' => lang_path()]));
+        }
+
         $group = $request->input('group');
 
-        $this->manager->exportTranslations($group, $group === '_json');
+        $this->manager->exportTranslations($group);
 
         return $response->setMessage(trans('plugins/translation::translation.done_publishing'));
     }
 
-    /**
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\View\View
-     */
     public function getLocales()
     {
         page_title()->setTitle(trans('plugins/translation::translation.locales'));
 
         Assets::addScriptsDirectly('vendor/core/plugins/translation/js/locales.js');
 
-        $locales = Language::getAvailableLocales();
+        $existingLocales = Language::getAvailableLocales();
         $languages = Language::getListLanguages();
         $flags = Language::getListLanguageFlags();
 
-        return view('plugins/translation::locales', compact('locales', 'languages', 'flags'));
+        $locales = collect($languages)->pluck(2, 0)->unique()->all();
+
+        return view('plugins/translation::locales', compact('existingLocales', 'locales', 'flags'));
     }
 
-    /**
-     * @param Request $request
-     * @param BaseHttpResponse $response
-     * @return BaseHttpResponse
-     */
     public function postLocales(LocaleRequest $request, BaseHttpResponse $response)
     {
-        $defaultLocale = resource_path('lang/en');
-        $locale = $request->input('locale');
-        if (File::exists($defaultLocale)) {
-            File::copyDirectory($defaultLocale, resource_path('lang/' . $locale));
+        if (! File::isWritable(lang_path()) || ! File::isWritable(lang_path('vendor'))) {
+            return $response
+                ->setError()
+                ->setMessage(trans('plugins/translation::translation.folder_is_not_writeable', ['lang_path' => lang_path()]));
         }
 
-        $this->createLocaleInPath(resource_path('lang/vendor/core'), $locale);
-        $this->createLocaleInPath(resource_path('lang/vendor/packages'), $locale);
-        $this->createLocaleInPath(resource_path('lang/vendor/plugins'), $locale);
+        $locale = $request->input('locale');
 
-        $themeLocale = Arr::first(scan_folder(theme_path(Theme::getThemeName() . '/lang')));
+        if (! File::isDirectory(lang_path($locale))) {
+            $result = app(Manager::class)->downloadRemoteLocale($locale);
 
-        if ($themeLocale) {
-            File::copy(theme_path(Theme::getThemeName() . '/lang/' . $themeLocale), resource_path('lang/' . $locale . '.json'));
+            if ($result['error']) {
+                $defaultLocale = lang_path('en');
+                if (File::exists($defaultLocale)) {
+                    File::copyDirectory($defaultLocale, lang_path($locale));
+                }
+
+                $this->createLocaleInPath(lang_path('vendor/core'), $locale);
+                $this->createLocaleInPath(lang_path('vendor/packages'), $locale);
+                $this->createLocaleInPath(lang_path('vendor/plugins'), $locale);
+
+                $themeLocale = Arr::first(BaseHelper::scanFolder(theme_path(Theme::getThemeName() . '/lang')));
+
+                if ($themeLocale) {
+                    File::copy(
+                        theme_path(Theme::getThemeName() . '/lang/' . $themeLocale),
+                        lang_path($locale . '.json')
+                    );
+                }
+            }
         }
 
         return $response->setMessage(trans('core/base::notices.create_success_message'));
     }
 
-    /**
-     * @param BaseHttpResponse $response
-     * @return BaseHttpResponse
-     */
-    public function deleteLocale($locale, BaseHttpResponse $response)
-    {
-        if ($locale !== 'en') {
-            $defaultLocale = resource_path('lang/' . $locale);
-            if (File::exists($defaultLocale)) {
-                File::deleteDirectory($defaultLocale);
-            }
-
-            if (File::exists(resource_path('lang/' . $locale . '.json'))) {
-                File::delete(resource_path('lang/' . $locale . '.json'));
-            }
-
-            $this->removeLocaleInPath(resource_path('lang/vendor/core'), $locale);
-            $this->removeLocaleInPath(resource_path('lang/vendor/packages'), $locale);
-            $this->removeLocaleInPath(resource_path('lang/vendor/plugins'), $locale);
-
-            if (is_plugin_active('translation') && Schema::hasTable('translations')) {
-                DB::table('translations')->where('locale', $locale)->delete();
-            }
-        }
-
-        return $response->setMessage(trans('core/base::notices.delete_success_message'));
-    }
-
-    /**
-     * @param string $path
-     * @param string $locale
-     * @return int|void
-     */
-    protected function createLocaleInPath(string $path, $locale)
+    protected function createLocaleInPath(string $path, string $locale): int
     {
         $folders = File::directories($path);
 
@@ -245,11 +196,35 @@ class TranslationController extends BaseController
         return count($folders);
     }
 
-    /**
-     * @param string $path
-     * @return int|void
-     */
-    protected function removeLocaleInPath(string $path, $locale)
+    public function deleteLocale($locale, BaseHttpResponse $response)
+    {
+        if ($locale !== 'en') {
+            if (! File::isWritable(lang_path()) || ! File::isWritable(lang_path('vendor'))) {
+                return $response
+                    ->setError()
+                    ->setMessage(trans('plugins/translation::translation.folder_is_not_writeable', ['lang_path' => lang_path()]));
+            }
+
+            $defaultLocale = lang_path($locale);
+            if (File::exists($defaultLocale)) {
+                File::deleteDirectory($defaultLocale);
+            }
+
+            if (File::exists(lang_path($locale . '.json'))) {
+                File::delete(lang_path($locale . '.json'));
+            }
+
+            $this->removeLocaleInPath(lang_path('vendor/core'), $locale);
+            $this->removeLocaleInPath(lang_path('vendor/packages'), $locale);
+            $this->removeLocaleInPath(lang_path('vendor/plugins'), $locale);
+
+            DB::table('translations')->where('locale', $locale)->delete();
+        }
+
+        return $response->setMessage(trans('core/base::notices.delete_success_message'));
+    }
+
+    protected function removeLocaleInPath(string $path, string $locale): int
     {
         $folders = File::directories($path);
 
@@ -264,22 +239,20 @@ class TranslationController extends BaseController
         return count($folders);
     }
 
-    /**
-     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
-     * @throws \Illuminate\Contracts\Filesystem\FileNotFoundException
-     */
     public function getThemeTranslations(Request $request)
     {
         page_title()->setTitle(trans('plugins/translation::translation.theme-translations'));
 
-        Assets::addScriptsDirectly('vendor/core/plugins/translation/js/theme-translations.js')
+        Assets::addScripts(['bootstrap-editable'])
+            ->addStyles(['bootstrap-editable'])
+            ->addScriptsDirectly('vendor/core/plugins/translation/js/theme-translations.js')
             ->addStylesDirectly('vendor/core/plugins/translation/css/theme-translations.css');
 
         $groups = Language::getAvailableLocales();
-        $defaultLanguage = Arr::get($groups, App::getLocale());
+        $defaultLanguage = Arr::get($groups, 'en');
 
-        if (!$request->has('ref_lang')) {
-            $group = Arr::first($groups);
+        if (! $request->has('ref_lang')) {
+            $group = $defaultLanguage;
         } else {
             $group = Arr::first(Arr::where($groups, function ($item) use ($request) {
                 return $item['locale'] == $request->input('ref_lang');
@@ -288,49 +261,243 @@ class TranslationController extends BaseController
 
         $translations = [];
         if ($group) {
-            $jsonFile = resource_path('lang/' . $group['locale'] . '.json');
+            $jsonFile = lang_path($group['locale'] . '.json');
 
-            if (!File::exists($jsonFile)) {
+            if (! File::exists($jsonFile)) {
                 $jsonFile = theme_path(Theme::getThemeName() . '/lang/' . $group['locale'] . '.json');
             }
 
-            if (!File::exists($jsonFile)) {
-                $languages = scan_folder(theme_path(Theme::getThemeName() . '/lang'));
+            if (! File::exists($jsonFile)) {
+                $languages = BaseHelper::scanFolder(theme_path(Theme::getThemeName() . '/lang'));
 
-                if (!empty($languages)) {
+                if (! empty($languages)) {
                     $jsonFile = theme_path(Theme::getThemeName() . '/lang/' . Arr::first($languages));
                 }
             }
 
             if (File::exists($jsonFile)) {
-                $translations = get_file_data($jsonFile, true);
+                $translations = BaseHelper::getFileData($jsonFile);
+            }
+
+            if ($group['locale'] != 'en') {
+                $defaultEnglishFile = theme_path(Theme::getThemeName() . '/lang/en.json');
+
+                if ($defaultEnglishFile) {
+                    $enTranslations = BaseHelper::getFileData($defaultEnglishFile);
+                    $translations = array_merge($enTranslations, $translations);
+
+                    $enTranslationKeys = array_keys($enTranslations);
+
+                    foreach ($translations as $key => $translation) {
+                        if (! in_array($key, $enTranslationKeys)) {
+                            Arr::forget($translations, $key);
+                        }
+                    }
+                }
             }
         }
 
-        return view('plugins/translation::theme-translations', compact('translations', 'groups', 'group', 'defaultLanguage'));
+        ksort($translations);
+
+        return view(
+            'plugins/translation::theme-translations',
+            compact('translations', 'groups', 'group', 'defaultLanguage')
+        );
     }
 
-    /**
-     * @param Request $request
-     */
     public function postThemeTranslations(Request $request, BaseHttpResponse $response)
     {
-        $translations = $request->input('translations', []);
-
-        $json = [];
-
-        foreach ($translations as $translation) {
-            $json[$translation['key']] = $translation['value'];
+        if (! File::isWritable(lang_path())) {
+            return $response
+                ->setError()
+                ->setMessage(trans('plugins/translation::translation.folder_is_not_writeable', ['lang_path' => lang_path()]));
         }
 
-        $jsonFile = resource_path('lang/' . $request->input('locale') . '.json');
+        $locale = $request->input('pk');
 
-        $json = json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        if ($locale) {
+            $translations = [];
 
-        save_file_data($jsonFile, $json, false);
+            $jsonFile = lang_path($locale . '.json');
+
+            if (! File::exists($jsonFile)) {
+                $jsonFile = theme_path(Theme::getThemeName() . '/lang/' . $locale . '.json');
+            }
+
+            if (File::exists($jsonFile)) {
+                $translations = BaseHelper::getFileData($jsonFile);
+            }
+
+            if ($locale != 'en') {
+                $defaultEnglishFile = theme_path(Theme::getThemeName() . '/lang/en.json');
+
+                if ($defaultEnglishFile) {
+                    $enTranslations = BaseHelper::getFileData($defaultEnglishFile);
+                    $translations = array_merge($enTranslations, $translations);
+
+                    $enTranslationKeys = array_keys($enTranslations);
+
+                    foreach ($translations as $key => $translation) {
+                        if (! in_array($key, $enTranslationKeys)) {
+                            Arr::forget($translations, $key);
+                        }
+                    }
+                }
+            }
+
+            ksort($translations);
+
+            $translations = array_combine(array_map('trim', array_keys($translations)), $translations);
+
+            $translations[$request->input('name')] = $request->input('value');
+
+            File::put(lang_path($locale . '.json'), json_encode($translations, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        }
 
         return $response
             ->setPreviousUrl(route('translations.theme-translations'))
             ->setMessage(trans('core/base::notices.update_success_message'));
+    }
+
+    public function downloadLocale(string $locale)
+    {
+        $file = RvMedia::getUploadPath() . '/locale-' . $locale . '.zip';
+
+        BaseHelper::maximumExecutionTimeAndMemoryLimit();
+
+        if (class_exists('ZipArchive', false)) {
+            $zip = new ZipArchive();
+            if ($zip->open($file, ZipArchive::CREATE) !== true) {
+                File::delete($file);
+            }
+        } else {
+            $zip = new Zip($file);
+        }
+
+        $source = lang_path($locale);
+
+        $arrSource = explode(DIRECTORY_SEPARATOR, str_replace('/' . $locale, '', $source));
+        $pathLength = strlen(implode(DIRECTORY_SEPARATOR, $arrSource) . DIRECTORY_SEPARATOR);
+
+        // Add each file in the file list to the archive
+        $this->recurseZip($source, $zip, $pathLength);
+
+        $jsonFile = lang_path($locale . '.json');
+
+        $arrSource = explode(DIRECTORY_SEPARATOR, File::dirname($jsonFile));
+        $pathLength = strlen(implode(DIRECTORY_SEPARATOR, $arrSource) . DIRECTORY_SEPARATOR);
+
+        $this->recurseZip($jsonFile, $zip, $pathLength);
+
+        foreach (File::directories(lang_path('vendor')) as $module) {
+            foreach (File::directories($module) as $item) {
+                $source = $item . '/' . $locale;
+
+                if (File::isDirectory($source)) {
+                    $arrSource = explode(
+                        DIRECTORY_SEPARATOR,
+                        str_replace(
+                            '/vendor/' . File::basename($module) . '/' . File::basename($item) . '/' . $locale,
+                            '',
+                            $source
+                        )
+                    );
+                    $pathLength = strlen(implode(DIRECTORY_SEPARATOR, $arrSource) . DIRECTORY_SEPARATOR);
+
+                    $this->recurseZip($source, $zip, $pathLength);
+                }
+            }
+        }
+
+        if (class_exists('ZipArchive', false)) {
+            $zip->close();
+        }
+
+        if (file_exists($file)) {
+            chmod($file, 0755);
+        }
+
+        return response()->download($file)->deleteFileAfterSend();
+    }
+
+    protected function recurseZip($src, &$zip, $pathLength): void
+    {
+        if (File::isDirectory($src)) {
+            $files = BaseHelper::scanFolder($src);
+        } else {
+            $files = [File::basename($src)];
+            $src = File::dirname($src);
+        }
+
+        foreach ($files as $file) {
+            if (File::isDirectory($src . DIRECTORY_SEPARATOR . $file)) {
+                $this->recurseZip($src . DIRECTORY_SEPARATOR . $file, $zip, $pathLength);
+            } else {
+                if (class_exists('ZipArchive', false)) {
+                    $zip->addFile($src . DIRECTORY_SEPARATOR . $file, substr($src . DIRECTORY_SEPARATOR . $file, $pathLength));
+                } else {
+                    /**
+                     * @var Zip $zip
+                     */
+                    $zip->add(
+                        $src . DIRECTORY_SEPARATOR . $file,
+                        PCLZIP_OPT_REMOVE_PATH,
+                        substr($src . DIRECTORY_SEPARATOR . $file, $pathLength)
+                    );
+                }
+            }
+        }
+    }
+
+    public function ajaxGetAvailableRemoteLocales(Manager $manager, BaseHttpResponse $response)
+    {
+        $remoteLocales = $manager->getRemoteAvailableLocales();
+
+        $availableLocales = collect(Language::getAvailableLocales())->pluck('locale')->all();
+
+        $listLanguages = Language::getListLanguages();
+
+        $locales = [];
+
+        foreach ($remoteLocales as $locale) {
+            if (in_array($locale, $availableLocales)) {
+                continue;
+            }
+
+            foreach ($listLanguages as $key => $language) {
+                if (in_array($key, [$locale, str_replace('-', '_', $locale)]) ||
+                    in_array($language[1], [$locale, str_replace('-', '_', $locale)])
+                ) {
+                    $locales[$locale] = [
+                        'locale' => $locale,
+                        'name' => $language[2],
+                        'flag' => $language[4],
+                    ];
+
+                    break;
+                }
+
+                if (! array_key_exists($locale, $locales) &&
+                    in_array($language[0], [$locale, str_replace('-', '_', $locale)])) {
+                    $locales[$locale] = [
+                        'locale' => $locale,
+                        'name' => $language[2],
+                        'flag' => $language[4],
+                    ];
+                }
+            }
+        }
+
+        return $response
+            ->setData(view('plugins/translation::partials.available-remote-locales', compact('locales'))->render());
+    }
+
+    public function ajaxDownloadRemoteLocale(string $locale, Manager $manager, BaseHttpResponse $response)
+    {
+        $result = $manager->downloadRemoteLocale($locale);
+
+        return $response
+            ->setError($result['error'])
+            ->setMessage($result['message']);
     }
 }

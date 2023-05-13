@@ -3,23 +3,25 @@
 namespace Botble\ACL\Traits;
 
 use Illuminate\Contracts\Auth\StatefulGuard;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
-use Illuminate\View\View;
 
 trait AuthenticatesUsers
 {
-    use RedirectsUsers, ThrottlesLogins;
+    use RedirectsUsers;
+    use ThrottlesLogins;
 
     /**
      * Show the application's login form.
      *
-     * @return Factory|View
+     * @return Factory|Application|View|\Response
      */
     public function showLoginForm()
     {
@@ -53,67 +55,40 @@ trait AuthenticatesUsers
         }
 
         // If the login attempt was unsuccessful we will increment the number of attempts
-        // to login and redirect the user back to the login form. Of course, when this
+        // to log in and redirect the user back to the login form. Of course, when this
         // user surpasses their maximum number of attempts they will get locked out.
         $this->incrementLoginAttempts($request);
 
         return $this->sendFailedLoginResponse();
     }
 
-    /**
-     * Validate the user login request.
-     *
-     * @param Request $request
-     * @return void
-     */
-    protected function validateLogin(Request $request)
+    protected function validateLogin(Request $request): void
     {
         $request->validate([
             $this->username() => 'required|string',
-            'password'        => 'required|string',
+            'password' => 'required|string',
         ]);
     }
 
-    /**
-     * Get the login username to be used by the controller.
-     *
-     * @return string
-     */
-    public function username()
+    public function username(): string
     {
         return 'email';
     }
 
-    /**
-     * Attempt to log the user into the application.
-     *
-     * @param Request $request
-     * @return bool
-     */
-    protected function attemptLogin(Request $request)
+    protected function attemptLogin(Request $request): bool
     {
         return $this->guard()->attempt(
-            $this->credentials($request), $request->filled('remember')
+            $this->credentials($request),
+            $request->filled('remember')
         );
     }
 
-    /**
-     * Get the guard to be used during authentication.
-     *
-     * @return StatefulGuard
-     */
-    protected function guard()
+    protected function guard(): StatefulGuard
     {
         return Auth::guard();
     }
 
-    /**
-     * Get the needed authorization credentials from the request.
-     *
-     * @param Request $request
-     * @return array
-     */
-    protected function credentials(Request $request)
+    protected function credentials(Request $request): array
     {
         return $request->only($this->username(), 'password');
     }
@@ -144,7 +119,7 @@ trait AuthenticatesUsers
      *
      * @param Request $request
      * @param mixed $user
-     * @return mixed
+     * @return void
      */
     protected function authenticated(Request $request, $user)
     {
@@ -190,7 +165,7 @@ trait AuthenticatesUsers
      * The user has logged out of the application.
      *
      * @param Request $request
-     * @return mixed
+     * @return void
      */
     protected function loggedOut(Request $request)
     {

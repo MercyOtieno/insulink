@@ -2,33 +2,36 @@
 
 namespace Botble\Base\Supports;
 
+use BaseHelper;
+use Botble\Base\Events\FinishedSeederEvent;
 use Botble\Media\Models\MediaFile;
 use Botble\Media\Models\MediaFolder;
 use Botble\PluginManagement\Services\PluginService;
 use Exception;
-use File;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 use Mimey\MimeTypes;
 use RvMedia;
+use Setting;
 
 class BaseSeeder extends Seeder
 {
-    /**
-     * @param string $folder
-     * @param null|string $basePath
-     * @return array
-     */
-    public function uploadFiles(string $folder, $basePath = null): array
+    public function uploadFiles(string $folder, ?string $basePath = null): array
     {
-        File::deleteDirectory(config('filesystems.disks.public.root') . '/' . $folder);
+        Storage::deleteDirectory($folder);
         MediaFile::where('url', 'LIKE', $folder . '/%')->forceDelete();
         MediaFolder::where('name', $folder)->forceDelete();
 
-        $mimeType = new MimeTypes;
+        $mimeType = new MimeTypes();
 
         $files = [];
 
         $folderPath = ($basePath ?: database_path('seeders/files')) . '/' . $folder;
+
+        if (! File::isDirectory($folderPath)) {
+            return [];
+        }
 
         foreach (File::allFiles($folderPath) as $file) {
             $type = $mimeType->getMimeType(File::extension($file));
@@ -38,20 +41,48 @@ class BaseSeeder extends Seeder
         return $files;
     }
 
-    /**
-     * @return array
-     * @throws Exception
-     */
     public function activateAllPlugins(): array
     {
-        $plugins = array_values(scan_folder(plugin_path()));
+        try {
+            $plugins = array_values(BaseHelper::scanFolder(plugin_path()));
 
-        $pluginService = app(PluginService::class);
+            $pluginService = app(PluginService::class);
 
-        foreach ($plugins as $plugin) {
-            $pluginService->activate($plugin);
+            foreach ($plugins as $plugin) {
+                $pluginService->activate($plugin);
+            }
+
+            return $plugins;
+        } catch (Exception) {
+            return [];
+        }
+    }
+
+    public function prepareRun(): array
+    {
+        Setting::forgetAll();
+
+        return $this->activateAllPlugins();
+    }
+
+    protected function random(int $from, int $to, array $exceptions = []): int
+    {
+        sort($exceptions); // lets us use break; in the foreach reliably
+        $number = rand($from, $to - count($exceptions)); // or mt_rand()
+
+        foreach ($exceptions as $exception) {
+            if ($number >= $exception) {
+                $number++; // make up for the gap
+            } else { /*if ($number < $exception)*/
+                break;
+            }
         }
 
-        return $plugins;
+        return $number;
+    }
+
+    protected function finished(): void
+    {
+        event(new FinishedSeederEvent());
     }
 }

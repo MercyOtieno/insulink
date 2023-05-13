@@ -7,10 +7,10 @@
             <h3>{{ trans('core/base::errors.401_title') }}</h3>
             <p>{{ trans('core/base::errors.reasons') }}</p>
             <ul>
-                {!! clean(trans('core/base::errors.401_msg')) !!}
+                {!! BaseHelper::clean(trans('core/base::errors.401_msg')) !!}
             </ul>
 
-            <p>{!! clean(trans('core/base::errors.try_again')) !!}</p>
+            <p>{!! BaseHelper::clean(trans('core/base::errors.try_again', ['link' => route('dashboard.index')])) !!}</p>
         </div>
     </div>
 

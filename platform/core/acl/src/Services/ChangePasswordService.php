@@ -2,48 +2,47 @@
 
 namespace Botble\ACL\Services;
 
+use Botble\ACL\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Botble\ACL\Repositories\Interfaces\UserInterface;
 use Botble\Support\Services\ProduceServiceInterface;
 use Exception;
 use Hash;
 use Illuminate\Http\Request;
+use Throwable;
 
 class ChangePasswordService implements ProduceServiceInterface
 {
-    /**
-     * @var UserInterface
-     */
-    protected $userRepository;
+    protected UserInterface $userRepository;
 
-    /**
-     * ChangePasswordService constructor.
-     * @param UserInterface $userRepository
-     */
     public function __construct(UserInterface $userRepository)
     {
         $this->userRepository = $userRepository;
     }
 
-    /**
-     * @param Request $request
-     * @return bool|Exception
-     */
-    public function execute(Request $request)
+    public function execute(Request $request): Exception|bool|User
     {
-        if (!$request->user()->isSuperUser()) {
-            if (!Hash::check($request->input('old_password'), $request->user()->getAuthPassword())) {
+        $currentUser = $request->user();
+
+        if (! $currentUser->isSuperUser()) {
+            if (! Hash::check($request->input('old_password'), $currentUser->getAuthPassword())) {
                 return new Exception(trans('core/acl::users.current_password_not_valid'));
             }
         }
 
-        $user = $this->userRepository->findOrFail($request->input('id', $request->user()->getKey()));
+        $user = $this->userRepository->findOrFail($request->input('id', $currentUser->getKey()));
 
-        $user->password = Hash::make($request->input('password'));
+        $password = $request->input('password');
+
+        $user->password = Hash::make($password);
         $this->userRepository->createOrUpdate($user);
 
-        if ($user->id != $request->user()->id) {
-            Auth::setUser($user)->logoutOtherDevices($request->input('password'));
+        if ($user->id != $currentUser->getKey()) {
+            try {
+                Auth::setUser($user)->logoutOtherDevices($password);
+            } catch (Throwable $exception) {
+                info($exception->getMessage());
+            }
         }
 
         do_action(USER_ACTION_AFTER_UPDATE_PASSWORD, USER_MODULE_SCREEN_NAME, $request, $user);

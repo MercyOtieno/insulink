@@ -2,7 +2,6 @@
 
 namespace Botble\SeoHelper\Providers;
 
-use Botble\Base\Supports\Helper;
 use Botble\Base\Traits\LoadAndPublishDataTrait;
 use Botble\SeoHelper\Contracts\SeoHelperContract;
 use Botble\SeoHelper\Contracts\SeoMetaContract;
@@ -21,28 +20,26 @@ class SeoHelperServiceProvider extends ServiceProvider
 {
     use LoadAndPublishDataTrait;
 
-    public function register()
+    public function register(): void
     {
         $this->app->bind(SeoMetaContract::class, SeoMeta::class);
         $this->app->bind(SeoHelperContract::class, SeoHelper::class);
         $this->app->bind(SeoOpenGraphContract::class, SeoOpenGraph::class);
         $this->app->bind(SeoTwitterContract::class, SeoTwitter::class);
 
-        Helper::autoload(__DIR__ . '/../../helpers');
+        $this->setNamespace('packages/seo-helper')
+            ->loadHelpers();
     }
 
-    public function boot()
+    public function boot(): void
     {
-        $this->setNamespace('packages/seo-helper')
+        $this
             ->loadAndPublishConfigurations(['general'])
             ->loadAndPublishViews()
             ->loadAndPublishTranslations()
             ->publishAssets();
 
         $this->app->register(EventServiceProvider::class);
-
-        $this->app->booted(function () {
-            $this->app->register(HookServiceProvider::class);
-        });
+        $this->app->register(HookServiceProvider::class);
     }
 }

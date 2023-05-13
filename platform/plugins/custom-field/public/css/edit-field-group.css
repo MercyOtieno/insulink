@@ -80,7 +80,11 @@
 }
 .line-group-container .line-group .location-add-rule-and {
   margin-left: 5px;
+<<<<<<< HEAD
   height: 35px;
+=======
+  height: 38px;
+>>>>>>> 3370e77a739cda4947bce068a00fc59315e30382
   line-height: 20px;
 }
 .line-group-container > .line-group:first-child > .rule-line:first-child .remove-rule-line {
@@ -196,3 +200,53 @@
 .p10 {
   padding: 10px;
 }
+<<<<<<< HEAD
+=======
+
+body[dir=rtl] .line-group-container .line-group .remove-rule-line {
+  right: auto;
+  left: 0;
+}
+body[dir=rtl] .line-group-container .line-group .rule-a, body[dir=rtl] .line-group-container .line-group .rule-type, body[dir=rtl] .line-group-container .line-group .rules-b-group {
+  margin-left: 0 !important;
+  margin-right: 5px !important;
+}
+body[dir=rtl] .add-new-field:before {
+  border-left: none;
+  border-right: 1px solid #aaaaaa;
+}
+body[dir=rtl] .field-table-header .list-group-item:not(:first-child) {
+  border-left: 1px solid #aaaaaa;
+  border-right: none;
+}
+body[dir=rtl] .field-table-header {
+  padding-left: 0;
+  padding-right: 50px;
+}
+body[dir=rtl] .field-group-items > li:after {
+  left: auto;
+  right: 0;
+  border-right: none;
+  border-left: 1px solid #aaa;
+}
+body[dir=rtl] .field-group-items li {
+  padding: 0 50px 0 0;
+}
+body[dir=rtl] .field-group-items > li:before {
+  left: auto;
+  right: 10px;
+}
+body[dir=rtl] .field-group-items {
+  padding-right: 0;
+}
+body[dir=rtl] .field-group-items > li > .field-column > .show-item-details {
+  right: auto;
+  left: 0;
+  border-left: none;
+  border-right: 1px solid #aaaaaa;
+}
+body[dir=rtl] .line-group-container .line-group .location-add-rule-and {
+  margin-left: 0;
+  margin-right: 5px;
+}
+>>>>>>> 3370e77a739cda4947bce068a00fc59315e30382

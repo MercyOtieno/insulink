@@ -9,50 +9,38 @@ use Illuminate\Http\Request;
 
 class AuditHandlerListener
 {
-    /**
-     * @var AuditLogInterface
-     */
-    public $auditLogRepository;
-
-    /**
-     * @var Request
-     */
-    protected $request;
-
-    /**
-     * AuditHandlerListener constructor.
-     * @param AuditLogInterface $auditLogRepository
-     * @param Request $request
-     */
-    public function __construct(AuditLogInterface $auditLogRepository, Request $request)
+    public function __construct(protected AuditLogInterface $auditLogRepository, protected Request $request)
     {
-        $this->auditLogRepository = $auditLogRepository;
-        $this->request = $request;
     }
 
-    /**
-     * Handle the event.
-     *
-     * @param AuditHandlerEvent $event
-     * @return void
-     */
-    public function handle(AuditHandlerEvent $event)
+    public function handle(AuditHandlerEvent $event): void
     {
         try {
             $data = [
-                'user_agent'     => $this->request->userAgent(),
-                'ip_address'     => $this->request->ip(),
-                'module'         => $event->module,
-                'action'         => $event->action,
-                'user_id'        => $this->request->user() ? $this->request->user()->getKey() : 0,
+                'user_agent' => $this->request->userAgent(),
+                'ip_address' => $this->request->ip(),
+                'module' => $event->module,
+                'action' => $event->action,
+                'user_id' => $this->request->user() ? $this->request->user()->getKey() : 0,
                 'reference_user' => $event->referenceUser,
-                'reference_id'   => $event->referenceId,
+                'reference_id' => $event->referenceId,
                 'reference_name' => $event->referenceName,
-                'type'           => $event->type,
+                'type' => $event->type,
             ];
 
-            if (!in_array($event->action, ['loggedin', 'password'])) {
-                $data['request'] = json_encode($this->request->input());
+            if (! in_array($event->action, ['loggedin', 'password'])) {
+                $data['request'] = json_encode($this->request->except([
+                    'username',
+                    'password',
+                    're_password',
+                    'new_password',
+                    'current_password',
+                    'password_confirmation',
+                    '_token',
+                    'token',
+                    'refresh_token',
+                    'remember_token',
+                ]));
             }
 
             $this->auditLogRepository->createOrUpdate($data);

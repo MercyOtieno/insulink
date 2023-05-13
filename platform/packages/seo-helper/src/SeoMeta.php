@@ -11,7 +11,6 @@ use Botble\SeoHelper\Contracts\SeoMetaContract;
 
 class SeoMeta implements SeoMetaContract
 {
-
     /**
      * The Title instance.
      *
@@ -54,15 +53,14 @@ class SeoMeta implements SeoMetaContract
 
     /**
      * Make SeoMeta instance.
-     * @throws Exceptions\InvalidArgumentException
      */
     public function __construct()
     {
-        $this->title(new Entities\Title);
-        $this->description(new Entities\Description);
-        $this->misc(new Entities\MiscTags);
-        $this->webmasters(new Entities\Webmasters);
-        $this->analytics(new Entities\Analytics);
+        $this->title(new Entities\Title());
+        $this->description(new Entities\Description());
+        $this->misc(new Entities\MiscTags());
+        $this->webmasters(new Entities\Webmasters());
+        $this->analytics(new Entities\Analytics());
     }
 
     /**
@@ -142,6 +140,7 @@ class SeoMeta implements SeoMetaContract
     public function setGoogle($code)
     {
         $this->analytics->setGoogle($code);
+
         return $this;
     }
 
@@ -154,7 +153,7 @@ class SeoMeta implements SeoMetaContract
     {
         $title = $this->title->getTitleOnly();
 
-        if (!theme_option('show_site_name') && $title) {
+        if (! theme_option('show_site_name') && $title) {
             return $title;
         }
 
@@ -172,15 +171,15 @@ class SeoMeta implements SeoMetaContract
      */
     public function setTitle($title, $siteName = null, $separator = null)
     {
-        if (!empty($title)) {
+        if (! empty($title)) {
             $this->title->set($title);
         }
 
-        if (!empty($siteName)) {
+        if (! empty($siteName)) {
             $this->title->setSiteName($siteName);
         }
 
-        if (!empty($separator)) {
+        if (! empty($separator)) {
             $this->title->setSeparator($separator);
         }
 
@@ -199,6 +198,14 @@ class SeoMeta implements SeoMetaContract
         $this->description->set($content);
 
         return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDescription()
+    {
+        return $this->description->getContent();
     }
 
     /**
@@ -274,6 +281,11 @@ class SeoMeta implements SeoMetaContract
         return $this;
     }
 
+    public function getAnalytics(): AnalyticsContract
+    {
+        return $this->analytics;
+    }
+
     /**
      * Render all seo tags.
      *
@@ -296,7 +308,6 @@ class SeoMeta implements SeoMetaContract
             $this->description->render(),
             $this->misc->render(),
             $this->webmasters->render(),
-            $this->analytics->render(),
         ]));
     }
 }

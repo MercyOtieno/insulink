@@ -2,14 +2,11 @@
 
 namespace Botble\PluginManagement\Providers;
 
-use Botble\Base\Supports\Helper;
 use Botble\Base\Traits\LoadAndPublishDataTrait;
+use Botble\PluginManagement\PluginManifest;
 use Composer\Autoload\ClassLoader;
 use Exception;
 use Illuminate\Routing\Events\RouteMatched;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\ServiceProvider;
 use Psr\SimpleCache\InvalidArgumentException;
 
@@ -21,86 +18,45 @@ class PluginManagementServiceProvider extends ServiceProvider
      * @throws InvalidArgumentException
      * @throws Exception
      */
-    public function boot()
+    public function boot(): void
     {
         $this->setNamespace('packages/plugin-management')
-            ->loadAndPublishConfigurations(['permissions'])
+            ->loadAndPublishConfigurations(['permissions', 'general'])
             ->loadAndPublishViews()
             ->loadAndPublishTranslations()
-            ->loadRoutes(['web'])
+            ->loadRoutes()
+            ->loadHelpers()
             ->publishAssets();
 
-        Helper::autoload(__DIR__ . '/../../helpers');
+        $manifest = (new PluginManifest())->getManifest();
 
-        $plugins = get_active_plugins();
-        if (!empty($plugins) && is_array($plugins)) {
-            $loader = new ClassLoader;
-            $providers = [];
-            $namespaces = [];
-            if (cache()->has('plugin_namespaces') && cache()->has('plugin_providers')) {
-                $providers = cache('plugin_providers');
-                if (!is_array($providers) || empty($providers)) {
-                    $providers = [];
-                }
+        $loader = new ClassLoader();
 
-                $namespaces = cache('plugin_namespaces');
+        foreach ($manifest['namespaces'] as $key => $namespace) {
+            $loader->setPsr4($namespace, plugin_path($key . '/src'));
+        }
 
-                if (!is_array($namespaces) || empty($namespaces)) {
-                    $namespaces = [];
-                }
+        $loader->register();
+
+        foreach ($manifest['providers'] as $provider) {
+            if (! class_exists($provider)) {
+                continue;
             }
 
-            if (empty($namespaces) || empty($providers)) {
-                foreach ($plugins as $plugin) {
-                    if (empty($plugin)) {
-                        continue;
-                    }
-
-                    $pluginPath = plugin_path($plugin);
-
-                    if (!File::exists($pluginPath . '/plugin.json')) {
-                        continue;
-                    }
-                    $content = get_file_data($pluginPath . '/plugin.json');
-                    if (!empty($content)) {
-                        if (Arr::has($content, 'namespace') && !class_exists($content['provider'])) {
-                            $namespaces[$plugin] = $content['namespace'];
-                        }
-
-                        $providers[] = $content['provider'];
-                    }
-                }
-
-                cache()->forever('plugin_namespaces', $namespaces);
-                cache()->forever('plugin_providers', $providers);
-            }
-
-            foreach ($namespaces as $key => $namespace) {
-                $loader->setPsr4($namespace, plugin_path($key . '/src'));
-            }
-
-            $loader->register();
-
-            foreach ($providers as $provider) {
-                if (!class_exists($provider)) {
-                    continue;
-                }
-
-                $this->app->register($provider);
-            }
+            $this->app->register($provider);
         }
 
         $this->app->register(CommandServiceProvider::class);
 
-        Event::listen(RouteMatched::class, function () {
+        $this->app['events']->listen(RouteMatched::class, function () {
             dashboard_menu()
                 ->registerItem([
-                    'id'          => 'cms-core-plugins',
-                    'priority'    => 997,
-                    'parent_id'   => null,
-                    'name'        => 'core/base::layouts.plugins',
-                    'icon'        => 'fa fa-plug',
-                    'url'         => route('plugins.index'),
+                    'id' => 'cms-core-plugins',
+                    'priority' => 997,
+                    'parent_id' => null,
+                    'name' => 'core/base::layouts.plugins',
+                    'icon' => 'fa fa-plug',
+                    'url' => route('plugins.index'),
                     'permissions' => ['plugins.index'],
                 ]);
         });
@@ -109,5 +65,6 @@ class PluginManagementServiceProvider extends ServiceProvider
             $this->app->register(HookServiceProvider::class);
         });
 
+        $this->app->register(EventServiceProvider::class);
     }
 }

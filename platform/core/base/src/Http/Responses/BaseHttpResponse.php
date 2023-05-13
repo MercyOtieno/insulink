@@ -2,92 +2,52 @@
 
 namespace Botble\Base\Http\Responses;
 
+use BaseHelper;
 use Illuminate\Contracts\Support\Responsable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use URL;
+use Illuminate\Support\Facades\URL;
 
 class BaseHttpResponse implements Responsable
 {
-    /**
-     * @var bool
-     */
-    protected $error = false;
+    protected bool $error = false;
 
-    /**
-     * @var array
-     */
-    protected $data;
+    protected mixed $data = null;
 
-    /**
-     * @var string
-     */
-    protected $message;
+    protected ?string $message = null;
 
-    /**
-     * @var string
-     */
-    protected $previousUrl = '';
+    protected ?string $previousUrl = '';
 
-    /**
-     * @var string
-     */
-    protected $nextUrl = '';
+    protected ?string $nextUrl = '';
 
-    /**
-     * @var bool
-     */
-    protected $withInput = false;
+    protected bool $withInput = false;
 
-    /**
-     * @var array
-     */
-    protected $additional = [];
+    protected array $additional = [];
 
-    /**
-     * @var int
-     */
-    protected $code = 200;
+    protected int $code = 200;
 
-    /**
-     * @param mixed $data
-     * @return BaseHttpResponse
-     */
-    public function setData($data): self
+    public function setData(mixed $data): self
     {
         $this->data = $data;
 
         return $this;
     }
 
-    /**
-     * @param string $previousUrl
-     * @return BaseHttpResponse
-     */
-    public function setPreviousUrl($previousUrl): self
+    public function setPreviousUrl(string $previousUrl): self
     {
         $this->previousUrl = $previousUrl;
 
         return $this;
     }
 
-    /**
-     * @param string $nextUrl
-     * @return BaseHttpResponse
-     */
-    public function setNextUrl($nextUrl): self
+    public function setNextUrl(string $nextUrl): self
     {
         $this->nextUrl = $nextUrl;
 
         return $this;
     }
 
-    /**
-     * @param bool $withInput
-     * @return BaseHttpResponse
-     */
     public function withInput(bool $withInput = true): self
     {
         $this->withInput = $withInput;
@@ -95,48 +55,34 @@ class BaseHttpResponse implements Responsable
         return $this;
     }
 
-    /**
-     * @param int $code
-     * @return BaseHttpResponse
-     */
     public function setCode(int $code): self
     {
+        if ($code < 100 || $code >= 600) {
+            return $this;
+        }
+
         $this->code = $code;
 
         return $this;
     }
 
-    /**
-     * @return string
-     */
     public function getMessage(): string
     {
         return $this->message;
     }
 
-    /**
-     * @param string $message
-     * @return BaseHttpResponse
-     */
-    public function setMessage($message): self
+    public function setMessage(?string $message): self
     {
-        $this->message = $message;
+        $this->message = BaseHelper::clean($message);
 
         return $this;
     }
 
-    /**
-     * @return bool
-     */
     public function isError(): bool
     {
         return $this->error;
     }
 
-    /**
-     * @param bool $error
-     * @return BaseHttpResponse
-     */
     public function setError(bool $error = true): self
     {
         $this->error = $error;
@@ -144,10 +90,6 @@ class BaseHttpResponse implements Responsable
         return $this;
     }
 
-    /**
-     * @param array $additional
-     * @return BaseHttpResponse
-     */
     public function setAdditional(array $additional): self
     {
         $this->additional = $additional;
@@ -155,14 +97,11 @@ class BaseHttpResponse implements Responsable
         return $this;
     }
 
-    /**
-     * @return BaseHttpResponse|RedirectResponse|JsonResource
-     */
-    public function toApiResponse()
+    public function toApiResponse(): BaseHttpResponse|JsonResponse|JsonResource|RedirectResponse
     {
         if ($this->data instanceof JsonResource) {
             return $this->data->additional(array_merge([
-                'error'   => $this->error,
+                'error' => $this->error,
                 'message' => $this->message,
             ], $this->additional));
         }
@@ -170,35 +109,33 @@ class BaseHttpResponse implements Responsable
         return $this->toResponse(request());
     }
 
-    /**
-     * @param Request $request
-     * @return BaseHttpResponse|JsonResponse|RedirectResponse
-     */
-    public function toResponse($request)
+    public function toResponse($request): JsonResponse|RedirectResponse
     {
         if ($request->expectsJson()) {
+            $data = [
+                'error' => $this->error,
+                'data' => $this->data,
+                'message' => $this->message,
+            ];
+
+            if ($this->additional) {
+                $data = array_merge($data, ['additional' => $this->additional]);
+            }
+
             return response()
-                ->json([
-                    'error'   => $this->error,
-                    'data'    => $this->data,
-                    'message' => $this->message,
-                ], $this->code);
+                ->json($data, $this->code);
         }
 
-        if ($request->input('submit') === 'save' && !empty($this->previousUrl)) {
+        if ($request->input('submit') === 'save' && ! empty($this->previousUrl)) {
             return $this->responseRedirect($this->previousUrl);
-        } elseif (!empty($this->nextUrl)) {
+        } elseif (! empty($this->nextUrl)) {
             return $this->responseRedirect($this->nextUrl);
         }
 
         return $this->responseRedirect(URL::previous());
     }
 
-    /**
-     * @param string $url
-     * @return RedirectResponse
-     */
-    protected function responseRedirect($url)
+    protected function responseRedirect(string $url): RedirectResponse
     {
         if ($this->withInput) {
             return redirect()

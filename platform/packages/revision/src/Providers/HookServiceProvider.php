@@ -3,28 +3,20 @@
 namespace Botble\Revision\Providers;
 
 use Assets;
-use Botble\Base\Models\BaseModel;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\ServiceProvider;
-use Throwable;
 
 class HookServiceProvider extends ServiceProvider
 {
-    public function boot()
+    public function boot(): void
     {
         add_filter(BASE_FILTER_REGISTER_CONTENT_TABS, [$this, 'addHistoryTab'], 55, 3);
         add_filter(BASE_FILTER_REGISTER_CONTENT_TAB_INSIDE, [$this, 'addHistoryContent'], 55, 3);
     }
 
-    /**
-     * @param string $tabs
-     * @param BaseModel $data
-     * @return string
-     * @throws Throwable
-     * @since 2.0
-     */
-    public function addHistoryTab($tabs, $data = null)
+    public function addHistoryTab(?string $tabs, string|Model|null $data = null): string
     {
-        if (!empty($data) && $this->isSupported($data)) {
+        if (! empty($data) && $this->isSupported($data)) {
             Assets::addScriptsDirectly([
                 '/vendor/core/packages/revision/js/html-diff.js',
                 '/vendor/core/packages/revision/js/revision.js',
@@ -37,11 +29,7 @@ class HookServiceProvider extends ServiceProvider
         return $tabs;
     }
 
-    /**
-     * @param string|BaseModel $model
-     * @return bool
-     */
-    protected function isSupported($model): bool
+    protected function isSupported(string|Model $model): bool
     {
         if (is_object($model)) {
             $model = get_class($model);
@@ -50,16 +38,9 @@ class HookServiceProvider extends ServiceProvider
         return in_array($model, config('packages.revision.general.supported', []));
     }
 
-    /**
-     * @param string $tabs
-     * @param BaseModel $data
-     * @return string
-     * @throws Throwable
-     * @since 2.0
-     */
-    public function addHistoryContent($tabs, $data = null)
+    public function addHistoryContent(?string $tabs, string|Model|null $data = null): string
     {
-        if (!empty($data) && $this->isSupported($data)) {
+        if (! empty($data) && $this->isSupported($data)) {
             return $tabs . view('packages/revision::history-content', ['model' => $data])->render();
         }
 

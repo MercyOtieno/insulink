@@ -5,40 +5,23 @@ namespace Botble\Page\Repositories\Eloquent;
 use Botble\Base\Enums\BaseStatusEnum;
 use Botble\Page\Repositories\Interfaces\PageInterface;
 use Botble\Support\Repositories\Eloquent\RepositoriesAbstract;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 
 class PageRepository extends RepositoriesAbstract implements PageInterface
 {
-
-    /**
-     * {@inheritDoc}
-     */
-    public function getDataSiteMap()
+    public function getDataSiteMap(): Collection
     {
         $data = $this->model
             ->where('status', BaseStatusEnum::PUBLISHED)
-            ->orderBy('created_at', 'desc');
+            ->orderBy('created_at', 'desc')
+            ->select(['id', 'name', 'updated_at'])
+            ->with('slugable');
 
         return $this->applyBeforeExecuteQuery($data)->get();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function getFeaturedPages($limit)
-    {
-        $data = $this->model
-            ->where(['status' => BaseStatusEnum::PUBLISHED, 'is_featured' => 1])
-            ->orderBy('created_at')
-            ->limit($limit)
-            ->orderBy('created_at', 'desc');
-
-        return $this->applyBeforeExecuteQuery($data)->get();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function whereIn($array, $select = [])
+    public function whereIn(array $array, array $select = []): Collection
     {
         $pages = $this->model
             ->whereIn('id', $array)
@@ -55,10 +38,7 @@ class PageRepository extends RepositoriesAbstract implements PageInterface
         return $this->applyBeforeExecuteQuery($data)->get();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function getSearch($query, $limit = 10)
+    public function getSearch(?string $query, int $limit = 10): Collection|LengthAwarePaginator
     {
         $pages = $this->model->where('status', BaseStatusEnum::PUBLISHED);
         foreach (explode(' ', $query) as $term) {
@@ -72,10 +52,7 @@ class PageRepository extends RepositoriesAbstract implements PageInterface
         return $this->applyBeforeExecuteQuery($data)->get();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function getAllPages($active = true)
+    public function getAllPages(bool $active = true): Collection
     {
         $data = $this->model;
 

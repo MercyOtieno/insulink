@@ -3,20 +3,21 @@
 namespace Botble\ACL\Traits;
 
 use Illuminate\Contracts\Auth\PasswordBroker;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
-use Illuminate\View\View;
 
 trait SendsPasswordResetEmails
 {
     /**
      * Display the form to request a password reset link.
      *
-     * @return Factory|View
+     * @return Factory|Application|View|\Response
      */
     public function showLinkRequestForm()
     {
@@ -87,7 +88,7 @@ trait SendsPasswordResetEmails
      *
      * @param Request $request
      * @param string $response
-     * @return RedirectResponse|JsonResponse
+     * @return RedirectResponse
      * @throws ValidationException
      */
     protected function sendResetLinkFailedResponse(Request $request, $response)

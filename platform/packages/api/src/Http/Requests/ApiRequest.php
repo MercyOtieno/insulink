@@ -14,24 +14,11 @@ use Illuminate\Validation\ValidationException;
  */
 abstract class ApiRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     *
-     * @return bool
-     */
-    public function authorize()
+    public function authorize(): bool
     {
         return true;
     }
 
-    /**
-     * Handle a failed validation attempt.
-     *
-     * @param Validator $validator
-     * @return BaseHttpResponse|void
-     *
-     * @throws ValidationException
-     */
     protected function failedValidation(Validator $validator)
     {
         $errors = [];
@@ -42,9 +29,9 @@ abstract class ApiRequest extends FormRequest
             ];
         }
 
-        $response = (new BaseHttpResponse)
-            ->setError(true)
-            ->setMessage(__('The given data is invalid'))
+        $response = (new BaseHttpResponse())
+            ->setError()
+            ->setMessage('The given data is invalid')
             ->setData($errors)
             ->setCode(422);
 

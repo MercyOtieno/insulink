@@ -2,73 +2,91 @@
 
 namespace Botble\Contact\Providers;
 
+use Assets;
+use Botble\Contact\Enums\ContactStatusEnum;
+use Botble\Contact\Repositories\Interfaces\ContactInterface;
+use Botble\Shortcode\Compilers\Shortcode;
 use Html;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\ServiceProvider;
-use Botble\Contact\Repositories\Interfaces\ContactInterface;
 use Theme;
 
 class HookServiceProvider extends ServiceProvider
 {
-    /**
-     * @throws \Throwable
-     */
-    public function boot()
+    public function boot(): void
     {
         add_filter(BASE_FILTER_TOP_HEADER_LAYOUT, [$this, 'registerTopHeaderNotification'], 120);
-        add_filter(BASE_FILTER_APPEND_MENU_NAME, [$this, 'getUnReadCount'], 120, 2);
+        add_filter(BASE_FILTER_APPEND_MENU_NAME, [$this, 'getUnreadCount'], 120, 2);
+        add_filter(BASE_FILTER_MENU_ITEMS_COUNT, [$this, 'getMenuItemCount'], 120);
 
         if (function_exists('add_shortcode')) {
-            add_shortcode('contact-form', __('Contact form'), __('Add contact form'), [$this, 'form']);
+            add_shortcode(
+                'contact-form',
+                trans('plugins/contact::contact.shortcode_name'),
+                trans('plugins/contact::contact.shortcode_description'),
+                [$this, 'form']
+            );
+
             shortcode()
                 ->setAdminConfig('contact-form', view('plugins/contact::partials.short-code-admin-config')->render());
         }
+
+        add_filter(BASE_FILTER_AFTER_SETTING_CONTENT, [$this, 'addSettings'], 93);
     }
 
-    /**
-     * @param string $options
-     * @return string
-     *
-     * @throws \Throwable
-     */
-    public function registerTopHeaderNotification($options)
+    public function registerTopHeaderNotification(?string $options): ?string
     {
         if (Auth::user()->hasPermission('contacts.edit')) {
-            $contacts = $this->app->make(ContactInterface::class)
-                ->getUnread(['id', 'name', 'email', 'phone', 'created_at']);
+            $contacts = $this->app[ContactInterface::class]
+                ->advancedGet([
+                    'condition' => [
+                        'status' => ContactStatusEnum::UNREAD,
+                    ],
+                    'paginate' => [
+                        'per_page' => 10,
+                        'current_paged' => 1,
+                    ],
+                    'select' => ['id', 'name', 'email', 'phone', 'created_at'],
+                    'order_by' => ['created_at' => 'DESC'],
+                ]);
 
             if ($contacts->count() == 0) {
-                return null;
+                return $options;
             }
 
             return $options . view('plugins/contact::partials.notification', compact('contacts'))->render();
         }
-        return null;
+
+        return $options;
     }
 
-    /**
-     * @param int $number
-     * @param string $menuId
-     * @return string
-     * @throws \Illuminate\Contracts\Container\BindingResolutionException
-     */
-    public function getUnReadCount($number, $menuId)
+    public function getUnreadCount(string|null|int $number, string $menuId): int|string|null
     {
-        if ($menuId == 'cms-plugins-contact') {
-            $unread = $this->app->make(ContactInterface::class)->countUnread();
-            if ($unread > 0) {
-                return Html::tag('span', (string)$unread, ['class' => 'badge badge-success'])->toHtml();
-            }
+        if ($menuId !== 'cms-plugins-contact') {
+            return $number;
         }
 
-        return $number;
+        $attributes = [
+            'class' => 'badge badge-success menu-item-count unread-contacts',
+            'style' => 'display: none;',
+        ];
+
+        return Html::tag('span', '', $attributes)->toHtml();
     }
 
-    /**
-     * @return string
-     * @throws \Throwable
-     */
-    public function form($shortcode)
+    public function getMenuItemCount(array $data = []): array
+    {
+        if (Auth::user()->hasPermission('contacts.index')) {
+            $data[] = [
+                'key' => 'unread-contacts',
+                'value' => app(ContactInterface::class)->countUnread(),
+            ];
+        }
+
+        return $data;
+    }
+
+    public function form(Shortcode $shortcode): string
     {
         $view = apply_filters(CONTACT_FORM_TEMPLATE_VIEW, 'plugins/contact::forms.contact');
 
@@ -81,14 +99,31 @@ class HookServiceProvider extends ServiceProvider
                 Theme::asset()
                     ->container('footer')
                     ->usePath(false)
-                    ->add('contact-public-js', asset('vendor/core/plugins/contact/js/contact-public.js'),
-                        ['jquery'], [], '1.0.0');
+                    ->add(
+                        'contact-public-js',
+                        asset('vendor/core/plugins/contact/js/contact-public.js'),
+                        ['jquery'],
+                        [],
+                        '1.0.0'
+                    );
             });
         }
 
         if ($shortcode->view && view()->exists($shortcode->view)) {
             $view = $shortcode->view;
         }
-        return view($view)->render();
+
+        return view($view, compact('shortcode'))->render();
+    }
+
+    public function addSettings(?string $data = null): string
+    {
+        Assets::addStylesDirectly('vendor/core/core/base/libraries/tagify/tagify.css')
+            ->addScriptsDirectly([
+                'vendor/core/core/base/libraries/tagify/tagify.js',
+                'vendor/core/core/base/js/tags.js',
+            ]);
+
+        return $data . view('plugins/contact::settings')->render();
     }
 }

@@ -23,7 +23,7 @@
     }
 
     .form-add-folder {
-        .input-group-prepend {
+        .input-group-text {
             padding: 0;
         }
     }
@@ -185,4 +185,11 @@
             }
         }
     }
+}
+
+.media-download-popup {
+    position: absolute;
+    bottom: 0;
+    right: 24px;
+    display: none;
 }

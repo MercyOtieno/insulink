@@ -10,6 +10,7 @@ use Botble\Table\Abstracts\TableAbstract;
 use Illuminate\Contracts\Routing\UrlGenerator;
 use Yajra\DataTables\DataTables;
 use Botble\Quotation\Models\Makes;
+use Illuminate\Http\JsonResponse;
 use Html;
 
 class MakesTable extends TableAbstract
@@ -43,10 +44,11 @@ class MakesTable extends TableAbstract
         }
     }
 
+
     /**
      * {@inheritDoc}
      */
-    public function ajax()
+    public function ajax(): JsonResponse
     {
         $data = $this->table
             ->eloquent($this->query())
@@ -64,14 +66,12 @@ class MakesTable extends TableAbstract
             })
             ->editColumn('status', function ($item) {
                 return $item->status->toHtml();
-            });
+            })
 
-        return apply_filters(BASE_FILTER_GET_LIST_DATA, $data, $this->repository->getModel())
             ->addColumn('operations', function ($item) {
                 return $this->getOperations('makes.edit', 'makes.destroy', $item);
-            })
-            ->escapeColumns([])
-            ->make(true);
+            });
+        return $this->toJson($data);
     }
 
     /**

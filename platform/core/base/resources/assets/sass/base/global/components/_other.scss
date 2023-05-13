@@ -53,9 +53,19 @@
     float: none;
 }
 
-.page-logo .logo-default {
-    height: 35px;
-    margin: 7px 0 0 !important;
+.page-header.navbar {
+    .page-logo {
+        > a {
+            max-width: 180px;
+
+            .logo-default {
+                height: 35px;
+                width: auto;
+                margin: 7px 0 0 !important;
+                max-width: 100%;
+            }
+        }
+    }
 }
 
 .mCSB_container {
@@ -82,7 +92,7 @@ label.error.valid {
     border-radius: 0;
 }
 
-ul.dropdown-menu.float-right {
+ul.dropdown-menu.float-end {
     > li:first-child {
         &:before {
             right: 11px;
@@ -155,7 +165,7 @@ ul.dropdown-menu.float-right {
 
 }
 
-.input-group .input-group-prepend {
+.input-group .input-group-text {
     border-color: #e5e5e5;
     background: #e5e5e5;
     min-width: 39px;

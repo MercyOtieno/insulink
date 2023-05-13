@@ -3,35 +3,17 @@
 namespace Botble\Dashboard\Models;
 
 use Botble\Base\Models\BaseModel;
-use Illuminate\Database\Eloquent\Relations\hasMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class DashboardWidget extends BaseModel
 {
-
-    /**
-     * @var string
-     */
     protected $table = 'dashboard_widgets';
 
-    /**
-     * @var array
-     */
-    protected $dates = [
-        'created_at',
-        'updated_at',
-    ];
-
-    /**
-     * @var array
-     */
     protected $fillable = [
         'name',
     ];
 
-    /**
-     * @return hasMany
-     */
-    public function settings()
+    public function settings(): HasMany
     {
         return $this->hasMany(DashboardWidgetSetting::class, 'widget_id', 'id');
     }

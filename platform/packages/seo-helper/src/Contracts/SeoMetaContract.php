@@ -2,6 +2,7 @@
 
 namespace Botble\SeoHelper\Contracts;
 
+use Botble\SeoHelper\Contracts\Entities\AnalyticsContract;
 use Botble\SeoHelper\Contracts\Entities\DescriptionContract;
 use Botble\SeoHelper\Contracts\Entities\MiscTagsContract;
 use Botble\SeoHelper\Contracts\Entities\TitleContract;
@@ -9,7 +10,6 @@ use Botble\SeoHelper\Contracts\Entities\WebmastersContract;
 
 interface SeoMetaContract extends RenderableContract
 {
-
     /**
      * Set the Title instance.
      *
@@ -101,4 +101,6 @@ interface SeoMetaContract extends RenderableContract
      * @return $this
      */
     public function addMetas(array $meta);
+
+    public function getAnalytics(): AnalyticsContract;
 }

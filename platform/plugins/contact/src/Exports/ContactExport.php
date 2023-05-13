@@ -9,9 +9,6 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 
 class ContactExport extends TableExportHandler
 {
-    /**
-     * {@inheritDoc}
-     */
     protected function afterSheet(AfterSheet $event)
     {
         parent::afterSheet($event);
@@ -31,7 +28,6 @@ class ContactExport extends TableExportHandler
             ->setHorizontal(Alignment::HORIZONTAL_LEFT);
 
         for ($index = 2; $index <= $totalRows; $index++) {
-
             $status = $event->sheet->getDelegate()
                 ->getStyle('F' . $index)
                 ->getFont()

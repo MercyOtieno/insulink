@@ -18,7 +18,8 @@
     ),
     'aliases' => 
     array (
-      'PDF' => 'Barryvdh\\DomPDF\\Facade',
+      'Pdf' => 'Barryvdh\\DomPDF\\Facade\\Pdf',
+      'PDF' => 'Barryvdh\\DomPDF\\Facade\\Pdf',
     ),
   ),
   'barryvdh/laravel-ide-helper' => 
@@ -107,12 +108,12 @@
     'aliases' => 
     array (
       'Assets' => 'Botble\\Base\\Facades\\AssetsFacade',
-      'BaseHelper' => 'Botble\\Base\\Facades\\BaseHelperFacade',
       'MetaBox' => 'Botble\\Base\\Facades\\MetaBoxFacade',
       'Action' => 'Botble\\Base\\Facades\\ActionFacade',
       'Filter' => 'Botble\\Base\\Facades\\FilterFacade',
       'EmailHandler' => 'Botble\\Base\\Facades\\EmailHandlerFacade',
       'Breadcrumbs' => 'Botble\\Base\\Facades\\BreadcrumbsFacade',
+      'MacroableModels' => 'Botble\\Base\\Facades\\MacroableModelsFacade',
       'JsValidator' => 'Botble\\JsValidation\\Facades\\JsValidatorFacade',
     ),
   ),
@@ -215,29 +216,11 @@
       0 => 'Botble\\WidgetGenerator\\Providers\\WidgetGeneratorServiceProvider',
     ),
   ),
-  'facade/ignition' => 
-  array (
-    'providers' => 
-    array (
-      0 => 'Facade\\Ignition\\IgnitionServiceProvider',
-    ),
-    'aliases' => 
-    array (
-      'Flare' => 'Facade\\Ignition\\Facades\\Flare',
-    ),
-  ),
   'fideloper/proxy' => 
   array (
     'providers' => 
     array (
       0 => 'Fideloper\\Proxy\\TrustedProxyServiceProvider',
-    ),
-  ),
-  'fruitcake/laravel-cors' => 
-  array (
-    'providers' => 
-    array (
-      0 => 'Fruitcake\\Cors\\CorsServiceProvider',
     ),
   ),
   'intervention/image' => 
@@ -299,6 +282,13 @@
     'providers' => 
     array (
       0 => 'Laravel\\Sail\\SailServiceProvider',
+    ),
+  ),
+  'laravel/sanctum' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'Laravel\\Sanctum\\SanctumServiceProvider',
     ),
   ),
   'laravel/socialite' => 
@@ -383,6 +373,24 @@
     'providers' => 
     array (
       0 => 'NunoMaduro\\Collision\\Adapters\\Laravel\\CollisionServiceProvider',
+    ),
+  ),
+  'nunomaduro/termwind' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'Termwind\\Laravel\\TermwindServiceProvider',
+    ),
+  ),
+  'spatie/laravel-ignition' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'Spatie\\LaravelIgnition\\IgnitionServiceProvider',
+    ),
+    'aliases' => 
+    array (
+      'Flare' => 'Spatie\\LaravelIgnition\\Facades\\Flare',
     ),
   ),
   'tightenco/ziggy' => 

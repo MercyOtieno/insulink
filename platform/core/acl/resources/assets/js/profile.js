@@ -59,7 +59,7 @@ class CropAvatar {
     initPreview() {
         let url = this.$avatar.prop('src');
 
-        this.$avatarPreview.empty().html('<img src="' + url + '">');
+        this.$avatarPreview.empty().html('<img src="' + url + '" alt="avatar">');
     }
 
     initIframe() {
@@ -90,7 +90,7 @@ class CropAvatar {
             } else if (firstLoad) {
                 firstLoad = false;
             } else {
-                _this.submitFail('Image upload failed!');
+                Botble.showError('Image upload failed!')
             }
 
             _this.submitEnd();
@@ -161,7 +161,7 @@ class CropAvatar {
         if (this.active) {
             this.$img.cropper('replace', this.url);
         } else {
-            this.$img = $('<img src="' + this.url + '">');
+            this.$img = $('<img src="' + this.url + '" alt="avatar">');
             this.$avatarWrapper.empty().html(this.$img);
             this.$img.cropper({
                 aspectRatio: 1,
@@ -210,8 +210,8 @@ class CropAvatar {
                 _this.submitDone(data);
             },
 
-            error: (XMLHttpRequest, textStatus, errorThrown) => {
-                _this.submitFail(XMLHttpRequest.responseJSON, textStatus || errorThrown);
+            error: (errors) => {
+                Botble.handleError(errors);
             },
 
             complete: () => {
@@ -257,10 +257,6 @@ class CropAvatar {
         } else {
             Botble.showError(data.message);
         }
-    }
-
-    static submitFail(errors) {
-        Botble.handleError(errors);
     }
 
     submitEnd() {

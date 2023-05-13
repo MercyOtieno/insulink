@@ -3,14 +3,8 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 
-class CreateAclTables extends Migration
-{
-    /**
-     * Run the migrations.
-     *
-     * @return void
-     */
-    public function up()
+return new class () extends Migration {
+    public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
             $table->dropColumn('name');
@@ -21,7 +15,7 @@ class CreateAclTables extends Migration
             $table->string('last_name')->nullable();
             $table->string('username', 60)->unique()->nullable();
             $table->string('password')->nullable()->change();
-            $table->integer('avatar_id')->unsigned()->nullable();
+            $table->foreignId('avatar_id')->nullable();
             $table->boolean('super_user')->default(0);
             $table->boolean('manage_supers')->default(0);
             $table->text('permissions')->nullable();
@@ -30,7 +24,7 @@ class CreateAclTables extends Migration
 
         Schema::create('activations', function (Blueprint $table) {
             $table->id();
-            $table->integer('user_id')->unsigned()->references('id')->on('users')->index();
+            $table->foreignId('user_id')->index();
             $table->string('code', 120);
             $table->boolean('completed')->default(0);
             $table->timestamp('completed_at')->nullable();
@@ -44,15 +38,15 @@ class CreateAclTables extends Migration
             $table->text('permissions')->nullable();
             $table->string('description', 255)->nullable();
             $table->tinyInteger('is_default')->unsigned()->default(0);
-            $table->integer('created_by')->unsigned()->references('id')->on('users')->index();
-            $table->integer('updated_by')->unsigned()->references('id')->on('users')->index();
+            $table->foreignId('created_by')->index();
+            $table->foreignId('updated_by')->index();
             $table->timestamps();
         });
 
         Schema::create('role_users', function (Blueprint $table) {
             $table->id();
-            $table->integer('user_id')->unsigned()->references('id')->on('users')->index();
-            $table->integer('role_id')->unsigned()->references('id')->on('roles')->index();
+            $table->foreignId('user_id')->index();
+            $table->foreignId('role_id')->index();
             $table->nullableTimestamps();
         });
 
@@ -60,17 +54,12 @@ class CreateAclTables extends Migration
             $table->id();
             $table->string('key')->nullable();
             $table->string('value')->nullable();
-            $table->integer('user_id')->unsigned()->references('id')->on('users')->index();
+            $table->foreignId('user_id')->index();
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('activations');
         Schema::dropIfExists('roles');
@@ -78,4 +67,4 @@ class CreateAclTables extends Migration
         Schema::dropIfExists('users');
         Schema::dropIfExists('user_meta');
     }
-}
+};

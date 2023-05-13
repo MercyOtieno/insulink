@@ -6,29 +6,26 @@ use Botble\Base\Traits\LoadAndPublishDataTrait;
 use Botble\Captcha\Captcha;
 use Botble\Captcha\CaptchaV3;
 use Botble\Captcha\Facades\CaptchaFacade;
+use Botble\Captcha\MathCaptcha;
 use Illuminate\Foundation\AliasLoader;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
+use Theme;
 
 class CaptchaServiceProvider extends ServiceProvider
 {
     use LoadAndPublishDataTrait;
 
-    /**
-     * Indicates if loading of the provider is deferred.
-     *
-     * @var bool
-     */
-    protected $defer = false;
+    protected bool $defer = false;
 
-    public function register()
+    public function register(): void
     {
         config([
-            'plugins.captcha.general.secret'     => setting('captcha_secret'),
-            'plugins.captcha.general.site_key'   => setting('captcha_site_key'),
-            'plugins.captcha.general.type'       => setting('captcha_type'),
+            'plugins.captcha.general.secret' => setting('captcha_secret'),
+            'plugins.captcha.general.site_key' => setting('captcha_site_key'),
+            'plugins.captcha.general.type' => setting('captcha_type'),
         ]);
 
         $this->app->singleton('captcha', function ($app) {
@@ -39,13 +36,14 @@ class CaptchaServiceProvider extends ServiceProvider
             return new Captcha($app);
         });
 
+        $this->app->singleton('math-captcha', function ($app) {
+            return new MathCaptcha($app['session']);
+        });
+
         AliasLoader::getInstance()->alias('Captcha', CaptchaFacade::class);
     }
 
-    /**
-     * @throws \Illuminate\Contracts\Container\BindingResolutionException
-     */
-    public function boot()
+    public function boot(): void
     {
         $this->setNamespace('plugins/captcha')
             ->loadAndPublishConfigurations(['general'])
@@ -55,7 +53,7 @@ class CaptchaServiceProvider extends ServiceProvider
         $this->bootValidator();
 
         if (defined('THEME_MODULE_SCREEN_NAME') && setting('captcha_hide_badge')) {
-            \Theme::asset()->writeStyle('hide-recaptcha-badge', '.grecaptcha-badge { visibility: hidden; }');
+            Theme::asset()->writeStyle('hide-recaptcha-badge', '.grecaptcha-badge { visibility: hidden; }');
         }
 
         $this->app->booted(function () {
@@ -104,18 +102,20 @@ class CaptchaServiceProvider extends ServiceProvider
                 return $app['captcha']->display($attributes, ['lang' => $app->getLocale()]);
             });
         }
+
+        $validator->extend('math_captcha', function ($attribute, $value) {
+            return $this->app['math-captcha']->verify((string)$value);
+        });
     }
 
-    /**
-     * @param array $parameters
-     * @return array
-     */
-    public function mapParameterToOptions($parameters = []): array
+    public function mapParameterToOptions(array $parameters = []): array
     {
-        if (!is_array($parameters)) {
+        if (! is_array($parameters)) {
             return [];
         }
+
         $options = [];
+
         foreach ($parameters as $parameter) {
             $option = explode(':', $parameter);
             if (count($option) === 2) {
@@ -126,13 +126,8 @@ class CaptchaServiceProvider extends ServiceProvider
         return $options;
     }
 
-    /**
-     * Get the services provided by the provider.
-     *
-     * @return array
-     */
-    public function provides()
+    public function provides(): array
     {
-        return ['captcha'];
+        return ['captcha', 'math-captcha'];
     }
 }

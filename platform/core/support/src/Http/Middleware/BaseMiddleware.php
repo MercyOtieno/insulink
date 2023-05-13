@@ -2,14 +2,12 @@
 
 namespace Botble\Support\Http\Middleware;
 
+use Closure;
+use Illuminate\Http\Request;
+
 class BaseMiddleware
 {
-    /**
-     * @param $request
-     * @param $next
-     * @return mixed
-     */
-    public function handle($request, $next)
+    public function handle(Request $request, Closure $next)
     {
         return $next($request);
     }

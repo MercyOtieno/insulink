@@ -29,7 +29,7 @@ class JsValidatorFactory
      *
      * @var array
      */
-    protected $options;
+    protected array $options = [];
 
     /**
      * Create a new Validator factory instance.
@@ -124,7 +124,7 @@ class JsValidatorFactory
      */
     public function formRequest($formRequest, $selector = null)
     {
-        if (!is_object($formRequest)) {
+        if (! is_object($formRequest)) {
             $formRequest = $this->createFormRequest($formRequest);
         }
 
@@ -201,19 +201,17 @@ class JsValidatorFactory
      */
     protected function jsValidator(Validator $validator, $selector = null)
     {
-        $remote = !$this->options['disable_remote_validation'];
+        $remote = ! $this->options['disable_remote_validation'];
         $view = $this->options['view'];
         $selector = is_null($selector) ? $this->options['form_selector'] : $selector;
 
         $delegated = new DelegatedValidator($validator, new ValidationRuleParserProxy($validator->getData()));
         $rules = new RuleParser($delegated, $this->getSessionToken());
-        $messages = new MessageParser($delegated, isset($this->options['escape']) ? $this->options['escape'] : false);
+        $messages = new MessageParser($delegated, $this->options['escape'] ?? false);
 
         $jsValidator = new ValidatorHandler($rules, $messages);
 
-        $manager = new JavascriptValidator($jsValidator, compact('view', 'selector', 'remote'));
-
-        return $manager;
+        return new JavascriptValidator($jsValidator, compact('view', 'selector', 'remote'));
     }
 
     /**
@@ -221,7 +219,7 @@ class JsValidatorFactory
      *
      * @return null|string
      */
-    protected function getSessionToken()
+    protected function getSessionToken(): ?string
     {
         $token = null;
         if ($session = $this->app->__get('session')) {

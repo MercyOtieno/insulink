@@ -7,51 +7,35 @@ use Botble\Base\Events\DeletedContentEvent;
 use Botble\Base\Events\UpdatedContentEvent;
 use Botble\Base\Traits\LoadAndPublishDataTrait;
 use Botble\Sitemap\Sitemap;
-use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 
 class SitemapServiceProvider extends ServiceProvider
 {
     use LoadAndPublishDataTrait;
 
-    /**
-     * Indicates if loading of the provider is deferred.
-     *
-     * @var bool
-     */
-    protected $defer = true;
+    protected bool $defer = true;
 
-    /**
-     * Bootstrap the application events.
-     *
-     * @return void
-     */
-    public function boot()
+    public function boot(): void
     {
         $this->setNamespace('packages/sitemap')
             ->loadAndPublishConfigurations(['config'])
             ->loadAndPublishViews()
             ->publishAssets();
 
-        Event::listen(CreatedContentEvent::class, function () {
-            cache()->forget('public.sitemap');
+        $this->app['events']->listen(CreatedContentEvent::class, function () {
+            cache()->forget('cache_site_map_key');
         });
 
-        Event::listen(UpdatedContentEvent::class, function () {
-            cache()->forget('public.sitemap');
+        $this->app['events']->listen(UpdatedContentEvent::class, function () {
+            cache()->forget('cache_site_map_key');
         });
 
-        Event::listen(DeletedContentEvent::class, function () {
-            cache()->forget('public.sitemap');
+        $this->app['events']->listen(DeletedContentEvent::class, function () {
+            cache()->forget('cache_site_map_key');
         });
     }
 
-    /**
-     * Register the service provider.
-     *
-     * @return void
-     */
-    public function register()
+    public function register(): void
     {
         $this->app->bind('sitemap', function ($app) {
             $config = config('packages.sitemap.config');
@@ -69,12 +53,7 @@ class SitemapServiceProvider extends ServiceProvider
         $this->app->alias('sitemap', Sitemap::class);
     }
 
-    /**
-     * Get the services provided by the provider.
-     *
-     * @return array
-     */
-    public function provides()
+    public function provides(): array
     {
         return ['sitemap', Sitemap::class];
     }

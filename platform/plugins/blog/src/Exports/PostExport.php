@@ -9,9 +9,6 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 
 class PostExport extends TableExportHandler
 {
-    /**
-     * {@inheritDoc}
-     */
     protected function afterSheet(AfterSheet $event)
     {
         parent::afterSheet($event);
@@ -34,7 +31,6 @@ class PostExport extends TableExportHandler
             ->setWidth(40);
 
         for ($index = 2; $index <= $totalRows; $index++) {
-
             $this->drawingImage($event, 'B', $index);
 
             $status = $event->sheet->getDelegate()

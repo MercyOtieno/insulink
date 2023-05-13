@@ -2,80 +2,98 @@
 
 namespace Botble\Blog\Http\Controllers;
 
+use Assets;
+use Botble\ACL\Models\User;
 use Botble\Base\Events\BeforeEditContentEvent;
+use Botble\Base\Events\CreatedContentEvent;
+use Botble\Base\Events\DeletedContentEvent;
+use Botble\Base\Events\UpdatedContentEvent;
+use Botble\Base\Forms\FormAbstract;
 use Botble\Base\Forms\FormBuilder;
 use Botble\Base\Http\Controllers\BaseController;
 use Botble\Base\Http\Responses\BaseHttpResponse;
 use Botble\Blog\Forms\CategoryForm;
-use Botble\Blog\Tables\CategoryTable;
 use Botble\Blog\Http\Requests\CategoryRequest;
+use Botble\Blog\Models\Category;
 use Botble\Blog\Repositories\Interfaces\CategoryInterface;
 use Exception;
-use Illuminate\Contracts\View\Factory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Botble\Base\Events\CreatedContentEvent;
-use Botble\Base\Events\DeletedContentEvent;
-use Botble\Base\Events\UpdatedContentEvent;
-use Illuminate\View\View;
-use Throwable;
 
 class CategoryController extends BaseController
 {
-
-    /**
-     * @var CategoryInterface
-     */
-    protected $categoryRepository;
-
-    /**
-     * @param CategoryInterface $categoryRepository
-     */
-    public function __construct(CategoryInterface $categoryRepository)
+    public function __construct(protected CategoryInterface $categoryRepository)
     {
-        $this->categoryRepository = $categoryRepository;
     }
 
-    /**
-     * @param CategoryTable $dataTable
-     * @return Factory|View
-     *
-     * @throws Throwable
-     */
-    public function index(CategoryTable $dataTable)
+    public function index(FormBuilder $formBuilder, Request $request, BaseHttpResponse $response)
     {
         page_title()->setTitle(trans('plugins/blog::categories.menu'));
 
-        return $dataTable->renderTable();
+        $categories = $this->categoryRepository->getCategories(['*'], [
+            'created_at' => 'DESC',
+            'is_default' => 'DESC',
+            'order' => 'ASC',
+        ], []);
+
+        $categories->load('slugable')->loadCount('posts');
+
+        if ($request->ajax()) {
+            $data = view('core/base::forms.partials.tree-categories', $this->getOptions(compact('categories')))
+                ->render();
+
+            return $response->setData($data);
+        }
+
+        Assets::addStylesDirectly(['vendor/core/core/base/css/tree-category.css'])
+            ->addScriptsDirectly(['vendor/core/core/base/js/tree-category.js']);
+
+        $form = $formBuilder->create(CategoryForm::class, ['template' => 'core/base::forms.form-tree-category']);
+        $form = $this->setFormOptions($form, null, compact('categories'));
+
+        return $form->renderForm();
     }
 
-    /**
-     * @param FormBuilder $formBuilder
-     * @return string
-     */
-    public function create(FormBuilder $formBuilder)
+    public function create(FormBuilder $formBuilder, Request $request, BaseHttpResponse $response)
     {
         page_title()->setTitle(trans('plugins/blog::categories.create'));
+
+        if ($request->ajax()) {
+            return $response->setData($this->getForm());
+        }
 
         return $formBuilder->create(CategoryForm::class)->renderForm();
     }
 
-    /**
-     * @param CategoryRequest $request
-     * @param BaseHttpResponse $response
-     * @return BaseHttpResponse
-     */
     public function store(CategoryRequest $request, BaseHttpResponse $response)
     {
         if ($request->input('is_default')) {
             $this->categoryRepository->getModel()->where('id', '>', 0)->update(['is_default' => 0]);
         }
 
-        $category = $this->categoryRepository->createOrUpdate(array_merge($request->input(), [
-            'author_id' => Auth::user()->getKey(),
-        ]));
+        $category = $this->categoryRepository->createOrUpdate(
+            array_merge($request->input(), [
+                'author_id' => Auth::id(),
+                'author_type' => User::class,
+            ])
+        );
 
         event(new CreatedContentEvent(CATEGORY_MODULE_SCREEN_NAME, $request, $category));
+
+        if ($request->ajax()) {
+            $category = $this->categoryRepository->findOrFail($category->id);
+
+            if ($request->input('submit') == 'save') {
+                $form = $this->getForm();
+            } else {
+                $form = $this->getForm($category);
+            }
+
+            $response->setData([
+                'model' => $category,
+                'form' => $form,
+            ]);
+        }
 
         return $response
             ->setPreviousUrl(route('categories.index'))
@@ -83,30 +101,22 @@ class CategoryController extends BaseController
             ->setMessage(trans('core/base::notices.create_success_message'));
     }
 
-    /**
-     * @param Request $request
-     * @param int $id
-     * @param FormBuilder $formBuilder
-     * @return string
-     */
-    public function edit(Request $request, $id, FormBuilder $formBuilder)
+    public function edit(int|string $id, FormBuilder $formBuilder, Request $request, BaseHttpResponse $response)
     {
         $category = $this->categoryRepository->findOrFail($id);
 
         event(new BeforeEditContentEvent($request, $category));
 
-        page_title()->setTitle(trans('plugins/blog::categories.edit') . ' "' . $category->name . '"');
+        if ($request->ajax()) {
+            return $response->setData($this->getForm($category));
+        }
+
+        page_title()->setTitle(trans('core/base::forms.edit_item', ['name' => $category->name]));
 
         return $formBuilder->create(CategoryForm::class, ['model' => $category])->renderForm();
     }
 
-    /**
-     * @param int $id
-     * @param CategoryRequest $request
-     * @param BaseHttpResponse $response
-     * @return BaseHttpResponse
-     */
-    public function update($id, CategoryRequest $request, BaseHttpResponse $response)
+    public function update(int|string $id, CategoryRequest $request, BaseHttpResponse $response)
     {
         $category = $this->categoryRepository->findOrFail($id);
 
@@ -120,26 +130,32 @@ class CategoryController extends BaseController
 
         event(new UpdatedContentEvent(CATEGORY_MODULE_SCREEN_NAME, $request, $category));
 
+        if ($request->ajax()) {
+            $category = $this->categoryRepository->findOrFail($id);
+
+            if ($request->input('submit') == 'save') {
+                $form = $this->getForm();
+            } else {
+                $form = $this->getForm($category);
+            }
+            $response->setData([
+                'model' => $category,
+                'form' => $form,
+            ]);
+        }
+
         return $response
             ->setPreviousUrl(route('categories.index'))
             ->setMessage(trans('core/base::notices.update_success_message'));
     }
 
-    /**
-     * @param Request $request
-     * @param int $id
-     * @param BaseHttpResponse $response
-     * @return BaseHttpResponse
-     */
-    public function destroy(Request $request, $id, BaseHttpResponse $response)
+    public function destroy(int|string $id, Request $request, BaseHttpResponse $response)
     {
         try {
             $category = $this->categoryRepository->findOrFail($id);
 
-            if (!$category->is_default) {
-                $this->categoryRepository->delete($category);
-                event(new DeletedContentEvent(CATEGORY_MODULE_SCREEN_NAME, $request, $category));
-            }
+            $this->categoryRepository->delete($category);
+            event(new DeletedContentEvent(CATEGORY_MODULE_SCREEN_NAME, $request, $category));
 
             return $response->setMessage(trans('core/base::notices.delete_success_message'));
         } catch (Exception $exception) {
@@ -149,12 +165,6 @@ class CategoryController extends BaseController
         }
     }
 
-    /**
-     * @param Request $request
-     * @param BaseHttpResponse $response
-     * @return BaseHttpResponse
-     * @throws Exception
-     */
     public function deletes(Request $request, BaseHttpResponse $response)
     {
         $ids = $request->input('ids');
@@ -164,13 +174,54 @@ class CategoryController extends BaseController
 
         foreach ($ids as $id) {
             $category = $this->categoryRepository->findOrFail($id);
-            if (!$category->is_default) {
-                $this->categoryRepository->delete($category);
+            $this->categoryRepository->delete($category);
 
-                event(new DeletedContentEvent(CATEGORY_MODULE_SCREEN_NAME, $request, $category));
-            }
+            event(new DeletedContentEvent(CATEGORY_MODULE_SCREEN_NAME, $request, $category));
         }
 
         return $response->setMessage(trans('core/base::notices.delete_success_message'));
+    }
+
+    protected function getForm(?Category $model = null): string
+    {
+        $options = ['template' => 'core/base::forms.form-no-wrap'];
+
+        if ($model) {
+            $options['model'] = $model;
+        }
+
+        $form = app(FormBuilder::class)->create(CategoryForm::class, $options);
+
+        $form = $this->setFormOptions($form, $model);
+
+        return $form->renderForm();
+    }
+
+    protected function setFormOptions(FormAbstract $form, ?Category $model = null, array $options = []): FormAbstract
+    {
+        if (! $model) {
+            $form->setUrl(route('categories.create'));
+        }
+
+        if (! Auth::user()->hasPermission('categories.create') && ! $model) {
+            $class = $form->getFormOption('class');
+            $form->setFormOption('class', $class . ' d-none');
+        }
+
+        $form->setFormOptions($this->getOptions($options));
+
+        return $form;
+    }
+
+    protected function getOptions(array $options = []): array
+    {
+        return array_merge([
+            'canCreate' => Auth::user()->hasPermission('categories.create'),
+            'canEdit' => Auth::user()->hasPermission('categories.edit'),
+            'canDelete' => Auth::user()->hasPermission('categories.destroy'),
+            'createRoute' => 'categories.create',
+            'editRoute' => 'categories.edit',
+            'deleteRoute' => 'categories.destroy',
+        ], $options);
     }
 }

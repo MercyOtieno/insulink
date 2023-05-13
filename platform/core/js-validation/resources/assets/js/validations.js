@@ -95,12 +95,12 @@ $.extend(true, laravelValidation, {
                     currentObject, element, param
                 );
                 required = required && (
-                      target!==undefined &&
-                      $.validator.methods.required.call(
-                          validator,
-                          currentObject.elementValue(target),
-                          target,true
-                      ));
+                    target!==undefined &&
+                    $.validator.methods.required.call(
+                        validator,
+                        currentObject.elementValue(target),
+                        target,true
+                    ));
             });
 
             if (required) {
