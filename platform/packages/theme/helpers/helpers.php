@@ -2,14 +2,11 @@
 
 use Botble\Theme\Facades\AdminBarFacade;
 use Botble\Theme\Facades\ThemeOptionFacade;
+use Botble\Theme\Supports\AdminBar as AdminBarBase;
+use Botble\Theme\ThemeOption as ThemeOptionBase;
 
-if (!function_exists('sanitize_html_class')) {
-    /**
-     * @param string $class
-     * @param string $fallback
-     * @return string
-     */
-    function sanitize_html_class($class, $fallback = '')
+if (! function_exists('sanitize_html_class')) {
+    function sanitize_html_class(string $class, string|callable|null $fallback = ''): string
     {
         //Strip out any % encoded octets
         $sanitized = preg_replace('|%[a-fA-F0-9][a-fA-F0-9]|', '', $class);
@@ -21,30 +18,17 @@ if (!function_exists('sanitize_html_class')) {
             return sanitize_html_class($fallback);
         }
 
-        /**
-         * Filters a sanitized HTML class string.
-         *
-         * @param string $sanitized The sanitized HTML class.
-         * @param string $class HTML class before sanitization.
-         * @param string $fallback The fallback string.
-         * @since 2.8.0
-         */
         return apply_filters('sanitize_html_class', $sanitized, $class, $fallback);
     }
 }
 
-if (!function_exists('parse_args')) {
-    /**
-     * @param array|object $args
-     * @param string $defaults
-     * @return array
-     */
-    function parse_args($args, $defaults = '')
+if (! function_exists('parse_args')) {
+    function parse_args(array|object $args, string|array $defaults = ''): object|array
     {
         if (is_object($args)) {
             $result = get_object_vars($args);
         } else {
-            $result =& $args;
+            $result =&$args;
         }
 
         if (is_array($defaults)) {
@@ -55,15 +39,8 @@ if (!function_exists('parse_args')) {
     }
 }
 
-if (!function_exists('theme')) {
-    /**
-     * Get the theme instance.
-     *
-     * @param string $themeName
-     * @param string $layoutName
-     * @return \Illuminate\Contracts\Foundation\Application|mixed
-     */
-    function theme($themeName = null, $layoutName = null)
+if (! function_exists('theme')) {
+    function theme(?string $themeName = null, ?string $layoutName = null): mixed
     {
         $theme = app('theme');
 
@@ -79,17 +56,16 @@ if (!function_exists('theme')) {
     }
 }
 
-if (!function_exists('theme_option')) {
-    /**
-     * @return \Botble\Theme\ThemeOption|string
-     */
-    function theme_option($key = null, $default = '')
+if (! function_exists('theme_option')) {
+    function theme_option($key = null, $default = ''): ThemeOptionBase|string|null
     {
-        if (!empty($key)) {
+        if (! empty($key)) {
             try {
                 return ThemeOption::getOption($key, $default);
             } catch (Exception $exception) {
                 info($exception->getMessage());
+
+                return $default;
             }
         }
 
@@ -97,21 +73,15 @@ if (!function_exists('theme_option')) {
     }
 }
 
-if (!function_exists('theme_path')) {
-    /**
-     * @return string
-     */
-    function theme_path($path = null)
+if (! function_exists('theme_path')) {
+    function theme_path(?string $path = null): string
     {
         return platform_path('themes' . DIRECTORY_SEPARATOR . $path);
     }
 }
 
-if (!function_exists('admin_bar')) {
-    /**
-     * @return Botble\Theme\Supports\AdminBar
-     */
-    function admin_bar()
+if (! function_exists('admin_bar')) {
+    function admin_bar(): AdminBarBase
     {
         return AdminBarFacade::getFacadeRoot();
     }

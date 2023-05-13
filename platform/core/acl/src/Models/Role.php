@@ -3,8 +3,10 @@
 namespace Botble\ACL\Models;
 
 use Botble\ACL\Traits\PermissionTrait;
+use Botble\Base\Casts\SafeContent;
 use Botble\Base\Models\BaseModel;
 use Exception;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
@@ -12,26 +14,8 @@ class Role extends BaseModel
 {
     use PermissionTrait;
 
-    /**
-     * The database table used by the model.
-     *
-     * @var string
-     */
     protected $table = 'roles';
 
-    /**
-     * The date fields for the model.clear
-     *
-     * @var array
-     */
-    protected $dates = [
-        'created_at',
-        'updated_at',
-    ];
-
-    /**
-     * @var array
-     */
     protected $fillable = [
         'name',
         'slug',
@@ -42,41 +26,27 @@ class Role extends BaseModel
         'updated_by',
     ];
 
-    /**
-     * @var array
-     */
     protected $casts = [
         'permissions' => 'json',
+        'name' => SafeContent::class,
+        'description' => SafeContent::class,
     ];
 
-    /**
-     * @param string $value
-     * @return array
-     */
-    public function getPermissionsAttribute($value)
+    protected function permissions(): Attribute
     {
-        try {
-            return json_decode($value, true) ?: [];
-        } catch (Exception $exception) {
-            return [];
-        }
+        return Attribute::make(
+            get: function ($value) {
+                try {
+                    return json_decode($value ?: '', true) ?: [];
+                } catch (Exception) {
+                    return [];
+                }
+            },
+            set: fn ($value) => $value ? json_encode($value) : ''
+        );
     }
 
-    /**
-     * Set mutator for the "permissions" attribute.
-     *
-     * @param array $permissions
-     * @return void
-     */
-    public function setPermissionsAttribute(array $permissions)
-    {
-        $this->attributes['permissions'] = $permissions ? json_encode($permissions) : '';
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function delete()
+    public function delete(): ?bool
     {
         if ($this->exists) {
             $this->users()->detach();
@@ -85,18 +55,14 @@ class Role extends BaseModel
         return parent::delete();
     }
 
-    /**
-     * @return BelongsToMany
-     */
-    public function users()
+    public function users(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'role_users', 'role_id', 'user_id')->withTimestamps();
+        return $this
+            ->belongsToMany(User::class, 'role_users', 'role_id', 'user_id')
+            ->withTimestamps();
     }
 
-    /**
-     * @return BelongsTo
-     */
-    public function author()
+    public function author(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by')->withDefault();
     }

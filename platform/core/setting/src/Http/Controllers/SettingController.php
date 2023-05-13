@@ -3,75 +3,64 @@
 namespace Botble\Setting\Http\Controllers;
 
 use Assets;
+use BaseHelper;
+use Botble\Base\Http\Controllers\BaseController;
+use Botble\Base\Http\Responses\BaseHttpResponse;
 use Botble\Base\Supports\Core;
 use Botble\Base\Supports\Language;
+use Botble\Media\Repositories\Interfaces\MediaFileInterface;
 use Botble\Setting\Http\Requests\EmailTemplateRequest;
 use Botble\Setting\Http\Requests\LicenseSettingRequest;
 use Botble\Setting\Http\Requests\MediaSettingRequest;
+use Botble\Setting\Http\Requests\ResetEmailTemplateRequest;
 use Botble\Setting\Http\Requests\SendTestEmailRequest;
 use Botble\Setting\Http\Requests\SettingRequest;
 use Botble\Setting\Repositories\Interfaces\SettingInterface;
 use Carbon\Carbon;
 use EmailHandler;
 use Exception;
-use Illuminate\Contracts\Filesystem\FileNotFoundException;
-use Illuminate\Contracts\View\Factory;
-use Illuminate\Support\Facades\File;
-use Botble\Base\Http\Controllers\BaseController;
-use Botble\Base\Http\Responses\BaseHttpResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\File;
+use RvMedia;
 use Throwable;
 
 class SettingController extends BaseController
 {
-    /**
-     * @var SettingInterface
-     */
-    protected $settingRepository;
-
-    /**
-     * SettingController constructor.
-     * @param SettingInterface $settingRepository
-     */
-    public function __construct(SettingInterface $settingRepository)
+    public function __construct(protected SettingInterface $settingRepository)
     {
-        $this->settingRepository = $settingRepository;
     }
 
-    /**
-     * @return Factory|View
-     */
     public function getOptions()
     {
         page_title()->setTitle(trans('core/setting::setting.title'));
 
-        Assets::addScriptsDirectly('vendor/core/core/setting/js/setting.js');
-        Assets::addStylesDirectly('vendor/core/core/setting/css/setting.css');
+        Assets::addScriptsDirectly('vendor/core/core/setting/js/setting.js')
+            ->addStylesDirectly('vendor/core/core/setting/css/setting.css')
+            ->usingVueJS();
 
-        return view('core/setting::index', ['host' => request()->getHost()]);
+        return view('core/setting::index');
     }
 
-    /**
-     * @param SettingRequest $request
-     * @param BaseHttpResponse $response
-     * @return BaseHttpResponse
-     */
     public function postEdit(SettingRequest $request, BaseHttpResponse $response)
     {
-        $this->saveSettings($request->except([
-            '_token',
-            'locale',
-            'default_admin_theme',
-            'admin_locale_direction',
-        ]));
+        $this->saveSettings(
+            $request->except([
+                '_token',
+                'locale',
+                'default_admin_theme',
+                'admin_locale_direction',
+            ])
+        );
 
         $locale = $request->input('locale');
-        if ($locale != false && array_key_exists($locale, Language::getAvailableLocales())) {
+        if ($locale && array_key_exists($locale, Language::getAvailableLocales())) {
             session()->put('site-locale', $locale);
         }
 
-        if (!app()->environment('demo')) {
+        $isDemoModeEnabled = app()->environment('demo');
+
+        if (! $isDemoModeEnabled) {
             setting()->set('locale', $locale)->save();
         }
 
@@ -80,7 +69,7 @@ class SettingController extends BaseController
             session()->put('admin-theme', $adminTheme);
         }
 
-        if (!app()->environment('demo')) {
+        if (! $isDemoModeEnabled) {
             setting()->set('default_admin_theme', $adminTheme)->save();
         }
 
@@ -89,7 +78,7 @@ class SettingController extends BaseController
             session()->put('admin_locale_direction', $adminLocalDirection);
         }
 
-        if (!app()->environment('demo')) {
+        if (! $isDemoModeEnabled) {
             setting()->set('admin_locale_direction', $adminLocalDirection)->save();
         }
 
@@ -98,34 +87,29 @@ class SettingController extends BaseController
             ->setMessage(trans('core/base::notices.update_success_message'));
     }
 
-    /**
-     * @param array $data
-     */
-    protected function saveSettings(array $data)
+    protected function saveSettings(array $data): void
     {
         foreach ($data as $settingKey => $settingValue) {
-            setting()->set($settingKey, $settingValue);
+            if (is_array($settingValue)) {
+                $settingValue = json_encode(array_filter($settingValue));
+            }
+
+            setting()->set($settingKey, (string)$settingValue);
         }
 
         setting()->save();
     }
 
-    /**
-     * @return Factory|View
-     */
     public function getEmailConfig()
     {
         page_title()->setTitle(trans('core/base::layouts.setting_email'));
-        Assets::addScriptsDirectly('vendor/core/core/setting/js/setting.js');
+
+        Assets::addScriptsDirectly('vendor/core/core/setting/js/setting.js')
+            ->addStylesDirectly('vendor/core/core/setting/css/setting.css');
 
         return view('core/setting::email');
     }
 
-    /**
-     * @param SettingRequest $request
-     * @param BaseHttpResponse $response
-     * @return BaseHttpResponse
-     */
     public function postEditEmailConfig(SettingRequest $request, BaseHttpResponse $response)
     {
         $this->saveSettings($request->except(['_token']));
@@ -135,19 +119,9 @@ class SettingController extends BaseController
             ->setMessage(trans('core/base::notices.update_success_message'));
     }
 
-    /**
-     * @param string $type
-     * @param string $module
-     * @param string $template
-     * @param Request $request
-     * @param BaseHttpResponse $response
-     * @return Factory|View
-     * @throws FileNotFoundException
-     */
-    public function getEditEmailTemplate($type, $module, $template)
+    public function getEditEmailTemplate(string $type, string $module, string $template)
     {
-        $title = trans(config($type . '.' . $module . '.email.templates.' . $template . '.title', ''));
-        page_title()->setTitle($title);
+        page_title()->setTitle(trans(config($type . '.' . $module . '.email.templates.' . $template . '.title', '')));
 
         Assets::addStylesDirectly([
             'vendor/core/core/base/libraries/codemirror/lib/codemirror.css',
@@ -163,23 +137,17 @@ class SettingController extends BaseController
                 'vendor/core/core/setting/js/setting.js',
             ]);
 
-
         $emailContent = get_setting_email_template_content($type, $module, $template);
         $emailSubject = get_setting_email_subject($type, $module, $template);
         $pluginData = [
-            'type'          => $type,
-            'name'          => $module,
+            'type' => $type,
+            'name' => $module,
             'template_file' => $template,
         ];
 
         return view('core/setting::email-template-edit', compact('emailContent', 'emailSubject', 'pluginData'));
     }
 
-    /**
-     * @param EmailTemplateRequest $request
-     * @param BaseHttpResponse $response
-     * @return BaseHttpResponse
-     */
     public function postStoreEmailTemplate(EmailTemplateRequest $request, BaseHttpResponse $response)
     {
         if ($request->has('email_subject_key')) {
@@ -188,30 +156,24 @@ class SettingController extends BaseController
                 ->save();
         }
 
-        save_file_data($request->input('template_path'), $request->input('email_content'), false);
+        $templatePath = get_setting_email_template_path($request->input('module'), $request->input('template_file'));
+
+        BaseHelper::saveFileData($templatePath, $request->input('email_content'), false);
 
         return $response->setMessage(trans('core/base::notices.update_success_message'));
     }
 
-    /**
-     * @param Request $request
-     * @param BaseHttpResponse $response
-     * @return BaseHttpResponse
-     * @throws Exception
-     */
-    public function postResetToDefault(Request $request, BaseHttpResponse $response)
+    public function postResetToDefault(ResetEmailTemplateRequest $request, BaseHttpResponse $response)
     {
         $this->settingRepository->deleteBy(['key' => $request->input('email_subject_key')]);
-        File::delete($request->input('template_path'));
+
+        $templatePath = get_setting_email_template_path($request->input('module'), $request->input('template_file'));
+
+        File::delete($templatePath);
 
         return $response->setMessage(trans('core/setting::setting.email.reset_success'));
     }
 
-    /**
-     * @param Request $request
-     * @param BaseHttpResponse $response
-     * @return BaseHttpResponse
-     */
     public function postChangeEmailStatus(Request $request, BaseHttpResponse $response)
     {
         setting()
@@ -221,12 +183,6 @@ class SettingController extends BaseController
         return $response->setMessage(trans('core/base::notices.update_success_message'));
     }
 
-    /**
-     * @param BaseHttpResponse $response
-     * @param SendTestEmailRequest $request
-     * @return BaseHttpResponse
-     * @throws Throwable
-     */
     public function postSendTestEmail(BaseHttpResponse $response, SendTestEmailRequest $request)
     {
         try {
@@ -240,28 +196,22 @@ class SettingController extends BaseController
 
             return $response->setMessage(trans('core/setting::setting.test_email_send_success'));
         } catch (Exception $exception) {
-            return $response->setError()
+            return $response
+                ->setError()
                 ->setMessage($exception->getMessage());
         }
     }
 
-    /**
-     * @return Factory|View
-     */
     public function getMediaSetting()
     {
         page_title()->setTitle(trans('core/setting::setting.media.title'));
 
-        Assets::addScriptsDirectly('vendor/core/core/setting/js/setting.js');
+        Assets::addScriptsDirectly('vendor/core/core/setting/js/setting.js')
+            ->addStylesDirectly('vendor/core/core/setting/css/setting.css');
 
         return view('core/setting::media');
     }
 
-    /**
-     * @param Request $request
-     * @param BaseHttpResponse $response
-     * @return BaseHttpResponse
-     */
     public function postEditMediaSetting(MediaSettingRequest $request, BaseHttpResponse $response)
     {
         $this->saveSettings($request->except(['_token']));
@@ -271,101 +221,225 @@ class SettingController extends BaseController
             ->setMessage(trans('core/base::notices.update_success_message'));
     }
 
-    /**
-     * @param Core $coreApi
-     * @param BaseHttpResponse $response
-     * @return BaseHttpResponse
-     */
     public function getVerifyLicense(Core $coreApi, BaseHttpResponse $response)
     {
-        if (!File::exists(storage_path('.license'))) {
+        if (! File::exists(storage_path('.license'))) {
             return $response->setError()->setMessage('Your license is invalid. Please activate your license!');
         }
 
         try {
             $result = $coreApi->verifyLicense(true);
 
-            if (!$result['status']) {
+            if (! $result['status']) {
                 return $response->setError()->setMessage($result['message']);
             }
 
             $activatedAt = Carbon::createFromTimestamp(filectime($coreApi->getLicenseFilePath()));
-        } catch (Exception $exception) {
-            $activatedAt = now();
+        } catch (Throwable $exception) {
+            $activatedAt = Carbon::now();
             $result = ['message' => $exception->getMessage()];
         }
 
         $data = [
             'activated_at' => $activatedAt->format('M d Y'),
-            'licensed_to'  => setting('licensed_to'),
+            'licensed_to' => setting('licensed_to'),
         ];
 
         return $response->setMessage($result['message'])->setData($data);
     }
 
-    /**
-     * @param LicenseSettingRequest $request
-     * @param BaseHttpResponse $response
-     * @param Core $coreApi
-     * @return BaseHttpResponse
-     * @throws FileNotFoundException
-     */
     public function activateLicense(LicenseSettingRequest $request, BaseHttpResponse $response, Core $coreApi)
     {
-        if (filter_var($request->input('buyer'), FILTER_VALIDATE_URL)) {
-            $buyer = explode('/', $request->input('buyer'));
+        $buyer = $request->input('buyer');
+        if (filter_var($buyer, FILTER_VALIDATE_URL)) {
+            $buyer = explode('/', $buyer);
             $username = end($buyer);
 
             return $response
-                ->setError(true)
-                ->setMessage(__('Envato username must not a URL. Please try with username ":username"!', compact('username')));
+                ->setError()
+                ->setMessage('Envato username must not a URL. Please try with username "' . $username . '"!');
         }
 
         try {
-            $result = $coreApi->activateLicense($request->input('purchase_code'), $request->input('buyer'));
+            $purchaseCode = $request->input('purchase_code');
 
-            if (!$result['status']) {
-                return $response->setError()->setMessage($result['message']);
+            $result = $coreApi->activateLicense($purchaseCode, $buyer);
+
+            $resetLicense = false;
+            if (! $result['status']) {
+                if (str_contains($result['message'], 'License is already active')) {
+                    $coreApi->deactivateLicense($purchaseCode, $buyer);
+
+                    $result = $coreApi->activateLicense($purchaseCode, $buyer);
+
+                    if (! $result['status']) {
+                        return $response->setError()->setMessage($result['message']);
+                    }
+
+                    $resetLicense = true;
+                } else {
+                    return $response->setError()->setMessage($result['message']);
+                }
             }
 
             setting()
-                ->set(['licensed_to' => $request->input('buyer')])
+                ->set(['licensed_to' => $buyer])
                 ->save();
 
             $activatedAt = Carbon::createFromTimestamp(filectime($coreApi->getLicenseFilePath()));
 
             $data = [
                 'activated_at' => $activatedAt->format('M d Y'),
-                'licensed_to'  => $request->input('buyer'),
+                'licensed_to' => $buyer,
             ];
 
+            if ($resetLicense) {
+                return $response->setMessage(
+                    $result['message'] . ' Your license on the previous domain has been revoked!'
+                )->setData($data);
+            }
+
             return $response->setMessage($result['message'])->setData($data);
-        } catch (Exception $exception) {
-            return $response->setError(true)->setMessage($exception->getMessage());
+        } catch (Throwable $exception) {
+            return $response
+                ->setError()
+                ->setMessage($exception->getMessage());
         }
     }
 
-    /**
-     * @param BaseHttpResponse $response
-     * @param Core $coreApi
-     * @return BaseHttpResponse
-     * @throws FileNotFoundException
-     * @throws Exception
-     */
     public function deactivateLicense(BaseHttpResponse $response, Core $coreApi)
     {
         try {
             $result = $coreApi->deactivateLicense();
 
-            if (!$result['status']) {
+            if (! $result['status']) {
+                if (str_contains($result['message'], 'Activation not recognized or is inactive')) {
+                    $this->settingRepository->deleteBy(['key' => 'licensed_to']);
+
+                    File::delete(storage_path('.license'));
+
+                    return $response->setMessage('Deactivated license successfully!');
+                }
+
                 return $response->setError()->setMessage($result['message']);
             }
 
             $this->settingRepository->deleteBy(['key' => 'licensed_to']);
 
             return $response->setMessage($result['message']);
-        } catch (Exception $exception) {
-            return $response->setError(true)->setMessage($exception->getMessage());
+        } catch (Throwable $exception) {
+            return $response->setError()->setMessage($exception->getMessage());
         }
+    }
+
+    public function resetLicense(LicenseSettingRequest $request, BaseHttpResponse $response, Core $coreApi)
+    {
+        try {
+            $result = $coreApi->deactivateLicense($request->input('purchase_code'), $request->input('buyer'));
+
+            if (! $result['status']) {
+                return $response->setError()->setMessage($result['message']);
+            }
+
+            $this->settingRepository->deleteBy(['key' => 'licensed_to']);
+
+            return $response->setMessage($result['message']);
+        } catch (Throwable $exception) {
+            return $response->setError()->setMessage($exception->getMessage());
+        }
+    }
+
+    public function generateThumbnails(MediaFileInterface $fileRepository, BaseHttpResponse $response)
+    {
+        BaseHelper::maximumExecutionTimeAndMemoryLimit();
+
+        $files = $fileRepository->allBy([], [], ['url', 'mime_type', 'folder_id']);
+
+        $errors = [];
+
+        foreach ($files as $file) {
+            try {
+                RvMedia::generateThumbnails($file);
+            } catch (Exception) {
+                $errors[] = $file->url;
+            }
+        }
+
+        $errors = array_unique($errors);
+
+        $errors = array_map(function ($item) {
+            return [$item];
+        }, $errors);
+
+        if ($errors) {
+            return $response
+                ->setError()
+                ->setMessage(trans('core/setting::setting.generate_thumbnails_error', ['count' => count($errors)]));
+        }
+
+        return $response->setMessage(trans('core/setting::setting.generate_thumbnails_success', ['count' => count($files)]));
+    }
+
+    public function previewEmailTemplate(Request $request, string $type, string $module, string $template)
+    {
+        $emailHandler = EmailHandler::setModule($module)
+            ->setType($type)
+            ->setTemplate($template);
+
+        $variables = $emailHandler->getVariables($type, $module, $template);
+
+        $coreVariables = $emailHandler->getCoreVariables();
+
+        Arr::forget($variables, array_keys($coreVariables));
+
+        $inputData = $request->only(array_keys($variables));
+
+        if (! empty($inputData)) {
+            foreach ($inputData as $key => $value) {
+                $inputData[BaseHelper::stringify($key)] = BaseHelper::clean(BaseHelper::stringify($value));
+            }
+        }
+
+        $routeParams = [$type, $module, $template];
+
+        $backUrl = route('setting.email.template.edit', $routeParams);
+
+        $iframeUrl = route('setting.email.preview.iframe', $routeParams);
+
+        return view(
+            'core/setting::preview-email',
+            compact('variables', 'inputData', 'backUrl', 'iframeUrl')
+        );
+    }
+
+    public function previewEmailTemplateIframe(Request $request, string $type, string $module, string $template)
+    {
+        $emailHandler = EmailHandler::setModule($module)
+            ->setType($type)
+            ->setTemplate($template);
+
+        $variables = $emailHandler->getVariables($type, $module, $template);
+
+        $coreVariables = $emailHandler->getCoreVariables();
+
+        Arr::forget($variables, array_keys($coreVariables));
+
+        $inputData = $request->only(array_keys($variables));
+
+        foreach ($variables as $key => $variable) {
+            if (! isset($inputData[$key])) {
+                $inputData[$key] = '{{ ' . $key . ' }}';
+            } else {
+                $inputData[$key] = BaseHelper::clean(BaseHelper::stringify($inputData[$key]));
+            }
+        }
+
+        $emailHandler->setVariableValues($inputData);
+
+        $content = get_setting_email_template_content($type, $module, $template);
+
+        $content = $emailHandler->prepareData($content);
+
+        return BaseHelper::clean($content);
     }
 }

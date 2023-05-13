@@ -2,6 +2,7 @@
 
 namespace Botble\SeoHelper\Entities;
 
+use BaseHelper;
 use Botble\SeoHelper\Contracts\Entities\DescriptionContract;
 use Botble\SeoHelper\Exceptions\InvalidArgumentException;
 use Botble\SeoHelper\Helpers\Meta;
@@ -9,7 +10,6 @@ use Illuminate\Support\Str;
 
 class Description implements DescriptionContract
 {
-
     /**
      * The meta name.
      *
@@ -70,7 +70,9 @@ class Description implements DescriptionContract
      */
     public function set($content)
     {
-        $this->content = trim(strip_tags($content));
+        if ($content) {
+            $this->content = trim(strip_tags(BaseHelper::cleanShortcodes((string)$content)));
+        }
 
         return $this;
     }
@@ -109,7 +111,6 @@ class Description implements DescriptionContract
      * @param int $max
      *
      * @return $this
-     * @throws InvalidArgumentException
      */
     public static function make($content, $max = 386)
     {
@@ -120,10 +121,11 @@ class Description implements DescriptionContract
      * Render the tag.
      *
      * @return string
+     * @throws InvalidArgumentException
      */
     public function render()
     {
-        if (!$this->hasContent()) {
+        if (! $this->hasContent()) {
             return '';
         }
 
@@ -147,7 +149,7 @@ class Description implements DescriptionContract
      */
     protected function hasContent()
     {
-        return !empty($this->get());
+        return ! empty($this->get());
     }
 
     /**
@@ -159,7 +161,7 @@ class Description implements DescriptionContract
      */
     protected function checkMax($max)
     {
-        if (!is_int($max)) {
+        if (! is_int($max)) {
             throw new InvalidArgumentException(
                 'The description maximum length must be integer.'
             );

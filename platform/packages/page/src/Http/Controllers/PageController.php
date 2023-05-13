@@ -3,6 +3,7 @@
 namespace Botble\Page\Http\Controllers;
 
 use Botble\Base\Events\BeforeEditContentEvent;
+use Botble\Base\Events\BeforeUpdateContentEvent;
 use Botble\Base\Events\CreatedContentEvent;
 use Botble\Base\Events\DeletedContentEvent;
 use Botble\Base\Events\UpdatedContentEvent;
@@ -15,37 +16,17 @@ use Botble\Page\Http\Requests\PageRequest;
 use Botble\Page\Repositories\Interfaces\PageInterface;
 use Botble\Page\Tables\PageTable;
 use Exception;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\View\View;
-use Throwable;
 
 class PageController extends BaseController
 {
-
     use HasDeleteManyItemsTrait;
 
-    /**
-     * @var PageInterface
-     */
-    protected $pageRepository;
-
-    /**
-     * PageController constructor.
-     * @param PageInterface $pageRepository
-     */
-    public function __construct(PageInterface $pageRepository)
+    public function __construct(protected PageInterface $pageRepository)
     {
-        $this->pageRepository = $pageRepository;
     }
 
-    /**
-     * @param PageTable $dataTable
-     * @return JsonResponse|View
-     *
-     * @throws Throwable
-     */
     public function index(PageTable $dataTable)
     {
         page_title()->setTitle(trans('packages/page::pages.menu_name'));
@@ -53,9 +34,6 @@ class PageController extends BaseController
         return $dataTable->renderTable();
     }
 
-    /**
-     * @return string
-     */
     public function create(FormBuilder $formBuilder)
     {
         page_title()->setTitle(trans('packages/page::pages.create'));
@@ -63,11 +41,6 @@ class PageController extends BaseController
         return $formBuilder->create(PageForm::class)->renderForm();
     }
 
-    /**
-     * @param PageRequest $request
-     * @param BaseHttpResponse $response
-     * @return BaseHttpResponse
-     */
     public function store(PageRequest $request, BaseHttpResponse $response)
     {
         $page = $this->pageRepository->createOrUpdate(array_merge($request->input(), [
@@ -81,32 +54,23 @@ class PageController extends BaseController
             ->setMessage(trans('core/base::notices.create_success_message'));
     }
 
-    /**
-     * @param Request $request
-     * @param int $id
-     * @param FormBuilder $formBuilder
-     * @return string
-     */
-    public function edit($id, FormBuilder $formBuilder, Request $request)
+    public function edit(int|string $id, FormBuilder $formBuilder, Request $request)
     {
         $page = $this->pageRepository->findOrFail($id);
 
-        page_title()->setTitle(trans('packages/page::pages.edit') . ' "' . $page->name . '"');
+        page_title()->setTitle(trans('core/base::forms.edit_item', ['name' => $page->name]));
 
         event(new BeforeEditContentEvent($request, $page));
 
         return $formBuilder->create(PageForm::class, ['model' => $page])->renderForm();
     }
 
-    /**
-     * @param $id
-     * @param PageRequest $request
-     * @param BaseHttpResponse $response
-     * @return BaseHttpResponse
-     */
-    public function update($id, PageRequest $request, BaseHttpResponse $response)
+    public function update(int|string $id, PageRequest $request, BaseHttpResponse $response)
     {
         $page = $this->pageRepository->findOrFail($id);
+
+        event(new BeforeUpdateContentEvent($request, $page));
+
         $page->fill($request->input());
 
         $page = $this->pageRepository->createOrUpdate($page);
@@ -118,13 +82,7 @@ class PageController extends BaseController
             ->setMessage(trans('core/base::notices.update_success_message'));
     }
 
-    /**
-     * @param Request $request
-     * @param int $id
-     * @param BaseHttpResponse $response
-     * @return BaseHttpResponse
-     */
-    public function destroy(Request $request, $id, BaseHttpResponse $response)
+    public function destroy(int|string $id, Request $request, BaseHttpResponse $response)
     {
         try {
             $page = $this->pageRepository->findOrFail($id);
@@ -140,12 +98,6 @@ class PageController extends BaseController
         }
     }
 
-    /**
-     * @param Request $request
-     * @param BaseHttpResponse $response
-     * @return BaseHttpResponse
-     * @throws Exception
-     */
     public function deletes(Request $request, BaseHttpResponse $response)
     {
         return $this->executeDeleteItems($request, $response, $this->pageRepository, PAGE_MODULE_SCREEN_NAME);

@@ -4,23 +4,16 @@ use Botble\ACL\Models\User;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 
-class CreateBlogTable extends Migration
-{
-
-    /**
-     * Run the migrations.
-     *
-     * @return void
-     */
-    public function up()
+return new class () extends Migration {
+    public function up(): void
     {
         Schema::create('categories', function (Blueprint $table) {
             $table->id();
             $table->string('name', 120);
-            $table->integer('parent_id')->unsigned()->default(0);
+            $table->foreignId('parent_id')->default(0);
             $table->string('description', 400)->nullable();
             $table->string('status', 60)->default('published');
-            $table->integer('author_id');
+            $table->foreignId('author_id');
             $table->string('author_type', 255)->default(addslashes(User::class));
             $table->string('icon', 60)->nullable();
             $table->tinyInteger('order')->default(0);
@@ -32,10 +25,9 @@ class CreateBlogTable extends Migration
         Schema::create('tags', function (Blueprint $table) {
             $table->id();
             $table->string('name', 120);
-            $table->integer('author_id');
+            $table->foreignId('author_id');
             $table->string('author_type', 255)->default(addslashes(User::class));
             $table->string('description', 400)->nullable()->default('');
-            $table->integer('parent_id')->unsigned()->default(0);
             $table->string('status', 60)->default('published');
             $table->timestamps();
         });
@@ -44,9 +36,9 @@ class CreateBlogTable extends Migration
             $table->id();
             $table->string('name', 255);
             $table->string('description', 400)->nullable();
-            $table->text('content')->nullable();
+            $table->longText('content')->nullable();
             $table->string('status', 60)->default('published');
-            $table->integer('author_id');
+            $table->foreignId('author_id');
             $table->string('author_type', 255)->default(addslashes(User::class));
             $table->tinyInteger('is_featured')->unsigned()->default(0);
             $table->string('image', 255)->nullable();
@@ -56,24 +48,17 @@ class CreateBlogTable extends Migration
         });
 
         Schema::create('post_tags', function (Blueprint $table) {
-            $table->id();
-            $table->integer('tag_id')->unsigned()->references('id')->on('tags')->onDelete('cascade');
-            $table->integer('post_id')->unsigned()->references('id')->on('posts')->onDelete('cascade');
+            $table->foreignId('tag_id')->index();
+            $table->foreignId('post_id')->index();
         });
 
         Schema::create('post_categories', function (Blueprint $table) {
-            $table->id();
-            $table->integer('category_id')->unsigned()->references('id')->on('categories')->onDelete('cascade');
-            $table->integer('post_id')->unsigned()->references('id')->on('posts')->onDelete('cascade');
+            $table->foreignId('category_id')->index();
+            $table->foreignId('post_id')->index();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
-    public function down()
+    public function down(): void
     {
         Schema::disableForeignKeyConstraints();
         Schema::dropIfExists('post_tags');
@@ -82,4 +67,4 @@ class CreateBlogTable extends Migration
         Schema::dropIfExists('categories');
         Schema::dropIfExists('tags');
     }
-}
+};

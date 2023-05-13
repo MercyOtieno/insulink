@@ -3,48 +3,39 @@
 namespace Botble\Blog\Repositories\Eloquent;
 
 use Botble\Base\Enums\BaseStatusEnum;
-use Botble\Support\Repositories\Eloquent\RepositoriesAbstract;
 use Botble\Blog\Repositories\Interfaces\TagInterface;
+use Botble\Support\Repositories\Eloquent\RepositoriesAbstract;
+use Illuminate\Support\Collection;
 
 class TagRepository extends RepositoriesAbstract implements TagInterface
 {
-
-    /**
-     * {@inheritDoc}
-     */
-    public function getDataSiteMap()
+    public function getDataSiteMap(): Collection
     {
         $data = $this->model
             ->with('slugable')
-            ->where('tags.status', BaseStatusEnum::PUBLISHED)
-            ->select('tags.*')
-            ->orderBy('tags.created_at', 'desc');
+            ->where('status', BaseStatusEnum::PUBLISHED)
+            ->orderBy('created_at', 'desc')
+            ->select(['id', 'name', 'updated_at']);
 
         return $this->applyBeforeExecuteQuery($data)->get();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function getPopularTags($limit)
+    public function getPopularTags(int $limit, array $with = ['slugable'], array $withCount = ['posts']): Collection
     {
         $data = $this->model
-            ->with('slugable')
-            ->orderBy('tags.id', 'DESC')
-            ->select('tags.*')
+            ->with($with)
+            ->withCount($withCount)
+            ->orderBy('posts_count', 'DESC')
             ->limit($limit);
 
         return $this->applyBeforeExecuteQuery($data)->get();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function getAllTags($active = true)
+    public function getAllTags($active = true): Collection
     {
-        $data = $this->model->select('tags.*');
+        $data = $this->model;
         if ($active) {
-            $data = $data->where('tags.status', BaseStatusEnum::PUBLISHED);
+            $data = $data->where('status', BaseStatusEnum::PUBLISHED);
         }
 
         return $this->applyBeforeExecuteQuery($data)->get();

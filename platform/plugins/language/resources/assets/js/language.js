@@ -3,7 +3,7 @@ class LanguageManagement {
         if (!state.id || state.element.value.toLowerCase().includes('...')) {
             return state.text;
         }
-        return $('<span><img src="' + $('#language_flag_path').val() + state.element.value.toLowerCase() + '.svg" class="img-flag" width="16"/> ' + state.text + '</span>');
+        return $('<span><img src="' + $('#language_flag_path').val() + state.element.value.toLowerCase() + '.svg" class="img-flag" width="16" alt="Language flag"/> ' + state.text + '</span>');
     }
 
     bindEventToElement() {
@@ -37,8 +37,8 @@ class LanguageManagement {
             let code = $('#lang_code').val();
             let flag = $('#flag_list').val();
             let order = $('#lang_order').val();
-            let is_rtl = $('.lang_is_rtl').prop('checked') ? 1 : 0;
-            LanguageManagement.createOrUpdateLanguage(0, name, locale, code, flag, order, is_rtl, 0);
+            let isRTL = $('.lang_is_rtl').prop('checked') ? 1 : 0;
+            LanguageManagement.createOrUpdateLanguage(0, name, locale, code, flag, order, isRTL, 0);
         });
 
         $(document).on('click', '#btn-language-submit-edit', event => {
@@ -49,8 +49,8 @@ class LanguageManagement {
             let code = $('#lang_code').val();
             let flag = $('#flag_list').val();
             let order = $('#lang_order').val();
-            let is_rtl = $('.lang_is_rtl').prop('checked') ? 1 : 0;
-            LanguageManagement.createOrUpdateLanguage(id, name, locale, code, flag, order, is_rtl, 1);
+            let isRTL = $('.lang_is_rtl').prop('checked') ? 1 : 0;
+            LanguageManagement.createOrUpdateLanguage(id, name, locale, code, flag, order, isRTL, 1);
         });
 
         languageTable.on('click', '.deleteDialog', event => {
@@ -69,7 +69,8 @@ class LanguageManagement {
 
             $.ajax({
                 url: deleteURL,
-                type: 'DELETE',
+                type: 'POST',
+                data: {'_method': 'DELETE'},
                 success: data => {
                     if (data.error) {
                         Botble.showError(data.message);
@@ -102,7 +103,7 @@ class LanguageManagement {
                         Botble.showError(data.message);
                     } else {
                         let star = languageTable.find('td > i');
-                        star.replaceWith('<a data-section="' + route('languages.set.default') + '?lang_id=' + star.data('id') + '" class="set-language-default tip" data-original-title="Choose ' + star.data('name') + ' as default language">' + star.closest('td').html() + '</a>');
+                        star.replaceWith('<a data-section="' + route('languages.set.default') + '?lang_id=' + star.data('id') + '" class="set-language-default tip" data-bs-original-title="Choose ' + star.data('name') + ' as default language">' + star.closest('td').html() + '</a>');
                         _self.find('i').unwrap();
                         $('.tooltip').remove();
                         Botble.showSuccess(data.message);
@@ -131,9 +132,8 @@ class LanguageManagement {
                         $('#lang_locale').val(language.lang_locale);
                         $('#lang_code').val(language.lang_code);
                         $('#flag_list').val(language.lang_flag).trigger('change');
-                        if (language.lang_rtl) {
-                            $('.lang_is_rtl').prop('checked', true);
-                        }
+                        $('.lang_is_rtl').prop('checked', language.lang_is_rtl);
+                        $('.lang_is_ltr').prop('checked', !language.lang_is_rtl);
                         $('#lang_order').val(language.lang_order);
 
                         $('#btn-language-submit').prop('id', 'btn-language-submit-edit').text('Update');
@@ -174,7 +174,7 @@ class LanguageManagement {
         });
     }
 
-    static createOrUpdateLanguage(id, name, locale, code, flag, order, is_rtl, edit) {
+    static createOrUpdateLanguage(id, name, locale, code, flag, order, isRTL, edit) {
         let url = route('languages.store');
         if (edit) {
             url = route('languages.edit') + '?lang_code=' + code;
@@ -190,7 +190,7 @@ class LanguageManagement {
                 lang_code: code,
                 lang_flag: flag,
                 lang_order: order,
-                lang_is_rtl: is_rtl
+                lang_is_rtl: isRTL
             },
             success: data => {
                 if (data.error) {

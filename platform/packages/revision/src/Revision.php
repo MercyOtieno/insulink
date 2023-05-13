@@ -10,22 +10,11 @@ use Illuminate\Support\Str;
 
 class Revision extends BaseModel
 {
-    /**
-     * @var string
-     */
     public $table = 'revisions';
 
-    /**
-     * @var array
-     */
-    protected $revisionFormattedFields = [];
+    protected array $revisionFormattedFields = [];
 
-    /**
-     * Grab the revision history for the model that is calling
-     *
-     * @return MorphTo
-     */
-    public function revisionable()
+    public function revisionable(): MorphTo
     {
         return $this->morphTo();
     }
@@ -35,10 +24,8 @@ class Revision extends BaseModel
      *
      * Returns the field that was updated, in the case that it's a foreign key
      * denoted by a suffix of "_id", then "_id" is simply stripped
-     *
-     * @return string field
      */
-    public function fieldName()
+    public function fieldName(): string
     {
         if ($formatted = $this->formatFieldName($this->key)) {
             return $formatted;
@@ -53,14 +40,11 @@ class Revision extends BaseModel
      * Format field name.
      *
      * Allow overrides for field names.
-     *
-     * @param string $key
-     * @return bool
      */
-    protected function formatFieldName($key)
+    protected function formatFieldName(string $key): bool|string
     {
         $relatedModel = $this->revisionable_type;
-        $relatedModel = new $relatedModel;
+        $relatedModel = new $relatedModel();
         $revisionFormattedFieldNames = $relatedModel->getRevisionFormattedFieldNames();
 
         if (isset($revisionFormattedFieldNames[$key])) {
@@ -75,10 +59,8 @@ class Revision extends BaseModel
      *
      * Grab the old value of the field, if it was a foreign key
      * attempt to get an identifying name for the model.
-     *
-     * @return string old value
      */
-    public function oldValue()
+    public function oldValue(): ?string
     {
         return $this->getValue('old');
     }
@@ -88,10 +70,8 @@ class Revision extends BaseModel
      * old or new value for the revision.
      *
      * @param string $which old or new
-     *
-     * @return string value
      */
-    protected function getValue($which = 'new')
+    protected function getValue(string $which = 'new'): ?string
     {
         $whichValue = $which . '_value';
 
@@ -99,16 +79,16 @@ class Revision extends BaseModel
         $mainModel = $this->revisionable_type;
         // Load it, WITH the related model
         if (class_exists($mainModel)) {
-            $mainModel = new $mainModel;
+            $mainModel = new $mainModel();
 
             try {
                 if ($this->isRelated()) {
                     $relatedModel = $this->getRelatedModel();
 
-                    // Now we can find out the namespace of of related model
-                    if (!method_exists($mainModel, $relatedModel)) {
+                    // Now we can find out the namespace of related model
+                    if (! method_exists($mainModel, $relatedModel)) {
                         $relatedModel = Str::camel($relatedModel); // for cases like published_status_id
-                        if (!method_exists($mainModel, $relatedModel)) {
+                        if (! method_exists($mainModel, $relatedModel)) {
                             throw new Exception('Relation ' . $relatedModel . ' does not exist for ' . $mainModel);
                         }
                     }
@@ -118,13 +98,13 @@ class Revision extends BaseModel
                     // we can load it, to find the information we so desire
                     $item = $relatedClass::find($this->$whichValue);
 
-                    if ($this->$whichValue === null || $this->$whichValue == '') {
-                        $item = new $relatedClass;
+                    if ($this->$whichValue == '') {
+                        $item = new $relatedClass();
 
                         return $item->getRevisionNullString();
                     }
-                    if (!$item) {
-                        $item = new $relatedClass;
+                    if (! $item) {
+                        $item = new $relatedClass();
 
                         return $this->format($this->key, $item->getRevisionUnknownString());
                     }
@@ -160,10 +140,8 @@ class Revision extends BaseModel
 
     /**
      * Return true if the key is for a related model.
-     *
-     * @return bool
      */
-    protected function isRelated()
+    protected function isRelated(): bool
     {
         $isRelated = false;
         $idSuffix = '_id';
@@ -178,10 +156,8 @@ class Revision extends BaseModel
 
     /**
      * Return the name of the related model.
-     *
-     * @return string
      */
-    protected function getRelatedModel()
+    protected function getRelatedModel(): string
     {
         $idSuffix = '_id';
 
@@ -190,16 +166,11 @@ class Revision extends BaseModel
 
     /**
      * Format the value according to the $revisionFormattedFields array.
-     *
-     * @param string $key
-     * @param string $value
-     *
-     * @return string formatted value
      */
-    public function format($key, $value)
+    public function format(string $key, ?string $value): ?string
     {
         $relatedModel = $this->revisionable_type;
-        $relatedModel = new $relatedModel;
+        $relatedModel = new $relatedModel();
         $revisionFormattedFields = $relatedModel->getRevisionFormattedFields();
 
         if (isset($revisionFormattedFields[$key])) {
@@ -214,10 +185,8 @@ class Revision extends BaseModel
      *
      * Grab the new value of the field, if it was a foreign key
      * attempt to get an identifying name for the model.
-     *
-     * @return string old value
      */
-    public function newValue()
+    public function newValue(): ?string
     {
         return $this->getValue();
     }
@@ -233,16 +202,16 @@ class Revision extends BaseModel
             return false;
         }
 
-        $userModel = app('config')->get('auth.model');
+        $userModel = config('auth.model');
 
         if (empty($userModel)) {
-            $userModel = app('config')->get('auth.providers.users.model');
+            $userModel = config('auth.providers.users.model');
             if (empty($userModel)) {
                 return false;
             }
         }
 
-        if (!class_exists($userModel)) {
+        if (! class_exists($userModel)) {
             return false;
         }
 

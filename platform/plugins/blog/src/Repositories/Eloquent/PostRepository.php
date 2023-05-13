@@ -3,68 +3,77 @@
 namespace Botble\Blog\Repositories\Eloquent;
 
 use Botble\Base\Enums\BaseStatusEnum;
-use Botble\Support\Repositories\Eloquent\RepositoriesAbstract;
+use Botble\Blog\Models\Category;
 use Botble\Blog\Repositories\Interfaces\PostInterface;
+use Botble\Support\Repositories\Eloquent\RepositoriesAbstract;
 use Eloquent;
 use Exception;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 
 class PostRepository extends RepositoriesAbstract implements PostInterface
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function getFeatured(int $limit = 5, array $with = [])
+    public function getFeatured(int $limit = 5, array $with = []): Collection
     {
         $data = $this->model
             ->where([
-                'posts.status'      => BaseStatusEnum::PUBLISHED,
-                'posts.is_featured' => 1,
+                'status' => BaseStatusEnum::PUBLISHED,
+                'is_featured' => 1,
             ])
             ->limit($limit)
             ->with(array_merge(['slugable'], $with))
-            ->orderBy('posts.created_at', 'desc');
+            ->orderBy('created_at', 'desc');
 
         return $this->applyBeforeExecuteQuery($data)->get();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function getListPostNonInList(array $selected = [], $limit = 7)
+    public function getListPostNonInList(array $selected = [], int $limit = 7, array $with = []): Collection
     {
         $data = $this->model
-            ->where('posts.status', BaseStatusEnum::PUBLISHED)
-            ->whereNotIn('posts.id', $selected)
+            ->where('status', BaseStatusEnum::PUBLISHED)
+            ->whereNotIn('id', $selected)
             ->limit($limit)
-            ->with('slugable')
-            ->orderBy('posts.created_at', 'desc');
+            ->with($with)
+            ->orderBy('created_at', 'desc');
 
         return $this->applyBeforeExecuteQuery($data)->get();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function getRelated($id, $limit = 3)
+    public function getRelated(int|string $id, int $limit = 3): Collection
     {
         $data = $this->model
-            ->where('posts.status', BaseStatusEnum::PUBLISHED)
-            ->where('posts.id', '!=', $id)
+            ->where('status', BaseStatusEnum::PUBLISHED)
+            ->where('id', '!=', $id)
             ->limit($limit)
             ->with('slugable')
-            ->orderBy('posts.created_at', 'desc');
+            ->orderBy('created_at', 'desc')
+            ->whereHas('categories', function ($query) use ($id) {
+                $query->whereIn('categories.id', $this->getRelatedCategoryIds($id));
+            });
 
         return $this->applyBeforeExecuteQuery($data)->get();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function getByCategory($categoryId, $paginate = 12, $limit = 0)
+    public function getRelatedCategoryIds(Category|int|string $model): array
     {
-        if (!is_array($categoryId)) {
+        $model = $model instanceof Eloquent ? $model : $this->findById($model);
+
+        if (! $model) {
+            return [];
+        }
+
+        try {
+            return $model->categories()->allRelatedIds()->toArray();
+        } catch (Exception) {
+            return [];
+        }
+    }
+
+    public function getByCategory(array|int|string $categoryId, int $paginate = 12, int $limit = 0): Collection|LengthAwarePaginator
+    {
+        if (! is_array($categoryId)) {
             $categoryId = [$categoryId];
         }
 
@@ -85,89 +94,72 @@ class PostRepository extends RepositoriesAbstract implements PostInterface
         return $this->applyBeforeExecuteQuery($data)->limit($limit)->get();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function getByUserId($authorId, $paginate = 6)
+    public function getByUserId(int|string $authorId, int $limit = 6): Collection|LengthAwarePaginator
     {
         $data = $this->model
             ->where([
-                'posts.status'    => BaseStatusEnum::PUBLISHED,
-                'posts.author_id' => $authorId,
+                'status' => BaseStatusEnum::PUBLISHED,
+                'author_id' => $authorId,
             ])
             ->with('slugable')
-            ->select('posts.*')
-            ->orderBy('posts.created_at', 'desc');
+            ->orderBy('created_at', 'desc');
 
         return $this->applyBeforeExecuteQuery($data)->paginate($paginate);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function getDataSiteMap()
+    public function getDataSiteMap(): Collection|LengthAwarePaginator
     {
         $data = $this->model
             ->with('slugable')
-            ->where('posts.status', BaseStatusEnum::PUBLISHED)
-            ->select('posts.*')
-            ->orderBy('posts.created_at', 'desc');
+            ->where('status', BaseStatusEnum::PUBLISHED)
+            ->orderBy('created_at', 'desc');
 
         return $this->applyBeforeExecuteQuery($data)->get();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function getByTag($tag, $paginate = 12)
+    public function getByTag(int|string $tag, int $paginate = 12): Collection|LengthAwarePaginator
     {
         $data = $this->model
-            ->with('slugable')
-            ->where('posts.status', BaseStatusEnum::PUBLISHED)
+            ->with('slugable', 'categories', 'categories.slugable', 'author')
+            ->where('status', BaseStatusEnum::PUBLISHED)
             ->whereHas('tags', function ($query) use ($tag) {
                 /**
                  * @var Builder $query
                  */
                 $query->where('tags.id', $tag);
             })
-            ->select('posts.*')
-            ->orderBy('posts.created_at', 'desc');
+            ->orderBy('created_at', 'desc');
 
         return $this->applyBeforeExecuteQuery($data)->paginate($paginate);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function getRecentPosts($limit = 5, $categoryId = 0)
+    public function getRecentPosts(int $limit = 5, int|string $categoryId = 0): Collection
     {
-        $data = $this->model->where(['posts.status' => BaseStatusEnum::PUBLISHED]);
+        $data = $this->model->where(['status' => BaseStatusEnum::PUBLISHED]);
 
         if ($categoryId != 0) {
-            $data = $data->join('post_categories', 'post_categories.post_id', '=', 'posts.id')
+            $data = $data
+                ->join('post_categories', 'post_categories.post_id', '=', 'posts.id')
                 ->where('post_categories.category_id', $categoryId);
         }
 
         $data = $data->limit($limit)
             ->with('slugable')
             ->select('posts.*')
-            ->orderBy('posts.created_at', 'desc');
+            ->orderBy('created_at', 'desc');
 
         return $this->applyBeforeExecuteQuery($data)->get();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function getSearch($query, $limit = 10, $paginate = 10)
+    public function getSearch(string|null $keyword, int $limit = 10, int $paginate = 10): Collection|LengthAwarePaginator
     {
-        $data = $this->model->with('slugable')->where('posts.status', BaseStatusEnum::PUBLISHED);
-        foreach (explode(' ', $query) as $term) {
-            $data = $data->where('posts.name', 'LIKE', '%' . $term . '%');
-        }
-
-        $data = $data->select('posts.*')
-            ->orderBy('posts.created_at', 'desc');
+        $data = $this->model
+            ->with('slugable')
+            ->where('status', BaseStatusEnum::PUBLISHED)
+            ->where(function ($query) use ($keyword) {
+                $query->addSearch('name', $keyword);
+            })
+            ->orderBy('created_at', 'desc');
 
         if ($limit) {
             $data = $data->limit($limit);
@@ -180,106 +172,89 @@ class PostRepository extends RepositoriesAbstract implements PostInterface
         return $this->applyBeforeExecuteQuery($data)->get();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function getAllPosts($perPage = 12, $active = true)
+    public function getAllPosts(int $perPage = 12, bool $active = true, array $with = ['slugable']): Collection|LengthAwarePaginator
     {
-        $data = $this->model->select('posts.*')
-            ->with('slugable')
-            ->orderBy('posts.created_at', 'desc');
+        $data = $this->model
+            ->with($with)
+            ->orderBy('created_at', 'desc');
 
         if ($active) {
-            $data = $data->where('posts.status', BaseStatusEnum::PUBLISHED);
+            $data = $data->where('status', BaseStatusEnum::PUBLISHED);
         }
 
         return $this->applyBeforeExecuteQuery($data)->paginate($perPage);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function getPopularPosts($limit, array $args = [])
+    public function getPopularPosts(int $limit, array $args = []): Collection
     {
         $data = $this->model
             ->with('slugable')
-            ->orderBy('posts.views', 'desc')
-            ->select('posts.*')
-            ->where('posts.status', BaseStatusEnum::PUBLISHED)
+            ->orderBy('views', 'desc')
+            ->where('status', BaseStatusEnum::PUBLISHED)
             ->limit($limit);
 
-        if (!empty(Arr::get($args, 'where'))) {
+        if (! empty(Arr::get($args, 'where'))) {
             $data = $data->where($args['where']);
         }
 
         return $this->applyBeforeExecuteQuery($data)->get();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function getRelatedCategoryIds($model)
+    public function getFilters(array $filters): Collection|LengthAwarePaginator
     {
-        $model = $model instanceof Eloquent ? $model : $this->findOrFail($model);
-
-        try {
-            return $model->categories()->allRelatedIds()->toArray();
-        } catch (Exception $exception) {
-            return [];
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function getFilters(array $filters)
-    {
-        $this->model = $this->originalModel;
+        $data = $this->originalModel;
 
         if ($filters['categories'] !== null) {
-            $categories = $filters['categories'];
-            $this->model = $this->model->whereHas('categories', function ($query) use ($categories) {
+            $categories = array_filter((array)$filters['categories']);
+
+            $data = $data->whereHas('categories', function ($query) use ($categories) {
                 $query->whereIn('categories.id', $categories);
             });
         }
 
         if ($filters['categories_exclude'] !== null) {
-            $excludeCategories = $filters['categories_exclude'];
-            $this->model = $this->model->whereHas('categories', function ($query) use ($excludeCategories) {
-                $query->whereNotIn('categories.id', $excludeCategories);
-            });
+            $data = $data
+                ->whereHas('categories', function ($query) use ($filters) {
+                    $query->whereNotIn('categories.id', array_filter((array)$filters['categories_exclude']));
+                });
         }
 
         if ($filters['exclude'] !== null) {
-            $this->model = $this->model->whereNotIn('posts.id', $filters['exclude']);
+            $data = $data->whereNotIn('posts.id', array_filter((array)$filters['exclude']));
         }
 
         if ($filters['include'] !== null) {
-            $this->model = $this->model->whereNotIn('posts.id', $filters['include']);
+            $data = $data->whereNotIn('posts.id', array_filter((array)$filters['include']));
         }
 
         if ($filters['author'] !== null) {
-            $this->model = $this->model->whereIn('posts.author_id', $filters['author']);
+            $data = $data->whereIn('author_id', array_filter((array)$filters['author']));
         }
 
         if ($filters['author_exclude'] !== null) {
-            $this->model = $this->model->whereNotIn('posts.author_id', $filters['author_exclude']);
+            $data = $data->whereNotIn('author_id', array_filter((array)$filters['author_exclude']));
         }
 
         if ($filters['featured'] !== null) {
-            $this->model = $this->model->where('posts.is_featured', $filters['featured']);
+            $data = $data->where('posts.is_featured', $filters['featured']);
         }
 
         if ($filters['search'] !== null) {
-            $this->model = $this->model->where('posts.name', 'like', '%' . $filters['search'] . '%')
-                ->orWhere('posts.content', 'like', '%' . $filters['search'] . '%');
+            $data = $data
+                ->where(function ($query) use ($filters) {
+                    $query
+                        ->addSearch('posts.name', $filters['search'])
+                        ->addSearch('posts.description', $filters['search']);
+                });
         }
 
-        $orderBy = isset($filters['order_by']) ? $filters['order_by'] : 'updated_at';
-        $order = isset($filters['order']) ? $filters['order'] : 'desc';
+        $orderBy = Arr::get($filters, 'order_by', 'updated_at');
+        $order = Arr::get($filters, 'order', 'desc');
 
-        $this->model->where('posts.status', BaseStatusEnum::PUBLISHED)->orderBy($orderBy, $order);
+        $data = $data
+            ->where('posts.status', BaseStatusEnum::PUBLISHED)
+            ->orderBy($orderBy, $order);
 
-        return $this->applyBeforeExecuteQuery($this->model)->paginate((int)$filters['per_page']);
+        return $this->applyBeforeExecuteQuery($data)->paginate((int)$filters['per_page']);
     }
 }

@@ -8,6 +8,7 @@ export class MediaDetails {
 
         this.onlyFields = [
             'name',
+            'alt',
             'full_url',
             'size',
             'mime_type',
@@ -23,11 +24,11 @@ export class MediaDetails {
         let description = '';
         let useClipboard = false;
         _.forEach(data, (val, index) => {
-            if (_.includes(_self.onlyFields, index)) {
+            if (_.includes(_self.onlyFields, index) && val) {
                 if (!_.includes(['size', 'mime_type'], index)) {
                     description += _self.descriptionItemTemplate
                         .replace(/__title__/gi, RV_MEDIA_CONFIG.translations[index])
-                        .replace(/__url__/gi, val ? index === 'full_url' ? '<div class="input-group"><input id="file_details_url" type="text" value="' + val + '" class="form-control"><span class="input-group-prepend"><button class="btn btn-default js-btn-copy-to-clipboard" type="button" data-clipboard-target="#file_details_url" title="Copied"><img class="clippy" src="' + Helpers.asset('/vendor/core/core/media/images/clippy.svg') + '" width="13" alt="Copy to clipboard"></button></span></div>' : '<span title="' + val + '">' + val + '</span>' : '');
+                        .replace(/__url__/gi, val ? index === 'full_url' ? '<div class="input-group"><input id="file_details_url" type="text" value="' + val + '" class="form-control"><span class="input-group-text"><button class="btn btn-default js-btn-copy-to-clipboard" type="button" data-clipboard-target="#file_details_url" title="Copied"><img class="clippy" src="' + Helpers.asset('/vendor/core/core/media/images/clippy.svg') + '" width="13" alt="Copy to clipboard"></button></span></div>' : '<span title="' + val + '">' + val + '</span>' : '');
                     if (index === 'full_url') {
                         useClipboard = true;
                     }

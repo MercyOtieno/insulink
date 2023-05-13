@@ -11,28 +11,13 @@ use Session;
 
 abstract class AbstractHandler
 {
-    /**
-     * @var Request
-     */
-    protected $request;
+    protected Request $request;
 
-    /**
-     * @var UploadedFile
-     */
-    protected $file;
+    protected UploadedFile $file;
 
-    /**
-     * @var array
-     */
-    protected $config;
+    protected mixed $config;
 
-    /**
-     * AbstractReceiver constructor.
-     *
-     * @param Request $request
-     * @param UploadedFile $file
-     */
-    public function __construct(Request $request, $file)
+    public function __construct(Request $request, UploadedFile $file)
     {
         $this->request = $request;
         $this->file = $file;
@@ -41,12 +26,10 @@ abstract class AbstractHandler
 
     /**
      * Checks the current setup if session driver was booted - if not, it will generate random hash.
-     *
-     * @return bool
      */
-    public static function canUseSession()
+    public static function canUseSession(): bool
     {
-        // Get the session driver and check if it was started - fully inited by laravel
+        // Get the session driver and check if it was started - fully init by laravel
         $session = session();
         $driver = $session->getDefaultDriver();
         $drivers = $session->getDrivers();
@@ -136,7 +119,7 @@ abstract class AbstractHandler
     abstract public function getChunkFileName();
 
     /**
-     * Checks if the request has first chunk.
+     * Checks if the request has first chunked.
      *
      * @return bool
      */

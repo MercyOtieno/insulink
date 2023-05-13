@@ -6,7 +6,6 @@ use Botble\Media\Http\Requests\MediaFolderRequest;
 use Botble\Media\Repositories\Interfaces\MediaFileInterface;
 use Botble\Media\Repositories\Interfaces\MediaFolderInterface;
 use Exception;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use RvMedia;
@@ -16,31 +15,10 @@ use RvMedia;
  */
 class MediaFolderController extends Controller
 {
-    /**
-     * @var MediaFolderInterface
-     */
-    protected $folderRepository;
-
-    /**
-     * @var MediaFileInterface
-     */
-    protected $fileRepository;
-
-    /**
-     * FolderController constructor.
-     * @param MediaFolderInterface $folderRepository
-     * @param MediaFileInterface $fileRepository
-     */
-    public function __construct(MediaFolderInterface $folderRepository, MediaFileInterface $fileRepository)
+    public function __construct(protected MediaFolderInterface $folderRepository, protected MediaFileInterface $fileRepository)
     {
-        $this->folderRepository = $folderRepository;
-        $this->fileRepository = $fileRepository;
     }
 
-    /**
-     * @param MediaFolderRequest $request
-     * @return JsonResponse
-     */
     public function store(MediaFolderRequest $request)
     {
         $name = $request->input('name');

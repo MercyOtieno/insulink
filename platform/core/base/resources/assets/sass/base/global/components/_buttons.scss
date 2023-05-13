@@ -16,7 +16,7 @@ Custom buttons based on bootstrap SASS
 }
 
 /***
-Custom color buttons 
+Custom color buttons
 ***/
 
 @each $name, $colors in $component-colors {
@@ -119,4 +119,8 @@ Custom color buttons
             border-radius: 0 0 25px 25px !important;
         }
     }
+}
+
+.btn-info {
+    color: #fff !important;
 }

@@ -3,29 +3,18 @@
 namespace Botble\Widget;
 
 use Botble\Widget\Repositories\Interfaces\WidgetInterface;
-use Illuminate\Contracts\Filesystem\FileNotFoundException;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
-use Illuminate\View\View;
 use Theme;
 
 abstract class AbstractWidget
 {
-    /**
-     * The configuration array.
-     *
-     * @var array
-     */
     protected $config = [];
 
-    /**
-     * @var string
-     */
     protected $frontendTemplate = 'frontend';
 
-    /**
-     * @var string
-     */
     protected $backendTemplate = 'backend';
 
     /**
@@ -33,37 +22,16 @@ abstract class AbstractWidget
      */
     protected $widgetDirectory;
 
-    /**
-     * @var bool
-     */
     protected $isCore = false;
 
-    /**
-     * @var WidgetInterface
-     */
-    protected $widgetRepository;
+    protected WidgetInterface $widgetRepository;
 
-    /**
-     * @var string
-     */
-    protected $theme = null;
+    protected ?string $theme = null;
 
-    /**
-     * @var Collection
-     */
-    protected $data = [];
+    protected Collection|array $data = [];
 
-    /**
-     * Whether the settings data are loaded.
-     *
-     * @var boolean
-     */
-    protected $loaded = false;
+    protected bool $loaded = false;
 
-    /**
-     * AbstractWidget constructor.
-     * @param array $config
-     */
     public function __construct(array $config = [])
     {
         foreach ($config as $key => $value) {
@@ -73,10 +41,7 @@ abstract class AbstractWidget
         $this->widgetRepository = app(WidgetInterface::class);
     }
 
-    /**
-     * @return array
-     */
-    public function getConfig()
+    public function getConfig(): array
     {
         return $this->config;
     }
@@ -84,10 +49,8 @@ abstract class AbstractWidget
     /**
      * Treat this method as a controller action.
      * Return view() or other content to display.
-     *
-     * @throws FileNotFoundException
      */
-    public function run()
+    public function run(): View|Factory|string|Application|null
     {
         $widgetGroup = app('botble.widget-group-collection');
         $widgetGroup->load();
@@ -101,42 +64,36 @@ abstract class AbstractWidget
             ->where('position', $args[1])
             ->first();
 
-        if (!empty($data)) {
+        if (! empty($data)) {
             $this->config = array_merge($this->config, $data->data);
         }
 
-        if (!$this->isCore) {
-            return Theme::loadPartial($this->frontendTemplate,
-                Theme::getThemeNamespace('/../widgets/' . $this->widgetDirectory . '/templates'), [
-                    'config'  => $this->config,
+        if (! $this->isCore) {
+            return Theme::loadPartial(
+                $this->frontendTemplate,
+                Theme::getThemeNamespace('/../widgets/' . $this->widgetDirectory . '/templates'),
+                [
+                    'config' => $this->config,
                     'sidebar' => $args[0],
-                ]);
+                ]
+            );
         }
 
         return view($this->frontendTemplate, [
-            'config'  => $this->config,
+            'config' => $this->config,
             'sidebar' => $args[0],
         ]);
     }
 
-    /**
-     * @return string
-     */
-    public function getId()
+    public function getId(): string
     {
         return get_class($this);
     }
 
-    /**
-     * @param string|null $sidebarId
-     * @param int $position
-     * @return Factory|View|mixed
-     * @throws FileNotFoundException
-     */
-    public function form($sidebarId = null, $position = 0)
+    public function form(?string $sidebarId = null, int $position = 0): View|Factory|string|Application|null
     {
         Theme::uses(Theme::getThemeName());
-        if (!empty($sidebarId)) {
+        if (! empty($sidebarId)) {
             $widgetGroup = app('botble.widget-group-collection');
             $widgetGroup->load();
             $widgetGroupData = $widgetGroup->getData();
@@ -147,16 +104,19 @@ abstract class AbstractWidget
                 ->where('position', $position)
                 ->first();
 
-            if (!empty($data)) {
+            if (! empty($data)) {
                 $this->config = array_merge($this->config, $data->data);
             }
         }
 
-        if (!$this->isCore) {
-            return Theme::loadPartial($this->backendTemplate,
-                Theme::getThemeNamespace('/../widgets/' . $this->widgetDirectory . '/templates'), [
+        if (! $this->isCore) {
+            return Theme::loadPartial(
+                $this->backendTemplate,
+                Theme::getThemeNamespace('/../widgets/' . $this->widgetDirectory . '/templates'),
+                [
                     'config' => $this->config,
-                ]);
+                ]
+            );
         }
 
         return view($this->backendTemplate, [

@@ -1,11 +1,11 @@
-@extends('core/base::layouts.master')
+@extends(BaseHelper::getAdminMasterLayoutTemplate())
 @section('content')
     <div class="widget meta-boxes">
         <div class="widget-title">
             <h4>&nbsp; {{ trans('plugins/translation::translation.theme-translations') }}</h4>
         </div>
-        <div class="widget-body box-translation">
-            @if (count(\Botble\Base\Supports\Language::getAvailableLocales()) > 0)
+        <div class="widget-body box-translation" v-pre>
+            @if (count(\Botble\Base\Supports\Language::getAvailableLocales()) > 0 && $group)
                 {!! Form::open(['role' => 'form', 'route' => 'translations.theme-translations', 'method' => 'POST']) !!}
                     <input type="hidden" name="locale" value="{{ $group['locale'] }}">
                     <div class="row">
@@ -13,36 +13,44 @@
                             <p>{{ trans('plugins/translation::translation.translate_from') }} <strong class="text-info">{{ $defaultLanguage ? $defaultLanguage['name'] : 'en' }}</strong> {{ trans('plugins/translation::translation.to') }} <strong class="text-info">{{ $group['name'] }}</strong></p>
                         </div>
                         <div class="col-md-6">
-                            <div class="text-right">
+                            <div class="text-end">
                                 @include('plugins/translation::partials.list-theme-languages-to-translate', compact('groups', 'group'))
                             </div>
                         </div>
                     </div>
-                    <div class="table-responsive table-striped">
-                        <table class="table">
+                    <p class="note note-warning">{{ trans('plugins/translation::translation.theme_translations_instruction') }}</p>
+
+                    {!! apply_filters('translation_theme_translation_header', null) !!}
+
+                    <div class="table-responsive">
+                        <table class="table table-striped">
                             <thead>
                             <tr>
                                 <th>{{ $defaultLanguage ? $defaultLanguage['name'] : 'en' }}</th>
                                 <th>{{ $group['name'] }}</th>
+                                {!! apply_filters('translation_theme_translation_table_header', null) !!}
                             </tr>
                             </thead>
                             <tbody>
                             @foreach ($translations as $key => $translation)
                                 <tr>
-                                    <td class="text-left" style="width: 50%">
+                                    <td class="text-start" style="width: 50%">
                                         {!! htmlentities($key, ENT_QUOTES, 'UTF-8', false) !!}
-                                        <input type="hidden" name="translations[{{ $key }}][key]" value="{!! htmlentities($key, ENT_QUOTES, 'UTF-8', false) !!}">
                                     </td>
-                                    <td class="text-left" style="width: 50%">
-                                        <input type="text" class="form-control" name="translations[{{ $key }}][value]" value="{!! htmlentities($translation, ENT_QUOTES, 'UTF-8', false) !!}">
+                                    <td class="text-start" style="width: 50%">
+                                        <a href="#" class="editable"
+                                           data-name="{{ $key }}"
+                                           data-type="textarea" data-pk="{{ $group['locale'] }}" data-url="{{ route('translations.theme-translations') }}"
+                                           data-title="{{ trans('plugins/translation::translation.edit_title') }}">{!! htmlentities($translation, ENT_QUOTES, 'UTF-8', false) !!}</a>
                                     </td>
+                                    {!! apply_filters('translation_theme_translation_table_body', null) !!}
                                 </tr>
                             @endforeach
                             </tbody>
                         </table>
                     </div>
                     <br>
-                    <div class="form-group">
+                    <div class="form-group mb-3">
                         <button type="submit" class="btn btn-info button-save-theme-translations">{{ trans('core/base::forms.save') }}</button>
                     </div>
                 {!! Form::close() !!}

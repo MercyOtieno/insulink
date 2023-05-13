@@ -11,57 +11,41 @@ use SlugHelper;
 
 class CreatedContentListener
 {
-
-    /**
-     * @var SlugInterface
-     */
-    protected $slugRepository;
-
-    /**
-     * CreatedContentListener constructor.
-     * @param SlugInterface $slugRepository
-     */
-    public function __construct(SlugInterface $slugRepository)
+    public function __construct(protected SlugInterface $slugRepository)
     {
-        $this->slugRepository = $slugRepository;
     }
 
-    /**
-     * Handle the event.
-     *
-     * @param CreatedContentEvent $event
-     * @param SlugService $slugService
-     * @return void
-     */
-    public function handle(CreatedContentEvent $event)
+    public function handle(CreatedContentEvent $event): void
     {
-        if (SlugHelper::isSupportedModel(get_class($event->data))) {
+        if (SlugHelper::isSupportedModel(get_class($event->data)) && $event->request->input('is_slug_editable', 0)) {
             try {
                 $slug = $event->request->input('slug');
 
-                if (!$slug) {
-                    $slug = $event->request->input('name');
+                $fieldNameToGenerateSlug = SlugHelper::getColumnNameToGenerateSlug($event->data);
+
+                if (! $slug) {
+                    $slug = $event->request->input($fieldNameToGenerateSlug);
                 }
 
-                if (!$slug && $event->data->name) {
-                    if (!SlugHelper::turnOffAutomaticUrlTranslationIntoLatin()) {
-                        $slug = Str::slug($event->data->name);
+                if (! $slug && $event->data->{$fieldNameToGenerateSlug}) {
+                    if (! SlugHelper::turnOffAutomaticUrlTranslationIntoLatin()) {
+                        $slug = Str::slug($event->data->{$fieldNameToGenerateSlug});
                     } else {
-                        $slug = $event->data->name;
+                        $slug = $event->data->{$fieldNameToGenerateSlug};
                     }
                 }
 
-                if (!$slug) {
+                if (! $slug) {
                     $slug = time();
                 }
 
                 $slugService = new SlugService($this->slugRepository);
 
                 $this->slugRepository->createOrUpdate([
-                    'key'            => $slugService->create($slug, (int)$event->data->slug_id, get_class($event->data)),
+                    'key' => $slugService->create($slug, (int)$event->data->slug_id, get_class($event->data)),
                     'reference_type' => get_class($event->data),
-                    'reference_id'   => $event->data->id,
-                    'prefix'         => SlugHelper::getPrefix(get_class($event->data)),
+                    'reference_id' => $event->data->id,
+                    'prefix' => SlugHelper::getPrefix(get_class($event->data)),
                 ]);
             } catch (Exception $exception) {
                 info($exception->getMessage());

@@ -4,13 +4,15 @@ namespace Botble\ACL\Traits;
 
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Contracts\Auth\StatefulGuard;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\View\View;
+use Illuminate\Validation\ValidationException;
 
 trait RegistersUsers
 {
@@ -19,7 +21,7 @@ trait RegistersUsers
     /**
      * Show the application registration form.
      *
-     * @return Factory|View
+     * @return Factory|Application|View|\Response
      */
     public function showRegistrationForm()
     {
@@ -31,6 +33,7 @@ trait RegistersUsers
      *
      * @param Request $request
      * @return RedirectResponse|Response|Redirector
+     * @throws ValidationException
      */
     public function register(Request $request)
     {
@@ -64,7 +67,7 @@ trait RegistersUsers
      *
      * @param Request $request
      * @param mixed $user
-     * @return mixed
+     * @return void
      */
     protected function registered(Request $request, $user)
     {

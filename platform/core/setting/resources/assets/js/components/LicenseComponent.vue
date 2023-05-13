@@ -21,36 +21,38 @@
                     </div>
                     <div v-if="!isLoading && !verified">
                         <div class="note note-warning">
-                            <p>Your license is invalid. Please activate your license!</p>
+                            <p v-if="manageLicense === 'yes'">Your license is invalid. Please activate your license!</p>
+                            <p v-if="manageLicense === 'no'">You doesn't have permission to activate the license!</p>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             <label class="text-title-field" for="buyer">Your username on Envato</label>
-                            <input type="text" class="next-input" v-model="buyer" id="buyer" placeholder="Your Envato's username">
+                            <input type="text" class="next-input" v-model="buyer" id="buyer" placeholder="Your Envato's username" :disabled="manageLicense === 'no'" :readonly="manageLicense === 'no'">
                             <div>
                                 <small>If your profile page is <a href="https://codecanyon.net/user/john-smith" rel="nofollow">https://codecanyon.net/user/john-smith</a>, then your username on Envato is <strong>john-smith</strong>.</small>
                             </div>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             <div>
-                                <div class="float-left">
+                                <div class="float-start">
                                     <label class="text-title-field" for="purchase_code">Purchase code</label>
                                 </div>
-                                <div class="float-right text-right">
+                                <div class="float-end text-end">
                                     <small><a href="https://help.market.envato.com/hc/en-us/articles/202822600-Where-Is-My-Purchase-Code" target="_blank">What's this?</a></small>
                                 </div>
                                 <div class="clearfix"></div>
                             </div>
-                            <input type="text" class="next-input" v-model="purchaseCode" id="purchase_code" placeholder="Ex: 10101010-10aa-0101-a1b1010a01b10">
+                            <input type="text" class="next-input" v-model="purchaseCode" id="purchase_code" :disabled="manageLicense === 'no'" :readonly="manageLicense === 'no'" placeholder="Ex: 10101010-10aa-0101-a1b1010a01b10">
                         </div>
-                        <div class="form-group">
-                            <label><input type="checkbox" name="license_rules_agreement" value="1" v-model="licenseRulesAgreement">Confirm that, according to the Envato License Terms, each license entitles one person for a single project. Creating multiple unregistered installations is a copyright violation.
+                        <div class="form-group mb-3">
+                            <label><input type="checkbox" name="license_rules_agreement" value="1" v-model="licenseRulesAgreement" :disabled="manageLicense === 'no'" :readonly="manageLicense === 'no'">Confirm that, according to the Envato License Terms, each license entitles one person for a single project. Creating multiple unregistered installations is a copyright violation.
                                 <a href="https://codecanyon.net/licenses/standard" target="_blank" rel="nofollow">More info</a>.</label>
                         </div>
-                        <div class="form-group">
-                            <button :class="activating ? 'btn btn-info button-loading' : 'btn btn-info'" type="button" @click="activateLicense()">Activate license</button>
+                        <div class="form-group mb-3">
+                            <button :class="activating ? 'btn btn-info button-loading' : 'btn btn-info'" type="button" :disabled="manageLicense === 'no'" @click="activateLicense()">Activate license</button>
+                            <button :class="deactivating ? 'btn btn-info button-loading ms-2' : 'btn btn-warning ms-2'" type="button" :disabled="manageLicense === 'no'" @click="resetLicense()">Reset license on this domain</button>
                         </div>
                         <hr>
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             <p><small class="text-danger">Note: Your site IP will be added to blacklist after 5 failed attempts.</small></p>
                             <p>
                                 <small>A purchase code (license) is only valid for One Domain. Are you using this theme on a new domain? Purchase a
@@ -60,8 +62,8 @@
                     </div>
                     <div v-if="!isLoading && verified">
                         <p class="text-info">Licensed to {{ license.licensed_to }}. Activated since {{ license.activated_at }}.</p>
-                        <div class="form-group">
-                            <button :class="deactivating ? 'btn btn-warning button-loading' : 'btn btn-warning'" type="button" @click="deactivateLicense()">Deactivate license</button>
+                        <div class="form-group mb-3">
+                            <button :class="deactivating ? 'btn btn-warning button-loading' : 'btn btn-warning'" type="button" @click="deactivateLicense()" :disabled="manageLicense === 'no'">Deactivate license</button>
                         </div>
                     </div>
                 </div>
@@ -92,6 +94,16 @@
             deactivateLicenseUrl: {
                 type: String,
                 default: () => null,
+                required: true
+            },
+            resetLicenseUrl: {
+                type: String,
+                default: () => null,
+                required: true
+            },
+            manageLicense: {
+                type: String,
+                default: () => 'no',
                 required: true
             },
         },
@@ -137,6 +149,7 @@
                         } else {
                             this.verified = true;
                             this.license = res.data.data;
+                            Botble.showSuccess(res.data.message);
                         }
                         this.activating = false;
                     })
@@ -155,6 +168,28 @@
                             this.verified = false;
                         }
                         this.deactivating = false;
+                    })
+                    .catch(res =>  {
+                        Botble.handleError(res.response.data);
+                        this.deactivating = false;
+                    });
+            },
+            resetLicense() {
+                this.deactivating = true;
+                axios.post(this.resetLicenseUrl, {purchase_code: this.purchaseCode, buyer: this.buyer, license_rules_agreement: this.licenseRulesAgreement})
+                    .then(res =>  {
+                        if (res.data.error) {
+                            Botble.showError(res.data.message);
+                            this.deactivating = false;
+
+                            return false;
+                        }
+
+                        this.verified = false;
+
+                        this.deactivating = false;
+
+                        Botble.showSuccess(res.data.message);
                     })
                     .catch(res =>  {
                         Botble.handleError(res.response.data);

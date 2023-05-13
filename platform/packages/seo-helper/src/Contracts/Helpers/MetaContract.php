@@ -6,7 +6,6 @@ use Botble\SeoHelper\Contracts\RenderableContract;
 
 interface MetaContract extends RenderableContract
 {
-
     /**
      * Get the meta name.
      *

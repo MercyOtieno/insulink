@@ -4,45 +4,27 @@ namespace Botble\Page\Repositories\Caches;
 
 use Botble\Page\Repositories\Interfaces\PageInterface;
 use Botble\Support\Repositories\Caches\CacheAbstractDecorator;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 
 class PageCacheDecorator extends CacheAbstractDecorator implements PageInterface
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function getDataSiteMap()
+    public function getDataSiteMap(): Collection
     {
         return $this->getDataIfExistCache(__FUNCTION__, func_get_args());
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function getFeaturedPages($limit)
+    public function whereIn(array $array, array $select = []): Collection
     {
         return $this->getDataIfExistCache(__FUNCTION__, func_get_args());
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function whereIn($array, $select = [])
+    public function getSearch(?string $query, int $limit = 10): Collection|LengthAwarePaginator
     {
         return $this->getDataIfExistCache(__FUNCTION__, func_get_args());
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function getSearch($query, $limit = 10)
-    {
-        return $this->getDataIfExistCache(__FUNCTION__, func_get_args());
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function getAllPages($active = true)
+    public function getAllPages(bool $active = true): Collection
     {
         return $this->getDataIfExistCache(__FUNCTION__, func_get_args());
     }

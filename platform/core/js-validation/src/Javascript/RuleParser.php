@@ -15,12 +15,12 @@ class RuleParser
     /**
      * Rule used to validate remote requests.
      */
-    const REMOTE_RULE = 'laravelValidationRemote';
+    public const REMOTE_RULE = 'laravelValidationRemote';
 
     /**
      * Rule used to validate javascript fields.
      */
-    const JAVASCRIPT_RULE = 'laravelValidation';
+    public const JAVASCRIPT_RULE = 'laravelValidation';
 
     /**
      * Token used to secure remote validations.
@@ -95,7 +95,8 @@ class RuleParser
     {
         foreach ((array)$attribute as $key) {
             $current = isset($this->conditional[$key]) ? $this->conditional[$key] : [];
-            $merge = head($this->validator->explodeRules((array)$rules));
+            $rules = $this->validator->explodeRules((array)$rules);
+            $merge = reset($rules);
             $this->conditional[$key] = array_merge($current, $merge);
         }
     }

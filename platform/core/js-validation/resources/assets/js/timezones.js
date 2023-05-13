@@ -1,3 +1,14 @@
+/*!
+ * Laravel Javascript Validation
+ *
+ * https://github.com/proengsoft/laravel-jsvalidation
+ *
+ * Timezone Helper functions used by validators
+ *
+ * Copyright (c) 2017 Proengsoft
+ * Released under the MIT license
+ */
+
 $.extend(true, laravelValidation, {
 
     helpers: {

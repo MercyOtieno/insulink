@@ -7,7 +7,6 @@ use Botble\SeoHelper\Contracts\Entities\MiscTagsContract;
 
 class MiscTags implements MiscTagsContract
 {
-
     /**
      * Current URL.
      *
@@ -27,7 +26,7 @@ class MiscTags implements MiscTagsContract
      */
     public function __construct()
     {
-        $this->meta = new MetaCollection;
+        $this->meta = new MetaCollection();
         $this->addCanonical();
         $this->addMany(config('packages.seo-helper.general.misc.default', []));
     }
@@ -151,7 +150,7 @@ class MiscTags implements MiscTagsContract
      */
     protected function hasUrl()
     {
-        return !empty($this->getUrl());
+        return ! empty($this->getUrl());
     }
 
     /**

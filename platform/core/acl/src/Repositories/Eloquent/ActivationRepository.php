@@ -7,7 +7,6 @@ use Botble\ACL\Models\User;
 use Botble\ACL\Repositories\Interfaces\ActivationInterface;
 use Botble\Support\Repositories\Eloquent\RepositoriesAbstract;
 use Carbon\Carbon;
-use Exception;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Str;
 
@@ -15,15 +14,10 @@ class ActivationRepository extends RepositoriesAbstract implements ActivationInt
 {
     /**
      * The activation expiration time, in seconds.
-     *
-     * @var int
      */
-    protected $expires = 259200;
+    protected int $expires = 259200;
 
-    /**
-     * {@inheritDoc}
-     */
-    public function createUser(User $user)
+    public function createUser(User $user): Activation
     {
         $activation = $this->model;
 
@@ -40,10 +34,7 @@ class ActivationRepository extends RepositoriesAbstract implements ActivationInt
         return $activation;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function exists(User $user, $code = null)
+    public function exists(User $user, $code = null): Activation|bool
     {
         $expires = $this->expires();
 
@@ -66,10 +57,7 @@ class ActivationRepository extends RepositoriesAbstract implements ActivationInt
         return $activation->first() ?: false;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function complete(User $user, $code)
+    public function complete(User $user, $code): bool
     {
         $expires = $this->expires();
 
@@ -90,8 +78,8 @@ class ActivationRepository extends RepositoriesAbstract implements ActivationInt
         }
 
         $activation->fill([
-            'completed'    => true,
-            'completed_at' => now(),
+            'completed' => true,
+            'completed_at' => Carbon::now(),
         ]);
 
         $activation->save();
@@ -101,10 +89,7 @@ class ActivationRepository extends RepositoriesAbstract implements ActivationInt
         return true;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function completed(User $user)
+    public function completed(User $user): Activation|bool
     {
         $activation = $this
             ->model
@@ -118,10 +103,6 @@ class ActivationRepository extends RepositoriesAbstract implements ActivationInt
         return $activation ?: false;
     }
 
-    /**
-     * {@inheritDoc}
-     * @throws Exception
-     */
     public function remove(User $user)
     {
         /**
@@ -129,7 +110,7 @@ class ActivationRepository extends RepositoriesAbstract implements ActivationInt
          */
         $activation = $this->completed($user);
 
-        if ($activation === false) {
+        if (! $activation) {
             return false;
         }
 
@@ -138,9 +119,6 @@ class ActivationRepository extends RepositoriesAbstract implements ActivationInt
         return $activation->delete();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function removeExpired()
     {
         $expires = $this->expires();
@@ -153,22 +131,12 @@ class ActivationRepository extends RepositoriesAbstract implements ActivationInt
             ->delete();
     }
 
-    /**
-     * Returns the expiration date.
-     *
-     * @return Carbon
-     */
-    protected function expires()
+    protected function expires(): Carbon
     {
-        return now()->subSeconds($this->expires);
+        return Carbon::now()->subSeconds($this->expires);
     }
 
-    /**
-     * Return a random string for an activation code.
-     *
-     * @return string
-     */
-    protected function generateActivationCode()
+    protected function generateActivationCode(): string
     {
         return Str::random(32);
     }

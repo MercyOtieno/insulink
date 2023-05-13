@@ -1,4 +1,4 @@
-@extends('core/base::layouts.master')
+@extends(BaseHelper::getAdminMasterLayoutTemplate())
 @section('content')
     <div class="row">
         <div class="col-12">
@@ -8,21 +8,23 @@
                 </div>
                 <div class="widget-body">
                     <div class="row pad">
-                        @foreach(ThemeManager::getThemes() as $key =>  $theme)
+                        @foreach(ThemeManager::getThemes() as $key => $theme)
                             <div class="col-sm-6 col-md-4 col-lg-3">
                                 <div class="thumbnail">
-                                    <div class="img-thumbnail-wrap" style="background-image: url('{{ url(config('packages.theme.general.themeDir')) }}/{{ $key }}/screenshot.png')"></div>
+                                    <div class="img-thumbnail-wrap">
+                                        <img src="{{ Theme::getThemeScreenshot($key) }}" alt="screenshot">
+                                    </div>
                                     <div class="caption">
                                         <div class="col-12" style="background: #eee; padding: 15px;">
                                             <div style="word-break: break-all">
                                                 <h4>{{ $theme['name'] }}</h4>
                                                 <p>{{ trans('packages/theme::theme.author') }}: {{ Arr::get($theme, 'author') }}</p>
-                                                <p>{{ trans('packages/theme::theme.version') }}: {{ Arr::get($theme, 'version') }}</p>
+                                                <p>{{ trans('packages/theme::theme.version') }}: {{ Arr::get($theme, 'version', get_cms_version()) }}</p>
                                                 <p>{{ trans('packages/theme::theme.description') }}: {{ Arr::get($theme, 'description') }}</p>
                                             </div>
                                             <div class="clearfix"></div>
                                             <div>
-                                                @if (Theme::getThemeName() == $key)
+                                                @if (setting('theme') && Theme::getThemeName() == $key)
                                                     <a href="#" class="btn btn-info" disabled="disabled"><i class="fa fa-check"></i> {{ trans('packages/theme::theme.activated') }}</a>
                                                 @else
                                                     @if (Auth::user()->hasPermission('theme.activate'))

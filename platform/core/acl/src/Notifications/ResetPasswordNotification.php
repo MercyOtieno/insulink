@@ -10,19 +10,9 @@ use Throwable;
 
 class ResetPasswordNotification extends Notification
 {
-    /**
-     * The password reset token.
-     *
-     * @var string
-     */
-    public $token;
+    public string $token;
 
-    /**
-     * Create a notification instance.
-     *
-     * @param string $token
-     */
-    public function __construct($token)
+    public function __construct(string $token)
     {
         $this->token = $token;
     }
@@ -31,7 +21,7 @@ class ResetPasswordNotification extends Notification
      * Get the notification's channels.
      *
      * @param mixed $notifiable
-     * @return array|string
+     * @return array
      */
     public function via($notifiable)
     {
@@ -49,7 +39,7 @@ class ResetPasswordNotification extends Notification
      * Get the mail representation of the notification.
      *
      * @param  mixed $notifiable
-     * @return \Illuminate\Notifications\Messages\MailMessage
+     * @return MailMessage
      */
     public function toMail($notifiable)
     {
@@ -59,7 +49,7 @@ class ResetPasswordNotification extends Notification
         $template = 'password-reminder';
         $content = EmailHandler::prepareData(EmailHandler::getTemplateContent($template, 'core'));
 
-        return (new MailMessage)
+        return (new MailMessage())
             ->view(['html' => new HtmlString($content)])
             ->subject(EmailHandler::getTemplateSubject($template));
     }

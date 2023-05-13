@@ -11,14 +11,15 @@ Forms
     }
 }
 
-.input-group-prepend {
+.input-group-text {
+    justify-content: center;
     > i {
         color: lighten($input-border, 1%);
     }
 }
 
 /***
-Custom color buttons 
+Custom color buttons
 ***/
 
 @each $name, $colors in $component-colors {

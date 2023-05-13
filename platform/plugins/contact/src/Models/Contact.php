@@ -2,36 +2,18 @@
 
 namespace Botble\Contact\Models;
 
-use Botble\Base\Traits\EnumCastable;
+use Botble\Base\Supports\Avatar;
 use Botble\Contact\Enums\ContactStatusEnum;
 use Botble\Base\Models\BaseModel;
+use Exception;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use RvMedia;
 
 class Contact extends BaseModel
 {
-    use EnumCastable;
-
-    /**
-     * The database table used by the model.
-     *
-     * @var string
-     */
     protected $table = 'contacts';
 
-    /**
-     * The date fields for the model.clear
-     *
-     * @var array
-     */
-    protected $dates = [
-        'created_at',
-        'updated_at',
-    ];
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
     protected $fillable = [
         'name',
         'email',
@@ -42,18 +24,25 @@ class Contact extends BaseModel
         'status',
     ];
 
-    /**
-     * @var array
-     */
     protected $casts = [
         'status' => ContactStatusEnum::class,
     ];
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
-     */
-    public function replies()
+    public function replies(): HasMany
     {
         return $this->hasMany(ContactReply::class);
+    }
+
+    protected function avatarUrl(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                try {
+                    return (new Avatar())->create($this->name)->toBase64();
+                } catch (Exception) {
+                    return RvMedia::getDefaultImage();
+                }
+            },
+        );
     }
 }

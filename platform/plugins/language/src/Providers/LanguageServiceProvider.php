@@ -3,7 +3,7 @@
 namespace Botble\Language\Providers;
 
 use Assets;
-use Botble\Base\Supports\Helper;
+use Botble\Base\Forms\FormAbstract;
 use Botble\Base\Traits\LoadAndPublishDataTrait;
 use Botble\Language\Facades\LanguageFacade;
 use Botble\Language\Http\Middleware\LocaleSessionRedirect;
@@ -19,43 +19,40 @@ use Botble\Language\Repositories\Interfaces\LanguageInterface;
 use Botble\Language\Repositories\Interfaces\LanguageMetaInterface;
 use Botble\Menu\Models\Menu;
 use Eloquent;
-use Event;
 use Html;
-use Illuminate\Contracts\Container\BindingResolutionException;
-use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Query\Builder;
 use Illuminate\Foundation\AliasLoader;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Events\RouteMatched;
 use Illuminate\Routing\Router;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
 use Language;
 use MetaBox;
 use Route;
 use Theme;
-use Throwable;
 use Yajra\DataTables\EloquentDataTable;
 
 class LanguageServiceProvider extends ServiceProvider
 {
     use LoadAndPublishDataTrait;
 
-    public function register()
+    public function register(): void
     {
         $this->setNamespace('plugins/language')
             ->loadAndPublishConfigurations(['general']);
 
         $this->app->bind(LanguageInterface::class, function () {
-            return new LanguageCacheDecorator(new LanguageRepository(new LanguageModel));
+            return new LanguageCacheDecorator(new LanguageRepository(new LanguageModel()));
         });
 
         $this->app->bind(LanguageMetaInterface::class, function () {
-            return new LanguageMetaCacheDecorator(new LanguageMetaRepository(new LanguageMeta));
+            return new LanguageMetaCacheDecorator(new LanguageMetaRepository(new LanguageMeta()));
         });
-
-        Helper::autoload(__DIR__ . '/../../helpers');
 
         AliasLoader::getInstance()->alias('Language', LanguageFacade::class);
 
@@ -68,30 +65,35 @@ class LanguageServiceProvider extends ServiceProvider
         $router->aliasMiddleware('localeSessionRedirect', LocaleSessionRedirect::class);
     }
 
-    public function boot()
+    public function boot(): void
     {
-        $this->setNamespace('plugins/language')
+        $this
+            ->setNamespace('plugins/language')
+            ->loadHelpers()
             ->loadAndPublishConfigurations(['permissions'])
-            ->loadRoutes(['web'])
+            ->loadRoutes()
             ->loadAndPublishViews()
             ->loadAndPublishTranslations()
             ->loadMigrations()
             ->publishAssets();
 
-        if ($this->app->runningInConsole()) {
-            $this->app->register(CommandServiceProvider::class);
-        } else {
-            $this->app->register(EventServiceProvider::class);
+        $this->app->register(CommandServiceProvider::class);
+        $this->app->register(EventServiceProvider::class);
 
-            Event::listen(RouteMatched::class, function () {
+        if (is_plugin_active('language')) {
+            add_filter(BASE_FILTER_GROUP_PUBLIC_ROUTE, [$this, 'addLanguageMiddlewareToPublicRoute'], 958);
+        }
+
+        if (! $this->app->runningInConsole() && is_plugin_active('language')) {
+            $this->app['events']->listen(RouteMatched::class, function () {
                 dashboard_menu()
                     ->registerItem([
-                        'id'          => 'cms-plugins-language',
-                        'priority'    => 2,
-                        'parent_id'   => 'cms-core-settings',
-                        'name'        => 'plugins/language::language.name',
-                        'icon'        => null,
-                        'url'         => route('languages.index'),
+                        'id' => 'cms-plugins-language',
+                        'priority' => 2,
+                        'parent_id' => 'cms-core-settings',
+                        'name' => 'plugins/language::language.name',
+                        'icon' => null,
+                        'url' => route('languages.index'),
                         'permissions' => ['languages.index'],
                     ]);
 
@@ -107,86 +109,98 @@ class LanguageServiceProvider extends ServiceProvider
                 if (defined('WIDGET_MANAGER_MODULE_SCREEN_NAME')) {
                     Language::registerModule(WIDGET_MANAGER_MODULE_SCREEN_NAME);
                 }
+
+                if (defined('THEME_OPTIONS_MODULE_SCREEN_NAME') && ! $this->app->isDownForMaintenance()) {
+                    Theme::asset()
+                        ->usePath(false)
+                        ->add(
+                            'language-css',
+                            asset('vendor/core/plugins/language/css/language-public.css'),
+                            [],
+                            [],
+                            '1.1.0'
+                        );
+
+                    Theme::asset()
+                        ->container('footer')
+                        ->usePath(false)
+                        ->add(
+                            'language-public-js',
+                            asset('vendor/core/plugins/language/js/language-public.js'),
+                            ['jquery'],
+                            [],
+                            '1.1.0'
+                        );
+                }
             });
 
-            $defaultLanguage = Language::getDefaultLanguage(['lang_id']);
-            if (!empty($defaultLanguage)) {
-                add_action(BASE_ACTION_META_BOXES, [$this, 'addLanguageBox'], 50, 2);
-                add_filter(FILTER_SLUG_PREFIX, [$this, 'setSlugPrefix'], 500, 1);
-                add_action(BASE_ACTION_TOP_FORM_CONTENT_NOTIFICATION, [$this, 'addCurrentLanguageEditingAlert'], 55, 3);
-                add_action(BASE_ACTION_BEFORE_EDIT_CONTENT, [$this, 'getCurrentAdminLanguage'], 55, 2);
-                if (defined('THEME_OPTIONS_MODULE_SCREEN_NAME')) {
-                    $this->app->booted(function () {
-                        Theme::asset()
-                            ->usePath(false)
-                            ->add('language-css', asset('vendor/core/plugins/language/css/language-public.css'), [], [], '1.0.0');
+            add_action(BASE_ACTION_META_BOXES, [$this, 'addLanguageBox'], 50, 2);
+            add_action(BASE_ACTION_TOP_FORM_CONTENT_NOTIFICATION, [$this, 'addCurrentLanguageEditingAlert'], 55, 2);
+            add_action(BASE_ACTION_BEFORE_EDIT_CONTENT, [$this, 'getCurrentAdminLanguage'], 55, 2);
 
-                        Theme::asset()
-                            ->container('footer')
-                            ->usePath(false)
-                            ->add('language-public-js', asset('vendor/core/plugins/language/js/language-public.js'),
-                                ['jquery'], [], '1.0.0');
-                    });
-                }
+            add_filter(FILTER_SLUG_PREFIX, [$this, 'setSlugPrefix'], 500);
+            add_filter(BASE_FILTER_GET_LIST_DATA, [$this, 'addLanguageColumn'], 50, 2);
+            add_filter(BASE_FILTER_TABLE_HEADINGS, [$this, 'addLanguageTableHeading'], 50, 2);
+            add_filter(LANGUAGE_FILTER_SWITCHER, [$this, 'languageSwitcher'], 50, 2);
+            add_filter(BASE_FILTER_BEFORE_GET_FRONT_PAGE_ITEM, [$this, 'checkItemLanguageBeforeShow'], 50, 2);
 
-                add_filter(BASE_FILTER_GET_LIST_DATA, [$this, 'addLanguageColumn'], 50, 2);
-                add_filter(BASE_FILTER_TABLE_HEADINGS, [$this, 'addLanguageTableHeading'], 50, 2);
-                add_filter(LANGUAGE_FILTER_SWITCHER, [$this, 'languageSwitcher']);
-                add_filter(BASE_FILTER_BEFORE_GET_FRONT_PAGE_ITEM, [$this, 'checkItemLanguageBeforeShow'], 50, 2);
-                if (setting('language_show_default_item_if_current_version_not_existed', true) && !is_in_admin()) {
-                    add_filter(BASE_FILTER_BEFORE_GET_SINGLE, [$this, 'getRelatedDataForOtherLanguage'], 50, 4);
-                }
-                if (!is_in_admin()) {
-                    add_filter(BASE_FILTER_GROUP_PUBLIC_ROUTE, [$this, 'addLanguageMiddlewareToPublicRoute'], 958, 1);
-                }
-                add_filter(BASE_FILTER_TABLE_BUTTONS, [$this, 'addLanguageSwitcherToTable'], 247, 2);
-                add_filter(BASE_FILTER_TABLE_QUERY, [$this, 'getDataByCurrentLanguage'], 157, 3);
-                add_filter(BASE_FILTER_BEFORE_GET_ADMIN_LIST_ITEM, [$this, 'checkItemLanguageBeforeGetAdminListItem'],
-                    50, 3);
-
-                if (defined('THEME_OPTIONS_ACTION_META_BOXES')) {
-                    add_filter(THEME_OPTIONS_ACTION_META_BOXES, [$this, 'addLanguageMetaBoxForThemeOptionsAndWidgets'],
-                        55, 2);
-                }
-
-                if (defined('WIDGET_TOP_META_BOXES')) {
-                    add_filter(WIDGET_TOP_META_BOXES, [$this, 'addLanguageMetaBoxForThemeOptionsAndWidgets'], 55, 2);
-                }
-
-                if (defined('THEME_FRONT_HEADER')) {
-                    add_filter(THEME_FRONT_HEADER, [$this, 'addLanguageRefLangTags'], 55, 1);
-                }
+            if (setting('language_show_default_item_if_current_version_not_existed', true) && ! is_in_admin()) {
+                add_filter(BASE_FILTER_BEFORE_GET_SINGLE, [$this, 'getRelatedDataForOtherLanguage'], 50, 2);
             }
+
+            add_filter(BASE_FILTER_TABLE_BUTTONS, [$this, 'addLanguageSwitcherToTable'], 247, 2);
+            add_filter(BASE_FILTER_TABLE_QUERY, [$this, 'getDataByCurrentLanguage'], 157);
+            add_filter(BASE_FILTER_BEFORE_GET_ADMIN_LIST_ITEM, [$this, 'checkItemLanguageBeforeGetAdminListItem'], 50);
+
+            if (defined('THEME_OPTIONS_ACTION_META_BOXES')) {
+                add_filter(
+                    THEME_OPTIONS_ACTION_META_BOXES,
+                    [$this, 'addLanguageMetaBoxForThemeOptionsAndWidgets'],
+                    55,
+                    2
+                );
+            }
+
+            if (defined('WIDGET_TOP_META_BOXES')) {
+                add_filter(WIDGET_TOP_META_BOXES, [$this, 'addLanguageMetaBoxForThemeOptionsAndWidgets'], 55, 2);
+            }
+
+            add_filter(BASE_FILTER_SITE_LANGUAGE_DIRECTION, function () {
+                return Language::getCurrentLocaleRTL() ? 'rtl' : 'ltr';
+            }, 1);
+
+            add_filter(MENU_FILTER_NODE_URL, [$this, 'updateMenuNodeUrl'], 1);
+
+            add_filter(BASE_FILTER_BEFORE_RENDER_FORM, [$this, 'changeDataBeforeRenderingForm'], 1134, 2);
+
+            Language::setRoutesCachePath();
         }
     }
 
-    /**
-     * @param string $priority
-     * @param string|Model $object
-     */
-    public function addLanguageBox($priority, $object)
+    public function addLanguageBox(string $priority, string|Model|null $object): void
     {
-        if (!empty($object) && in_array(get_class($object), Language::supportedModels())) {
-            MetaBox::addMetaBox('language_wrap', trans('plugins/language::language.name'), [$this, 'languageMetaField'],
-                get_class($object), 'top', 'default');
+        if (! empty($object) && in_array(get_class($object), Language::supportedModels())) {
+            MetaBox::addMetaBox(
+                'language_wrap',
+                trans('plugins/language::language.name'),
+                [$this, 'languageMetaField'],
+                get_class($object),
+                'top'
+            );
         }
     }
 
-    /**
-     * @param string $screen
-     * @param string $data
-     * @return string
-     * @throws Throwable
-     */
-    public function addLanguageMetaBoxForThemeOptionsAndWidgets($data, $screen)
+    public function addLanguageMetaBoxForThemeOptionsAndWidgets(?string $data, string $screen): ?string
     {
         $route = null;
         switch ($screen) {
             case THEME_OPTIONS_MODULE_SCREEN_NAME:
                 $route = 'theme.options';
+
                 break;
             case WIDGET_MANAGER_MODULE_SCREEN_NAME:
                 $route = 'widgets.index';
+
                 break;
         }
 
@@ -197,11 +211,7 @@ class LanguageServiceProvider extends ServiceProvider
         return $data . view('plugins/language::partials.admin-list-language-chooser', compact('route'))->render();
     }
 
-    /**
-     * @param string $slug
-     * @return string
-     */
-    public function setSlugPrefix(string $prefix)
+    public function setSlugPrefix(string $prefix): string
     {
         if (is_in_admin()) {
             $currentLocale = Language::getCurrentAdminLocale();
@@ -209,20 +219,22 @@ class LanguageServiceProvider extends ServiceProvider
             $currentLocale = Language::getCurrentLocale();
         }
 
-        if ($currentLocale && (!setting('language_hide_default') || $currentLocale != Language::getDefaultLocale())) {
-            if (!$prefix) {
+        if ($currentLocale && (! setting('language_hide_default') || $currentLocale != Language::getDefaultLocale())) {
+            if (! $prefix) {
                 return $currentLocale;
             }
+
+            if ($prefix === $currentLocale || Str::contains($prefix, $currentLocale . '/')) {
+                return $prefix;
+            }
+
             return $currentLocale . '/' . $prefix;
         }
 
         return $prefix;
     }
 
-    /**
-     * @throws Throwable
-     */
-    public function languageMetaField()
+    public function languageMetaField(): ?string
     {
         $languages = Language::getActiveLanguage([
             'lang_code',
@@ -245,7 +257,7 @@ class LanguageServiceProvider extends ServiceProvider
         if ($args[0] && $args[0]->id) {
             $meta = $this->app->make(LanguageMetaInterface::class)->getFirstBy(
                 [
-                    'reference_id'   => $args[0]->id,
+                    'reference_id' => $args[0]->id,
                     'reference_type' => get_class($args[0]),
                 ],
                 [
@@ -254,13 +266,14 @@ class LanguageServiceProvider extends ServiceProvider
                     'lang_meta_origin',
                 ]
             );
-            if (!empty($meta)) {
+
+            if (! empty($meta)) {
                 $value = $meta->lang_meta_code;
             }
         } elseif ($request->input('ref_from')) {
             $meta = $this->app->make(LanguageMetaInterface::class)->getFirstBy(
                 [
-                    'reference_id'   => $request->input('ref_from'),
+                    'reference_id' => $request->input('ref_from'),
                     'reference_type' => get_class($args[0]),
                 ],
                 [
@@ -278,7 +291,7 @@ class LanguageServiceProvider extends ServiceProvider
 
         $currentLanguage = self::checkCurrentLanguage($languages, $value);
 
-        if (!$currentLanguage) {
+        if (! $currentLanguage) {
             $currentLanguage = Language::getDefaultLanguage([
                 'lang_flag',
                 'lang_name',
@@ -288,33 +301,29 @@ class LanguageServiceProvider extends ServiceProvider
 
         $route = $this->getRoutes();
 
-        return view('plugins/language::language-box',
-            compact('args', 'languages', 'currentLanguage', 'related', 'route'))->render();
+        return view(
+            'plugins/language::language-box',
+            compact('args', 'languages', 'currentLanguage', 'related', 'route')
+        )->render();
     }
 
-    /**
-     * @param string $value
-     * @param array $languages
-     * @return mixed
-     * @throws BindingResolutionException
-     */
-    public function checkCurrentLanguage($languages, $value)
+    public function checkCurrentLanguage(array|Collection $languages, ?string $value): ?LanguageModel
     {
-        $request = $this->app->make('request');
+        $request = $this->app['request'];
         $currentLanguage = null;
         foreach ($languages as $language) {
-            if ($value) {
-                if ($language->lang_code == $value) {
-                    $currentLanguage = $language;
-                }
-            } else {
-                if ($request->input('ref_lang')) {
-                    if ($language->lang_code == $request->input('ref_lang')) {
-                        $currentLanguage = $language;
-                    }
-                } elseif ($language->lang_is_default) {
-                    $currentLanguage = $language;
-                }
+            if ($value && $language->lang_code == $value) {
+                $currentLanguage = $language;
+
+                break;
+            } elseif ($request->input('ref_lang') && $language->lang_code == $request->input('ref_lang')) {
+                $currentLanguage = $language;
+
+                break;
+            } elseif ($language->lang_is_default) {
+                $currentLanguage = $language;
+
+                break;
             }
         }
 
@@ -322,6 +331,8 @@ class LanguageServiceProvider extends ServiceProvider
             foreach ($languages as $language) {
                 if ($language->lang_is_default) {
                     $currentLanguage = $language;
+
+                    break;
                 }
             }
         }
@@ -329,28 +340,17 @@ class LanguageServiceProvider extends ServiceProvider
         return $currentLanguage;
     }
 
-    /**
-     * @return array
-     */
     protected function getRoutes(): array
     {
         $currentRoute = implode('.', explode('.', Route::currentRouteName(), -1));
 
         return apply_filters(LANGUAGE_FILTER_ROUTE_ACTION, [
             'create' => $currentRoute . '.create',
-            'edit'   => $currentRoute . '.edit',
+            'edit' => $currentRoute . '.edit',
         ]);
     }
 
-    /**
-     * @param string $screen
-     * @param Request $request
-     * @param string|Model $data
-     * @return void
-     * @throws Throwable
-     * @since 2.1
-     */
-    public function addCurrentLanguageEditingAlert($request, $data = null)
+    public function addCurrentLanguageEditingAlert(Request $request, $data = null)
     {
         $model = $data;
         if (is_object($data)) {
@@ -364,42 +364,39 @@ class LanguageServiceProvider extends ServiceProvider
             }
 
             $language = null;
-            if (!empty($code)) {
+            if (! empty($code)) {
                 Language::setCurrentAdminLocale($code);
-                $language = $this->app->make(LanguageInterface::class)->getFirstBy(['lang_code' => $code],
-                    ['lang_name']);
-                if (!empty($language)) {
+                $language = $this->app->make(LanguageInterface::class)->getFirstBy(
+                    ['lang_code' => $code],
+                    ['lang_name']
+                );
+                if (! empty($language)) {
                     $language = $language->lang_name;
                 }
             }
+
             echo view('plugins/language::partials.notification', compact('language'))->render();
         }
+
         echo null;
     }
 
-    /**
-     * @param string $screen
-     * @param Request $request
-     * @param Eloquent | null $data
-     * @return null|string
-     * @throws BindingResolutionException
-     */
-    public function getCurrentAdminLanguage($request, $data = null)
+    public function getCurrentAdminLanguage(Request $request, ?Model $data = null): ?string
     {
         $code = null;
         if ($request->has('ref_lang')) {
             $code = $request->input('ref_lang');
-        } elseif (!empty($data) && $data->id) {
+        } elseif (! empty($data) && $data->id) {
             $meta = $this->app->make(LanguageMetaInterface::class)->getFirstBy([
-                'reference_id'   => $data->id,
+                'reference_id' => $data->id,
                 'reference_type' => get_class($data),
             ], ['lang_meta_code']);
-            if (!empty($meta)) {
+            if (! empty($meta)) {
                 $code = $meta->lang_meta_code;
             }
         }
 
-        if (empty($code)) {
+        if (empty($code) || ! is_string($code)) {
             $code = Language::getDefaultLocaleCode();
         }
 
@@ -408,15 +405,10 @@ class LanguageServiceProvider extends ServiceProvider
         return $code;
     }
 
-    /**
-     * @param array $headings
-     * @param string|Model $model
-     * @return array
-     */
-    public function addLanguageTableHeading($headings, $model)
+    public function addLanguageTableHeading(array $headings, string|Model $model): array
     {
         if (in_array(get_class($model), Language::supportedModels())) {
-            if (is_in_admin() && Auth::check() && !Auth::user()->hasAnyPermission($this->getRoutes())) {
+            if (is_in_admin() && Auth::check() && ! Auth::user()->hasAnyPermission($this->getRoutes())) {
                 return $headings;
             }
 
@@ -425,59 +417,80 @@ class LanguageServiceProvider extends ServiceProvider
             foreach ($languages as $language) {
                 $heading .= language_flag($language->lang_flag, $language->lang_name);
             }
+
             return array_merge($headings, [
                 'language' => [
-                    'name'       => 'language_meta.lang_meta_id',
-                    'title'      => $heading,
-                    'class'      => 'text-center language-header no-sort',
-                    'width'      => (count($languages) * 40) . 'px',
-                    'orderable'  => false,
+                    'name' => 'language_meta.lang_meta_id',
+                    'title' => $heading,
+                    'class' => 'text-center language-header no-sort',
+                    'width' => (count($languages) * 40) . 'px',
+                    'orderable' => false,
                     'searchable' => false,
                 ],
             ]);
         }
+
         return $headings;
     }
 
-    /**
-     * @param EloquentDataTable $data
-     * @param string|Model $model
-     * @return string
-     */
-    public function addLanguageColumn($data, $model)
+    public function addLanguageColumn(EloquentDataTable $data, string|Model $model): EloquentDataTable
     {
         if ($model && in_array(get_class($model), Language::supportedModels())) {
             $route = $this->getRoutes();
 
-            if (is_in_admin() && Auth::check() && !Auth::user()->hasAnyPermission($route)) {
+            if (is_in_admin() && Auth::check() && ! Auth::user()->hasAnyPermission($route)) {
                 return $data;
             }
 
             return $data->addColumn('language', function ($item) use ($model, $route) {
                 $relatedLanguages = [];
-                if ($item->lang_meta_origin) {
-                    $relatedLanguages = Language::getRelatedLanguageItem($item->id, $item->lang_meta_origin);
+
+                if (Language::getCurrentAdminLocaleCode() === 'all') {
+                    $currentLanguage = $this->app->make(LanguageMetaInterface::class)->getFirstBy([
+                        'reference_id' => $item->id,
+                        'reference_type' => get_class($item),
+                    ]);
+
+                    if ($currentLanguage) {
+                        $relatedLanguages = Language::getRelatedLanguageItem(
+                            $currentLanguage->reference_id,
+                            $currentLanguage->lang_meta_origin
+                        );
+                        $currentLanguage = $currentLanguage->lang_meta_code;
+                    }
+                } else {
+                    if ($item->lang_meta_origin) {
+                        $relatedLanguages = Language::getRelatedLanguageItem($item->id, $item->lang_meta_origin);
+                    }
+
+                    $currentLanguage = $item->lang_meta_code;
                 }
+
                 $languages = Language::getActiveLanguage();
                 $data = '';
 
                 foreach ($languages as $language) {
-                    if ($language->lang_code == $item->lang_meta_code) {
+                    if ($language->lang_code == $currentLanguage) {
                         $data .= view('plugins/language::partials.status.active', compact('route', 'item'))->render();
                     } else {
                         $added = false;
-                        if (!empty($relatedLanguages)) {
+                        if (! empty($relatedLanguages)) {
                             foreach ($relatedLanguages as $key => $relatedLanguage) {
                                 if ($key == $language->lang_code) {
-                                    $data .= view('plugins/language::partials.status.edit',
-                                        compact('route', 'relatedLanguage'))->render();
+                                    $data .= view(
+                                        'plugins/language::partials.status.edit',
+                                        compact('route', 'relatedLanguage')
+                                    )->render();
                                     $added = true;
                                 }
                             }
                         }
-                        if (!$added) {
-                            $data .= view('plugins/language::partials.status.plus',
-                                compact('route', 'item', 'language'))->render();
+
+                        if (! $added) {
+                            $data .= view(
+                                'plugins/language::partials.status.plus',
+                                compact('route', 'item', 'language')
+                            )->render();
                         }
                     }
                 }
@@ -489,48 +502,41 @@ class LanguageServiceProvider extends ServiceProvider
         return $data;
     }
 
-    /**
-     * @param array $options
-     * @return string
-     *
-     * @throws Throwable
-     */
-    public function languageSwitcher($options = [])
+    public function languageSwitcher(string $switcher, array $options = []): string
     {
         return view('plugins/language::partials.switcher', compact('options'))->render();
     }
 
-    /**
-     * @param EloquentBuilder $data
-     * @param Model $model
-     * @return mixed
-     */
-    public function checkItemLanguageBeforeShow($data, $model)
+    public function checkItemLanguageBeforeShow(Builder|Model $data): Builder|Model
     {
-        return $this->getDataByCurrentLanguageCode($data, $model, Language::getCurrentLocaleCode());
+        return $this->getDataByCurrentLanguageCode($data, Language::getCurrentLocaleCode());
     }
 
-    /**
-     * @param Builder $data
-     * @param Model $model
-     * @param string $languageCode
-     * @return mixed
-     */
-    protected function getDataByCurrentLanguageCode($data, $model, $languageCode)
+    protected function getDataByCurrentLanguageCode(Builder|Model $data, ?string $languageCode): Builder|Model
     {
-        if (!empty($model) &&
-            in_array(get_class($model), Language::supportedModels()) &&
-            !empty($languageCode) &&
-            !$model instanceof LanguageModel &&
-            !$model instanceof LanguageMeta
+        $model = $data->getModel();
+
+        if (in_array(get_class($model), Language::supportedModels()) &&
+            ! empty($languageCode) &&
+            ! $model instanceof LanguageModel &&
+            ! $model instanceof LanguageMeta
         ) {
             if (Language::getCurrentAdminLocaleCode() !== 'all') {
-
-                if ($model instanceof EloquentBuilder) {
+                if ($model instanceof Builder) {
                     $model = $model->getModel();
                 }
 
                 $table = $model->getTable();
+
+                $joins = $data->getQuery()->joins;
+                if ($joins && is_array($joins)) {
+                    foreach ($joins as $join) {
+                        if ($join->table == 'language_meta') {
+                            return $data;
+                        }
+                    }
+                }
+
                 $data = $data
                     ->join('language_meta', 'language_meta.reference_id', $table . '.id')
                     ->where('language_meta.reference_type', get_class($model))
@@ -543,105 +549,103 @@ class LanguageServiceProvider extends ServiceProvider
         return $data;
     }
 
-    /**
-     * @param EloquentBuilder $data
-     * @param Model $model
-     * @return mixed
-     */
-    public function checkItemLanguageBeforeGetAdminListItem($data, $model)
+    public function checkItemLanguageBeforeGetAdminListItem(Builder|Model $data): Builder|Model
     {
-        return $this->getDataByCurrentLanguageCode($data, $model, Language::getCurrentAdminLocaleCode());
+        return $this->getDataByCurrentLanguageCode($data, Language::getCurrentAdminLocaleCode());
     }
 
-    /**
-     * @param Builder $query
-     * @param EloquentBuilder $model
-     * @return string
-     * @throws BindingResolutionException
-     */
-    public function getRelatedDataForOtherLanguage($query, $model)
+    public function getRelatedDataForOtherLanguage(Collection|Builder $query, ?Model $model)
     {
+        if ($query instanceof Builder) {
+            $model = $query->getModel();
+        }
+
         if (in_array(get_class($model), Language::supportedModels()) &&
-            !$model instanceof LanguageModel &&
-            !$model instanceof LanguageMeta
+            ! $model instanceof LanguageModel &&
+            ! $model instanceof LanguageMeta
         ) {
             $data = $query->first();
 
-            if (!empty($data)) {
+            if (! empty($data)) {
                 $current = $this->app->make(LanguageMetaInterface::class)->getFirstBy([
                     'reference_type' => get_class($model),
-                    'reference_id'   => $data->id,
+                    'reference_id' => $data->id,
                 ]);
 
                 if ($current) {
                     Language::setCurrentAdminLocale($current->lang_meta_code);
                     if ($current->lang_meta_code != Language::getCurrentLocaleCode()) {
-                        if (setting('language_show_default_item_if_current_version_not_existed',
-                                true) == false && get_class($model) != Menu::class) {
+                        if (! setting('language_show_default_item_if_current_version_not_existed', true) &&
+                            get_class($model) != Menu::class
+                        ) {
                             return $data;
                         }
+
                         $meta = $this->app->make(LanguageMetaInterface::class)->getModel()
                             ->where('lang_meta_origin', $current->lang_meta_origin)
                             ->where('reference_id', '!=', $data->id)
                             ->where('reference_type', get_class($model))
                             ->where('lang_meta_code', Language::getCurrentLocaleCode())
                             ->first();
-                        if ($meta) {
-                            $result = $model->where('id', $meta->reference_id);
-                            if ($result) {
-                                return $result;
-                            }
+
+                        if ($meta && $result = $model->where('id', $meta->reference_id)) {
+                            return $result;
                         }
                     }
                 }
             }
         }
+
         return $query;
     }
 
-    /**
-     * @param array $data
-     * @return array
-     */
-    public function addLanguageMiddlewareToPublicRoute($data)
+    public function addLanguageMiddlewareToPublicRoute(array $data): array
     {
-        return array_merge_recursive($data, [
-            'prefix'     => Language::setLocale(),
-            'middleware' => [
-                'localeSessionRedirect',
-                'localizationRedirect',
-            ],
+        $locale = Language::setLocale();
+
+        if (! isset($data['prefix'])) {
+            $data['prefix'] = trim((string)$locale);
+        }
+
+        $data['middleware'] = array_merge(Arr::get($data, 'middleware', []), [
+            'localeSessionRedirect',
+            'localizationRedirect',
         ]);
+
+        $data['middleware'] = array_unique($data['middleware']);
+
+        return $data;
     }
 
-    /**
-     * @param array $buttons
-     * @param string $screen
-     * @return array
-     * @since 2.2
-     */
-    public function addLanguageSwitcherToTable($buttons, $screen)
+    public function addLanguageSwitcherToTable(array $buttons, string $model): array
     {
-        if (in_array($screen, Language::supportedModels())) {
+        if (in_array($model, Language::supportedModels())) {
             $activeLanguages = Language::getActiveLanguage(['lang_code', 'lang_name', 'lang_flag']);
             $languageButtons = [];
             $currentLanguage = Language::getCurrentAdminLocaleCode();
+
             foreach ($activeLanguages as $item) {
                 $languageButtons[] = [
                     'className' => 'change-data-language-item ' . ($item->lang_code == $currentLanguage ? 'active' : ''),
-                    'text'      => Html::tag('span', $item->lang_name,
-                        ['data-href' => route('languages.change.data.language', $item->lang_code)])->toHtml(),
+                    'text' => Html::tag(
+                        'span',
+                        $item->lang_name,
+                        ['data-href' => route('languages.change.data.language', $item->lang_code)]
+                    )->toHtml(),
                 ];
             }
 
             $languageButtons[] = [
                 'className' => 'change-data-language-item ' . ('all' == $currentLanguage ? 'active' : ''),
-                'text'      => Html::tag('span', trans('plugins/language::language.show_all'),
-                    ['data-href' => route('languages.change.data.language', 'all')])->toHtml(),
+                'text' => Html::tag(
+                    'span',
+                    trans('plugins/language::language.show_all'),
+                    ['data-href' => route('languages.change.data.language', 'all')]
+                )->toHtml(),
             ];
 
             $flag = $activeLanguages->where('lang_code', $currentLanguage)->first();
-            if (!empty($flag)) {
+            if (! empty($flag)) {
                 $flag = language_flag($flag->lang_flag, $flag->lang_name);
             } else {
                 $flag = Html::tag('i', '', ['class' => 'fa fa-flag'])->toHtml();
@@ -649,49 +653,46 @@ class LanguageServiceProvider extends ServiceProvider
 
             $language = [
                 'language' => [
-                    'extend'  => 'collection',
-                    'text'    => $flag . Html::tag('span',
-                            ' ' . trans('plugins/language::language.change_language') . ' ' . Html::tag('span', '',
-                                ['class' => 'caret'])->toHtml())->toHtml(),
+                    'extend' => 'collection',
+                    'text' => $flag . Html::tag(
+                        'span',
+                        ' ' . trans('plugins/language::language.change_language') . ' ' . Html::tag(
+                            'span',
+                            '',
+                            ['class' => 'caret']
+                        )->toHtml()
+                    )->toHtml(),
                     'buttons' => $languageButtons,
                 ],
             ];
+
             $buttons = array_merge($buttons, $language);
         }
 
         return $buttons;
     }
 
-    /**
-     * @param Builder $query
-     * @param Model $model
-     * @param array $selectedColumns
-     * @return mixed
-     * @since 2.2
-     */
-    public function getDataByCurrentLanguage($query, $model, array $selectedColumns = [])
+    public function getDataByCurrentLanguage(Builder $query): Builder
     {
-        if ($model && in_array(get_class($model),
-                Language::supportedModels()) && Language::getCurrentAdminLocaleCode()) {
+        $model = $query->getModel();
 
+        if (in_array(get_class($model), Language::supportedModels()) && Language::getCurrentAdminLocaleCode()) {
             if (Language::getCurrentAdminLocaleCode() !== 'all') {
-                /**
-                 * @var Eloquent $model
-                 */
-                $table = $model->getTable();
-
-                if (empty($selectedColumns)) {
-                    $selectedColumns = [$table . '.*'];
+                $joins = $query->getQuery()->joins;
+                if ($joins && is_array($joins)) {
+                    foreach ($joins as $join) {
+                        if ($join->table == 'language_meta') {
+                            return $query;
+                        }
+                    }
                 }
 
-                $selectedColumns = array_merge($selectedColumns, [
-                    'language_meta.lang_meta_code',
-                    'language_meta.lang_meta_origin',
-                ]);
-
                 $query = $query
-                    ->select($selectedColumns)
-                    ->join('language_meta', 'language_meta.reference_id', $table . '.id')
+                    ->addSelect([
+                        'language_meta.lang_meta_code',
+                        'language_meta.lang_meta_origin',
+                    ])
+                    ->join('language_meta', 'language_meta.reference_id', $model->getTable() . '.id')
                     ->where('language_meta.reference_type', get_class($model))
                     ->where('language_meta.lang_meta_code', Language::getCurrentAdminLocaleCode());
             }
@@ -700,15 +701,33 @@ class LanguageServiceProvider extends ServiceProvider
         return $query;
     }
 
-    /**
-     * @param string|null $header
-     * @return string
-     * @throws Throwable
-     */
-    public function addLanguageRefLangTags($header)
+    public function changeDataBeforeRenderingForm(FormAbstract $form, Eloquent|Model $data): FormAbstract
     {
-        $supportedLocales = Language::getSupportedLocales();
+        if (is_in_admin() && Language::getCurrentAdminLocaleCode() != Language::getDefaultLocaleCode() && in_array(
+            get_class($data),
+            Language::supportedModels()
+        )) {
+            $refLang = request()->input('ref_lang');
+            $refFrom = request()->input('ref_from');
 
-        return $header . view('plugins/language::partials.hreflang', compact('supportedLocales'))->render();
+            if ($refLang && $refFrom) {
+                $data = $data->getModel()->find($refFrom);
+
+                if ($data) {
+                    $form->setModel($data->replicate());
+                }
+            }
+        }
+
+        return $form;
+    }
+
+    public function updateMenuNodeUrl(?string $value): string
+    {
+        if (is_in_admin() || in_array($value, ['#', 'javascript:void(0)'])) {
+            return $value;
+        }
+
+        return filter_var($value, FILTER_VALIDATE_URL) ? $value : Language::localizeURL($value);
     }
 }

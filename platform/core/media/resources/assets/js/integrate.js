@@ -37,10 +37,11 @@ class rvMedia {
 
         options = $.extend(true, defaultOptions, options);
 
-        let clickCallback = event =>  {
+        let clickCallback = event => {
             event.preventDefault();
             let $current = $(event.currentTarget);
-            $('#rv_media_modal').modal();
+
+            $('#rv_media_modal').modal('show');
 
             window.rvMedia.options = options;
             window.rvMedia.options.open_in = 'modal';
@@ -66,6 +67,7 @@ class rvMedia {
                     if (data.error) {
                         alert(data.message);
                     }
+
                     $('#rv_media_body')
                         .removeClass('media-modal-loading')
                         .closest('.modal-content').removeClass('bb-loading');

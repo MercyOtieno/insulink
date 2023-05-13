@@ -13,7 +13,7 @@
                     <div class="max-w-7xl mx-auto py-10 sm:px-6 lg:px-8 bg-white shadow overflow-hidden sm:rounded-lg">
                         <div class="">
                             <div class="max-w-7xl mx-auto">
-                                <div class="md:grid md:grid-cols-2 md:gap-6">
+                                <div class="md:grid md:grid-cols-2 md:gap-6 p-5">
                                     <div class="relative">
                                         <label for="product">Choose a Product below to begin</label>
                                         <input type="text" name="product_name" class="form-control" id="grid-state"
@@ -46,8 +46,8 @@
                                                 placeholder="Enter Child + 1 rate" />
                                         </div>
                                     @else
-                                        
-                                    
+
+
                                     <div>
                                         <label for="member_plus_one_rate">Member + 1 Rate</label>
                                         <input id="member_plus_one_rate" type="text" class="form-control" name="member_plus_one_rate"
@@ -184,9 +184,6 @@
                                         Save Rate Card
                                     </button>
                                 </div>
-
-
-
                             </div>
                         </div>
                     </div>

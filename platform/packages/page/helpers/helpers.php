@@ -2,56 +2,32 @@
 
 use Botble\Page\Repositories\Interfaces\PageInterface;
 use Botble\Page\Supports\Template;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
 
-if (!function_exists('get_featured_pages')) {
-    /**
-     * @param int $limit
-     * @return mixed
-     */
-    function get_featured_pages($limit)
-    {
-        return app(PageInterface::class)->getFeaturedPages($limit);
-    }
-}
-
-if (!function_exists('get_page_by_slug')) {
-    /**
-     * @param string $slug
-     * @return mixed
-     */
-    function get_page_by_slug($slug)
+if (! function_exists('get_page_by_slug')) {
+    function get_page_by_slug(string $slug): ?Model
     {
         return app(PageInterface::class)->getBySlug($slug, true);
     }
 }
 
-if (!function_exists('get_all_pages')) {
-    /**
-     * @param boolean $active
-     * @return mixed
-     */
-    function get_all_pages($active = true)
+if (! function_exists('get_all_pages')) {
+    function get_all_pages(bool $active = true): Collection
     {
         return app(PageInterface::class)->getAllPages($active);
     }
 }
 
-if (!function_exists('register_page_template')) {
-    /**
-     * @param array $templates
-     * @return void
-     */
-    function register_page_template(array $templates)
+if (! function_exists('register_page_template')) {
+    function register_page_template(array $templates): void
     {
         Template::registerPageTemplate($templates);
     }
 }
 
-if (!function_exists('get_page_templates')) {
-    /**
-     * @return array
-     */
-    function get_page_templates()
+if (! function_exists('get_page_templates')) {
+    function get_page_templates(): array
     {
         return Template::getPageTemplates();
     }

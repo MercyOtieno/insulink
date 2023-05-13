@@ -4,58 +4,45 @@ namespace Botble\Blog\Tables;
 
 use BaseHelper;
 use Botble\Base\Enums\BaseStatusEnum;
-use Botble\Blog\Models\Tag;
-use Html;
-use Illuminate\Support\Facades\Auth;
 use Botble\Blog\Repositories\Interfaces\TagInterface;
 use Botble\Table\Abstracts\TableAbstract;
+use Html;
 use Illuminate\Contracts\Routing\UrlGenerator;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Database\Query\Builder as QueryBuilder;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
 use Yajra\DataTables\DataTables;
 
 class TagTable extends TableAbstract
 {
-
-    /**
-     * @var bool
-     */
     protected $hasActions = true;
 
-    /**
-     * @var bool
-     */
     protected $hasFilter = true;
 
-    /**
-     * TagTable constructor.
-     * @param DataTables $table
-     * @param UrlGenerator $urlGenerator
-     * @param TagInterface $tagRepository
-     */
     public function __construct(DataTables $table, UrlGenerator $urlGenerator, TagInterface $tagRepository)
     {
-        $this->repository = $tagRepository;
-        $this->setOption('id', 'table-tags');
         parent::__construct($table, $urlGenerator);
 
-        if (!Auth::user()->hasAnyPermission(['tags.edit', 'tags.destroy'])) {
+        $this->repository = $tagRepository;
+
+        if (! Auth::user()->hasAnyPermission(['tags.edit', 'tags.destroy'])) {
             $this->hasOperations = false;
             $this->hasActions = false;
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function ajax()
+    public function ajax(): JsonResponse
     {
         $data = $this->table
             ->eloquent($this->query())
             ->editColumn('name', function ($item) {
-                if (!Auth::user()->hasPermission('tags.edit')) {
-                    return $item->name;
+                if (! Auth::user()->hasPermission('tags.edit')) {
+                    return BaseHelper::clean($item->name);
                 }
 
-                return Html::link(route('tags.edit', $item->id), $item->name);
+                return Html::link(route('tags.edit', $item->id), BaseHelper::clean($item->name));
             })
             ->editColumn('checkbox', function ($item) {
                 return $this->getCheckbox($item->id);
@@ -67,102 +54,77 @@ class TagTable extends TableAbstract
                 if ($this->request()->input('action') === 'excel') {
                     return $item->status->getValue();
                 }
-                return $item->status->toHtml();
-            });
 
-        return apply_filters(BASE_FILTER_GET_LIST_DATA, $data, $this->repository->getModel())
+                return BaseHelper::clean($item->status->toHtml());
+            })
             ->addColumn('operations', function ($item) {
                 return $this->getOperations('tags.edit', 'tags.destroy', $item);
-            })
-            ->escapeColumns([])
-            ->make(true);
+            });
+
+        return $this->toJson($data);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function query()
+    public function query(): Relation|Builder|QueryBuilder
     {
-        $model = $this->repository->getModel();
-        $select = [
-            'tags.id',
-            'tags.name',
-            'tags.created_at',
-            'tags.status',
-        ];
+        $query = $this->repository->getModel()->select([
+            'id',
+            'name',
+            'created_at',
+            'status',
+        ]);
 
-        $query = $model->select($select);
-
-        return $this->applyScopes(apply_filters(BASE_FILTER_TABLE_QUERY, $query, $model, $select));
+        return $this->applyScopes($query);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function columns()
+    public function columns(): array
     {
         return [
-            'id'         => [
-                'name'  => 'tags.id',
+            'id' => [
                 'title' => trans('core/base::tables.id'),
                 'width' => '20px',
             ],
-            'name'       => [
-                'name'  => 'tags.name',
+            'name' => [
                 'title' => trans('core/base::tables.name'),
-                'class' => 'text-left',
+                'class' => 'text-start',
             ],
-            'status'     => [
-                'name'  => 'tags.status',
+            'status' => [
                 'title' => trans('core/base::tables.status'),
                 'width' => '100px',
             ],
             'created_at' => [
-                'name'  => 'tags.created_at',
                 'title' => trans('core/base::tables.created_at'),
                 'width' => '100px',
             ],
         ];
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function buttons()
+    public function buttons(): array
     {
-        $buttons = $this->addCreateButton(route('tags.create'), 'tags.create');
-
-        return apply_filters(BASE_FILTER_TABLE_BUTTONS, $buttons, Tag::class);
+        return $this->addCreateButton(route('tags.create'), 'tags.create');
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function bulkActions(): array
     {
         return $this->addDeleteAction(route('tags.deletes'), 'tags.destroy', parent::bulkActions());
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function getBulkChanges(): array
     {
         return [
-            'tags.name'       => [
-                'title'    => trans('core/base::tables.name'),
-                'type'     => 'text',
+            'name' => [
+                'title' => trans('core/base::tables.name'),
+                'type' => 'text',
                 'validate' => 'required|max:120',
             ],
-            'tags.status'     => [
-                'title'    => trans('core/base::tables.status'),
-                'type'     => 'select',
-                'choices'  => BaseStatusEnum::labels(),
+            'status' => [
+                'title' => trans('core/base::tables.status'),
+                'type' => 'customSelect',
+                'choices' => BaseStatusEnum::labels(),
                 'validate' => 'required|in:' . implode(',', BaseStatusEnum::values()),
             ],
-            'tags.created_at' => [
+            'created_at' => [
                 'title' => trans('core/base::tables.created_at'),
-                'type'  => 'date',
+                'type' => 'datePicker',
             ],
         ];
     }

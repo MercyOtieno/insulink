@@ -21,18 +21,23 @@
         @endif
     </div>
 </header>
-{!! clean($post->content, 'youtube') !!}
+{!! BaseHelper::clean($post->content) !!}
 <br />
 {!! apply_filters(BASE_FILTER_PUBLIC_COMMENT_AREA, null) !!}
-<footer>
-    @foreach (get_related_posts($post->slug, 2) as $relatedItem)
-        <div>
-            <article>
-                <div><a href="{{ $relatedItem->url }}"></a>
-                    <img src="{{ RvMedia::getImageUrl($relatedItem->image, null, false, RvMedia::getDefaultImage()) }}" alt="{{ $relatedItem->name }}">
-                </div>
-                <header><a href="{{ $relatedItem->url }}"> {{ $relatedItem->name }}</a></header>
-            </article>
-        </div>
-    @endforeach
-</footer>
+
+@php $relatedPosts = get_related_posts($post->id, 2); @endphp
+
+@if ($relatedPosts->count())
+    <footer>
+        @foreach ($relatedPosts as $relatedItem)
+            <div>
+                <article>
+                    <div><a href="{{ $relatedItem->url }}"></a>
+                        <img src="{{ RvMedia::getImageUrl($relatedItem->image, null, false, RvMedia::getDefaultImage()) }}" alt="{{ $relatedItem->name }}">
+                    </div>
+                    <header><a href="{{ $relatedItem->url }}"> {{ $relatedItem->name }}</a></header>
+                </article>
+            </div>
+        @endforeach
+    </footer>
+@endif

@@ -6,27 +6,18 @@ use Illuminate\Support\Manager;
 
 class SettingsManager extends Manager
 {
-    /**
-     * @return string
-     */
-    public function getDefaultDriver()
+    public function getDefaultDriver(): string
     {
         return config('core.setting.general.driver');
     }
 
-    /**
-     * @return JsonSettingStore
-     */
-    public function createJsonDriver()
+    public function createJsonDriver(): JsonSettingStore
     {
         return new JsonSettingStore(app('files'));
     }
 
-    /**
-     * @return DatabaseSettingStore
-     */
-    public function createDatabaseDriver()
+    public function createDatabaseDriver(): DatabaseSettingStore
     {
-        return new DatabaseSettingStore;
+        return new DatabaseSettingStore();
     }
 }

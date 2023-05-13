@@ -4,105 +4,49 @@ namespace Botble\Shortcode\Compilers;
 
 class Shortcode
 {
+    protected string $name;
 
-    /**
-     * Shortcode name
-     *
-     * @var string
-     */
-    protected $name;
+    protected array $attributes = [];
 
-    /**
-     * Shortcode Attributes
-     *
-     * @var array
-     */
-    protected $attributes = [];
+    public ?string $content;
 
-    /**
-     * Shortcode content
-     *
-     * @var string
-     */
-    public $content;
-
-    /**
-     * Constructor
-     *
-     * @param string $name
-     * @param array $attributes
-     * @param string $content
-     * @since 2.1
-     */
-    public function __construct($name, $attributes = [], $content = null)
+    public function __construct(string $name, array $attributes = [], ?string $content = null)
     {
         $this->name = $name;
         $this->attributes = $attributes;
         $this->content = $content;
     }
 
-    /**
-     * Get html attribute
-     *
-     * @param string $attribute
-     * @param $fallback
-     * @return string|null
-     * @since 2.1
-     */
-    public function get($attribute, $fallback = null)
+    public function get(string $attribute, ?string $fallback = null): string
     {
         $value = $this->{$attribute};
-        if (!empty($value)) {
+
+        if (! empty($value)) {
             return $attribute . '="' . $value . '"';
-        } elseif (!empty($fallback)) {
+        } elseif (! empty($fallback)) {
             return $attribute . '="' . $fallback . '"';
         }
 
         return '';
     }
 
-    /**
-     * Get shortcode name
-     *
-     * @return string
-     * @since 2.1
-     */
-    public function getName()
+    public function getName(): ?string
     {
         return $this->name;
     }
 
-    /**
-     * Get shortcode attributes
-     *
-     * @return string
-     * @since 2.1
-     */
-    public function getContent()
+    public function getContent(): ?string
     {
         return $this->content;
     }
 
-    /**
-     * Return array of attributes;
-     *
-     * @return array
-     * @since 2.1
-     */
-    public function toArray()
+    public function toArray(): array
     {
         return $this->attributes;
     }
 
-    /**
-     * Dynamically get attributes
-     *
-     * @param string $param
-     * @return string|null
-     * @since 2.1
-     */
-    public function __get($param)
+    public function __get(string $param)
     {
-        return isset($this->attributes[$param]) ? $this->attributes[$param] : null;
+        return $this->attributes[$param] ?? null;
     }
 }

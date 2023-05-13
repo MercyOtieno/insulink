@@ -9,7 +9,6 @@ use Illuminate\Support\Str;
 
 class Card implements TwitterCardContract
 {
-
     /**
      * Card type.
      *
@@ -36,7 +35,7 @@ class Card implements TwitterCardContract
      */
     public function __construct()
     {
-        $this->meta = new MetaCollection;
+        $this->meta = new MetaCollection();
     }
 
     /**
@@ -200,7 +199,7 @@ class Card implements TwitterCardContract
      */
     public function render()
     {
-        if (!empty($this->images)) {
+        if (! empty($this->images)) {
             $this->loadImages();
         }
 
@@ -226,7 +225,7 @@ class Card implements TwitterCardContract
      */
     protected function checkType(&$type)
     {
-        if (!is_string($type)) {
+        if (! is_string($type)) {
             throw new InvalidTwitterCardException(
                 'The Twitter card type must be a string value, [' . gettype($type) . '] was given.'
             );
@@ -234,7 +233,7 @@ class Card implements TwitterCardContract
 
         $type = strtolower(trim($type));
 
-        if (!in_array($type, $this->types())) {
+        if (! in_array($type, $this->types())) {
             throw new InvalidTwitterCardException('The Twitter card type [' . $type . '] is not supported.');
         }
     }
@@ -258,7 +257,7 @@ class Card implements TwitterCardContract
      */
     protected function prepareUsername($username)
     {
-        if (!Str::startsWith($username, '@')) {
+        if (! Str::startsWith($username, '@')) {
             $username = '@' . $username;
         }
 

@@ -252,6 +252,8 @@
                 });
             });
 
+            $(document).find('.table-check-all').closest('th').removeAttr('title');
+
             $(document).on('change', '.checkboxes', event => {
                 let _self = $(event.currentTarget);
                 let table = _self.closest('.table-wrapper').find('.table').prop('id');
@@ -305,7 +307,8 @@
 
                 $.ajax({
                     url: deleteURL,
-                    type: 'DELETE',
+                    type: 'POST',
+                    data: {'_method': 'DELETE'},
                     success: data => {
                         if (data.error) {
                             Botble.showError(data.message);
@@ -363,8 +366,9 @@
 
                 $.ajax({
                     url: _self.data('href'),
-                    type: 'DELETE',
+                    type: 'POST',
                     data: {
+                        '_method': 'DELETE',
                         ids: ids,
                         class: _self.data('class-item')
                     },

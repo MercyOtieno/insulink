@@ -1,6 +1,6 @@
 !(function ($) {
     $.fn.filetree = function (i) {
-        var options = {
+        const options = {
             animationSpeed: 'slow',
             console: false
         };
@@ -95,14 +95,16 @@
 })(jQuery);
 
 $(() => {
-    $('.file-tree-wrapper').dragScroll();
+    $treeWrapper = $('.file-tree-wrapper');
+
+    $treeWrapper.dragScroll();
 
     const $formLoading = $('.tree-form-container').find('.tree-loading');
     const $treeLoading = $('.tree-categories-container').find('.tree-loading');
 
     function loadTree(activeId) {
         $treeLoading.removeClass('d-none');
-        $('.file-tree-wrapper')
+        $treeWrapper
             .filetree()
             .removeClass('d-none')
             .hide()
@@ -110,7 +112,7 @@ $(() => {
         $treeLoading.addClass('d-none');
 
         if (activeId) {
-            $('.file-tree-wrapper').find('li[data-id="' + activeId + '"] .category-name:first').addClass('active');
+            $treeWrapper.find('li[data-id="' + activeId + '"] .category-name:first').addClass('active');
         }
     }
 
@@ -160,7 +162,7 @@ $(() => {
             type: 'GET',
             beforeSend: () => {
                 $formLoading.removeClass('d-none');
-                $('.file-tree-wrapper')
+                $treeWrapper
                     .find('a.active')
                     .removeClass('active');
                 if ($el) {
@@ -183,13 +185,13 @@ $(() => {
         });
     }
 
-    $(document).on('click', '.file-tree-wrapper .fetch-data', event => {
+    $treeWrapper.on('click', '.fetch-data', event => {
         event.preventDefault();
         const $this = $(event.currentTarget);
         if ($this.attr('href')) {
             fetchData($this.attr('href'), $this);
         } else {
-            $('.file-tree-wrapper').find('a.active').removeClass('active');
+            $treeWrapper.find('a.active').removeClass('active');
             $this.addClass('active');
         }
     });
@@ -231,19 +233,18 @@ $(() => {
     }
 
     function reloadTree(activeId, callback) {
-        const $tree = $('.file-tree-wrapper');
         $.ajax({
-            url: $tree.data('url'),
+            url: $treeWrapper.data('url'),
             type: 'GET',
             success: data => {
                 if (data.error) {
                     Botble.showError(data.message);
                 } else {
-                    $tree.html(data.data);
+                    $treeWrapper.html(data.data);
                     loadTree(activeId);
 
                     if (jQuery().tooltip) {
-                        $('[data-toggle="tooltip"]').tooltip({
+                        $('[data-bs-toggle="tooltip"]').tooltip({
                             placement: 'top',
                             boundary: 'window'
                         });
@@ -262,7 +263,7 @@ $(() => {
 
     $(document).on('click', '#list-others-language a', event => {
         event.preventDefault();
-        fetchData($(event.currentTarget).prop('href'))
+        fetchData($(event.currentTarget).prop('href'));
     });
 
     $(document).on('submit', '.tree-form-container form', event => {
@@ -289,14 +290,14 @@ $(() => {
                     Botble.showError(data.message);
                 } else {
                     Botble.showSuccess(data.message);
+                    $formLoading.addClass('d-none');
 
                     const activeId = saveAndEdit && data.data.model ? data.data.model.id : null;
-                    reloadTree(activeId, callback1);
-
-                    function callback1() {
+                    reloadTree(activeId, function () {
                         if (activeId) {
-                            if ($('.folder-root[data-id="' + activeId + '"] a.fetch-data').length) {
-                                $('.folder-root[data-id="' + activeId + '"] a.fetch-data').trigger('click');
+                            let fetchDataButton = $('.folder-root[data-id="' + activeId + '"] a.fetch-data');
+                            if (fetchDataButton.length) {
+                                fetchDataButton.trigger('click');
                             } else {
                                 location.reload();
                             }
@@ -306,7 +307,8 @@ $(() => {
                             reloadForm(data.data?.form);
                             $formLoading.addClass('d-none');
                         }
-                    }
+                    });
+
                 }
             },
             error: data => {
@@ -334,15 +336,17 @@ $(() => {
 
         $.ajax({
             url: deleteURL,
-            type: 'DELETE',
+            type: 'POST',
+            data: {'_method': 'DELETE'},
             success: data => {
                 if (data.error) {
                     Botble.showError(data.message);
                 } else {
                     Botble.showSuccess(data.message);
                     reloadTree();
-                    if ($('.tree-categories-create').length) {
-                        $('.tree-categories-create').trigger('click');
+                    let $createButton = $('.tree-categories-create');
+                    if ($createButton.length) {
+                        $createButton.trigger('click');
                     } else {
                         reloadForm('');
                     }

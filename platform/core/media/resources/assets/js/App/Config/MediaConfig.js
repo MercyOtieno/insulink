@@ -1,7 +1,7 @@
 let MediaConfig = $.parseJSON(localStorage.getItem('MediaConfig')) || {};
 
 let defaultConfig = {
-    app_key:  (RV_MEDIA_CONFIG.random_hash ? RV_MEDIA_CONFIG.random_hash : '21d06709fe1d3abcc0efddda89c4b279'),
+    app_key: (RV_MEDIA_CONFIG.random_hash ? RV_MEDIA_CONFIG.random_hash : '21d06709fe1d3abdf0e35ddda89c4b279'),
     request_params: {
         view_type: 'tiles',
         filter: 'everything',
@@ -21,6 +21,13 @@ let defaultConfig = {
                 action: 'preview',
                 order: 0,
                 class: 'rv-action-preview',
+            },
+            {
+                icon: 'fa fa-crop',
+                name: 'Crop',
+                action: 'crop',
+                order: 1,
+                class: 'rv-action-crop',
             },
         ],
         file: [
@@ -44,6 +51,13 @@ let defaultConfig = {
                 action: 'make_copy',
                 order: 2,
                 class: 'rv-action-make-copy',
+            },
+            {
+                icon: 'fas fa-file-signature',
+                name: 'Alt text',
+                action: 'alt_text',
+                order: 3,
+                class: 'rv-action-alt-text',
             },
         ],
         user: [

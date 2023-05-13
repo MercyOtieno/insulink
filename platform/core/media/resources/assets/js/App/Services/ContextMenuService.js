@@ -86,6 +86,7 @@ export class ContextMenuService {
 
         if (hasFolderSelected) {
             items.preview = undefined;
+            items.crop = undefined;
             items.copy_link = undefined;
 
             if (!_.includes(RV_MEDIA_CONFIG.permissions, 'folders.create')) {
@@ -135,17 +136,27 @@ export class ContextMenuService {
                 items.favorite = undefined;
                 items.remove_favorite = undefined;
             }
+
+            if (selectedFiles.length > 1) {
+                items.crop = undefined;
+            }
         }
 
-        let canPreview = false;
-        _.each(selectedFiles, (value) => {
-            if (_.includes(['image', 'pdf', 'text', 'video'], value.type)) {
-                canPreview = true;
-            }
-        });
+        let canPreview = _.filter(selectedFiles, function (value) {
+            return value.preview_url;
+        }).length;
 
         if (!canPreview) {
             items.preview = undefined;
+        }
+
+        let fileIsImage = _.filter(selectedFiles, function (value) {
+            return value.type === 'image';
+        }).length;
+
+        if (! fileIsImage) {
+            items.crop = undefined;
+            items.alt_text = undefined;
         }
 
         return items;

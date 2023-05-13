@@ -9,20 +9,21 @@ use Illuminate\Validation\Rule;
 
 class PostRequest extends Request
 {
-
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array
-     */
-    public function rules()
+    public function rules(): array
     {
-        return [
-            'name'        => 'required|max:255',
+        $rules = [
+            'name' => 'required|max:255',
             'description' => 'max:400',
-            'categories'  => 'required',
-            'format_type' => Rule::in(array_keys(PostFormat::getPostFormats(true))),
-            'status'      => Rule::in(BaseStatusEnum::values()),
+            'categories' => 'required',
+            'status' => Rule::in(BaseStatusEnum::values()),
         ];
+
+        $postFormats = PostFormat::getPostFormats(true);
+
+        if (count($postFormats) > 1) {
+            $rules['format_type'] = Rule::in(array_keys($postFormats));
+        }
+
+        return $rules;
     }
 }

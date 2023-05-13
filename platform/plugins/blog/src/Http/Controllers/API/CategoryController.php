@@ -7,52 +7,34 @@ use Botble\Base\Enums\BaseStatusEnum;
 use Botble\Base\Http\Responses\BaseHttpResponse;
 use Botble\Blog\Http\Resources\CategoryResource;
 use Botble\Blog\Http\Resources\ListCategoryResource;
+use Botble\Blog\Models\Category;
 use Botble\Blog\Repositories\Interfaces\CategoryInterface;
 use Botble\Blog\Supports\FilterCategory;
-use Botble\Slug\Repositories\Interfaces\SlugInterface;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Botble\Blog\Models\Category;
+use SlugHelper;
 
 class CategoryController extends Controller
 {
-    /**
-     * @var CategoryInterface
-     */
-    protected $categoryRepository;
-
-    /**
-     * @var SlugInterface
-     */
-    protected $slugRepository;
-
-    /**
-     * CategoryController constructor.
-     * @param CategoryInterface $categoryRepository
-     * @param SlugInterface $slugRepository
-     */
-    public function __construct(CategoryInterface $categoryRepository, SlugInterface $slugRepository)
+    public function __construct(protected CategoryInterface $categoryRepository)
     {
-        $this->categoryRepository = $categoryRepository;
-        $this->slugRepository = $slugRepository;
     }
 
     /**
      * List categories
      *
      * @group Blog
-     *
-     * @param Request $request
-     * @param BaseHttpResponse $response
-     * @return BaseHttpResponse
      */
     public function index(Request $request, BaseHttpResponse $response)
     {
         $data = $this->categoryRepository
-            ->getModel()
-            ->where(['status' => BaseStatusEnum::PUBLISHED])
-            ->select(['id', 'name', 'description'])
-            ->paginate($request->input('per_page', 10));
+            ->advancedGet([
+                'with' => ['slugable'],
+                'condition' => ['status' => BaseStatusEnum::PUBLISHED],
+                'paginate' => [
+                    'per_page' => (int)$request->input('per_page', 10),
+                    'current_paged' => (int)$request->input('page', 1),
+                ],
+            ]);
 
         return $response
             ->setData(ListCategoryResource::collection($data))
@@ -63,15 +45,12 @@ class CategoryController extends Controller
      * Filters categories
      *
      * @group Blog
-     *
-     * @param Request $request
-     * @param BaseHttpResponse $response
-     * @return BaseHttpResponse
      */
     public function getFilters(Request $request, BaseHttpResponse $response)
     {
         $filters = FilterCategory::setFilters($request->input());
         $data = $this->categoryRepository->getFilters($filters);
+
         return $response
             ->setData(CategoryResource::collection($data))
             ->toApiResponse();
@@ -82,20 +61,18 @@ class CategoryController extends Controller
      *
      * @group Blog
      * @queryParam slug Find by slug of category.
-     * @param string $slug
-     * @param BaseHttpResponse $response
-     * @return BaseHttpResponse|JsonResponse
      */
     public function findBySlug(string $slug, BaseHttpResponse $response)
     {
-        $slug = $this->slugRepository->getFirstBy(['key' => $slug, 'reference_type' => Category::class]);
-        if (!$slug) {
+        $slug = SlugHelper::getSlug($slug, SlugHelper::getPrefix(Category::class));
+
+        if (! $slug) {
             return $response->setError()->setCode(404)->setMessage('Not found');
         }
 
         $category = $this->categoryRepository->getCategoryById($slug->reference_id);
 
-        if (!$category) {
+        if (! $category) {
             return $response->setError()->setCode(404)->setMessage('Not found');
         }
 

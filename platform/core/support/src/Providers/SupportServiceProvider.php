@@ -2,13 +2,12 @@
 
 namespace Botble\Support\Providers;
 
-use File;
 use Illuminate\Support\ServiceProvider;
 
 class SupportServiceProvider extends ServiceProvider
 {
-    public function register()
+    public function register(): void
     {
-        File::requireOnce(__DIR__ . '/../../helpers/common.php');
+        $this->app['files']->requireOnce(core_path('support/helpers/common.php'));
     }
 }

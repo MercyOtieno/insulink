@@ -177,20 +177,23 @@ laravelValidation = {
             }
 
             $.ajax( $.extend( true, {
-                mode: "abort",
-                port: "validate" + element.name,
-                dataType: "json",
-                data: data,
-                context: validator.currentForm,
-                url: $(validator.currentForm).attr('action'),
-                type: formMethod,
+                    mode: "abort",
+                    port: "validate" + element.name,
+                    dataType: "json",
+                    data: data,
+                    context: validator.currentForm,
+                    url: $(validator.currentForm).attr('action'),
+                    type: formMethod,
 
-                beforeSend: function (xhr) {
-                    if ($(validator.currentForm).attr('method').toLowerCase() !== 'get' && token) {
-                        return xhr.setRequestHeader('X-XSRF-TOKEN', token);
+                    beforeSend: function (xhr) {
+                        if ($(validator.currentForm).attr('method').toLowerCase() !== 'get' && token) {
+                            return xhr.setRequestHeader('X-XSRF-TOKEN', token);
+                        }
+                    },
+                    complete: function () {
+                        $(validator.currentForm).find('button[type=submit]').prop('disabled', false).removeClass('disabled');
                     }
-                }
-            }, param )
+                }, param )
             ).always(function( response, textStatus ) {
                     var errors, message, submitted, valid;
 
