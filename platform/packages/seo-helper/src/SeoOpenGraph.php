@@ -2,10 +2,10 @@
 
 namespace Botble\SeoHelper;
 
-use BaseHelper;
+use Botble\Base\Facades\BaseHelper;
+use Botble\Media\Facades\RvMedia;
 use Botble\SeoHelper\Contracts\Entities\OpenGraphContract;
 use Botble\SeoHelper\Contracts\SeoOpenGraphContract;
-use RvMedia;
 
 class SeoOpenGraph implements SeoOpenGraphContract
 {

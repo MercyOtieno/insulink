@@ -3,12 +3,12 @@
 namespace Botble\Blog\Repositories\Eloquent;
 
 use Botble\Base\Enums\BaseStatusEnum;
+use Botble\Base\Models\BaseModel;
 use Botble\Blog\Models\Category;
 use Botble\Blog\Repositories\Interfaces\CategoryInterface;
 use Botble\Support\Repositories\Eloquent\RepositoriesAbstract;
-use Eloquent;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Collection;
 
 class CategoryRepository extends RepositoriesAbstract implements CategoryInterface
 {
@@ -18,12 +18,12 @@ class CategoryRepository extends RepositoriesAbstract implements CategoryInterfa
             ->with('slugable')
             ->where('status', BaseStatusEnum::PUBLISHED)
             ->select(['id', 'name', 'updated_at'])
-            ->orderBy('created_at', 'desc');
+            ->orderBy('created_at', 'DESC');
 
         return $this->applyBeforeExecuteQuery($data)->get();
     }
 
-    public function getFeaturedCategories(?int $limit, array $with = []): Collection
+    public function getFeaturedCategories(int|null $limit, array $with = []): Collection
     {
         $data = $this->model
             ->with(array_merge(['slugable'], $with))
@@ -37,7 +37,8 @@ class CategoryRepository extends RepositoriesAbstract implements CategoryInterfa
                 'description',
                 'icon',
             ])
-            ->orderBy('order')
+            ->orderBy('order', 'ASC')
+            ->orderBy('created_at', 'DESC')
             ->limit($limit);
 
         return $this->applyBeforeExecuteQuery($data)->get();
@@ -52,7 +53,7 @@ class CategoryRepository extends RepositoriesAbstract implements CategoryInterfa
 
         $data = $data
             ->where('status', BaseStatusEnum::PUBLISHED)
-            ->orderBy('order', 'DESC')
+            ->orderBy('order', 'ASC')
             ->orderBy('created_at', 'DESC');
 
         if ($with) {
@@ -89,9 +90,9 @@ class CategoryRepository extends RepositoriesAbstract implements CategoryInterfa
         return $this->applyBeforeExecuteQuery($data)->get();
     }
 
-    public function getAllRelatedChildrenIds(int|string|null|Eloquent $id): array
+    public function getAllRelatedChildrenIds(int|string|null|BaseModel $id): array
     {
-        if ($id instanceof Eloquent) {
+        if ($id instanceof BaseModel) {
             $model = $id;
         } else {
             $model = $this->getFirstBy(['id' => $id]);
@@ -127,15 +128,13 @@ class CategoryRepository extends RepositoriesAbstract implements CategoryInterfa
 
     public function getFilters(array $filters): LengthAwarePaginator
     {
-        $this->model = $this->originalModel;
-
         $orderBy = $filters['order_by'] ?? 'created_at';
 
-        $order = $filters['order'] ?? 'desc';
+        $order = $filters['order'] ?? 'ASC';
 
-        $this->model = $this->model->where('status', BaseStatusEnum::PUBLISHED)->orderBy($orderBy, $order);
+        $data = $this->model->where('status', BaseStatusEnum::PUBLISHED)->orderBy($orderBy, $order);
 
-        return $this->applyBeforeExecuteQuery($this->model)->paginate((int)$filters['per_page']);
+        return $this->applyBeforeExecuteQuery($data)->paginate((int)$filters['per_page']);
     }
 
     public function getPopularCategories(int $limit, array $with = ['slugable'], array $withCount = ['posts']): Collection
@@ -143,7 +142,9 @@ class CategoryRepository extends RepositoriesAbstract implements CategoryInterfa
         $data = $this->model
             ->with($with)
             ->withCount($withCount)
-            ->orderBy('posts_count', 'desc')
+            ->orderBy('posts_count', 'DESC')
+            ->orderBy('order', 'ASC')
+            ->orderBy('created_at', 'DESC')
             ->where('status', BaseStatusEnum::PUBLISHED)
             ->limit($limit);
 

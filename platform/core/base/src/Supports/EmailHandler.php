@@ -3,11 +3,12 @@
 namespace Botble\Base\Supports;
 
 use Botble\Base\Events\SendMailEvent;
+use Botble\Media\Facades\RvMedia;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\URL;
-use RvMedia;
 use Symfony\Component\ErrorHandler\ErrorRenderer\HtmlErrorRenderer;
 use Symfony\Component\ErrorHandler\Exception\FlattenException;
 use Throwable;
@@ -16,9 +17,9 @@ class EmailHandler
 {
     protected string $type = 'plugins';
 
-    protected ?string $module = null;
+    protected string|null $module = null;
 
-    protected ?string $template = null;
+    protected string|null $template = null;
 
     protected array $templates = [];
 
@@ -52,12 +53,12 @@ class EmailHandler
         return $this;
     }
 
-    public function getTemplate(): ?string
+    public function getTemplate(): string|null
     {
         return $this->template;
     }
 
-    public function setTemplate(?string $template): self
+    public function setTemplate(string|null $template): self
     {
         $this->template = $template;
 
@@ -103,16 +104,18 @@ class EmailHandler
         return $this;
     }
 
-    public function getVariableValues(?string $module = null): array
+    public function getVariableValues(string|null $module = null): array
     {
+        $values = apply_filters('cms_email_variable_values', $this->variableValues, $this->template);
+
         if ($module) {
-            return Arr::get($this->variableValues, $module, []);
+            return Arr::get($values, $module, []);
         }
 
-        return $this->variableValues;
+        return $values;
     }
 
-    public function setVariableValues(array $data, ?string $module = null): self
+    public function setVariableValues(array $data, string|null $module = null): self
     {
         foreach ($data as $name => $value) {
             $this->variableValues[$module ?: $this->module][$name] = $value;
@@ -121,7 +124,7 @@ class EmailHandler
         return $this;
     }
 
-    public function addTemplateSettings(string $module, array $data, string $type = 'plugins'): self
+    public function addTemplateSettings(string $module, array|null $data, string $type = 'plugins'): self
     {
         if (empty($data)) {
             return $this;
@@ -273,23 +276,35 @@ class EmailHandler
 
         $data = [];
 
+        $twigCompiler = apply_filters('cms_twig_compiler', $this->twigCompiler);
+
         foreach ($variables as $variable) {
             $data[$variable] = $this->getVariableValue($variable, $module);
         }
 
         foreach ($data as $key => $value) {
-            $data[$key] = $this->twigCompiler->compile($value, $data);
+            $data[$key] = $value && is_string($value) ? $twigCompiler->compile($value, $data) : $value;
         }
 
-        return $this->twigCompiler->compile($content, $data);
+        if (empty($data) || empty($content)) {
+            return $content;
+        }
+
+        return $twigCompiler->compile($content, $data);
     }
 
-    public function getVariableValue(string $variable, string $module, string $default = ''): string
+    public function getVariableValue(string $variable, string $module, string $default = ''): string|array|null
     {
-        $value = (string)Arr::get($this->variableValues, $module . '.' . $variable, $default);
+        $values = $this->getVariableValues();
+
+        $value = Arr::get($values, $module . '.' . $variable, $default);
 
         if (! $value) {
-            $value = (string)Arr::get($this->variableValues, 'core.' . $variable, $default);
+            $value = Arr::get($values, 'core.' . $variable, $default);
+        }
+
+        if ($value instanceof Arrayable) {
+            $value = $value->toArray();
         }
 
         return $value;
@@ -332,7 +347,7 @@ class EmailHandler
         return $exception->getAsString();
     }
 
-    public function getTemplateContent(string $template, string $type = 'plugins'): ?string
+    public function getTemplateContent(string $template, string $type = 'plugins'): string|null
     {
         $this->template = $template;
         $this->type = $type;

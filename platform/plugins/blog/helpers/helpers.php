@@ -9,8 +9,8 @@ use Botble\Blog\Repositories\Interfaces\TagInterface;
 use Botble\Blog\Supports\PostFormat;
 use Botble\Page\Repositories\Interfaces\PageInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 
 if (! function_exists('get_featured_posts')) {
     function get_featured_posts(int $limit, array $with = []): Collection
@@ -179,7 +179,7 @@ if (! function_exists('get_post_formats')) {
 }
 
 if (! function_exists('get_blog_page_id')) {
-    function get_blog_page_id(): int|string|null
+    function get_blog_page_id(): string|null
     {
         return theme_option('blog_page_id', setting('blog_page_id'));
     }

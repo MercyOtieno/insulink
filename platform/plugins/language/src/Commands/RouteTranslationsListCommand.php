@@ -16,19 +16,21 @@ class RouteTranslationsListCommand extends RouteListCommand
 
     protected $description = 'List all registered routes for specific locales';
 
-    public function handle()
+    public function handle(): int
     {
         $locale = $this->argument('locale');
 
         if (! $this->isSupportedLocale($locale)) {
             $this->error("Unsupported locale: '{$locale}'.");
 
-            return;
+            return self::FAILURE;
         }
 
         $this->loadFreshApplicationRoutes($locale);
 
         parent::handle();
+
+        return self::SUCCESS;
     }
 
     protected function loadFreshApplicationRoutes(string $locale): void

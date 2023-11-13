@@ -2,7 +2,7 @@
 
 namespace Botble\PluginManagement;
 
-use BaseHelper;
+use Botble\Base\Facades\BaseHelper;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\File;
 use Throwable;

@@ -2,12 +2,12 @@
 
 namespace Botble\CookieConsent\Providers;
 
+use Botble\Base\Supports\ServiceProvider;
 use Botble\Base\Traits\LoadAndPublishDataTrait;
-use Cookie;
+use Botble\Theme\Facades\Theme;
 use Illuminate\Contracts\View\View;
 use Illuminate\Cookie\Middleware\EncryptCookies;
-use Illuminate\Support\ServiceProvider;
-use Theme;
+use Illuminate\Support\Facades\Cookie;
 
 class CookieConsentServiceProvider extends ServiceProvider
 {
@@ -205,8 +205,12 @@ class CookieConsentServiceProvider extends ServiceProvider
             ]);
     }
 
-    public function registerCookieConsent(?string $html): string
+    public function registerCookieConsent(string|null $html): string
     {
+        if (is_in_admin()) {
+            return $html;
+        }
+
         return $html . view('plugins/cookie-consent::index')->render();
     }
 }

@@ -3,9 +3,14 @@
 namespace Botble\Base\Providers;
 
 use App\Http\Middleware\VerifyCsrfToken;
-use BaseHelper;
 use Botble\Base\Exceptions\Handler;
-use Botble\Base\Facades\BaseHelperFacade;
+use Botble\Base\Facades\BaseHelper;
+use Botble\Base\Facades\DashboardMenu;
+use Botble\Base\Facades\MetaBox;
+use Botble\Base\Facades\PageTitle;
+use Botble\Base\Forms\Form;
+use Botble\Base\Forms\FormBuilder;
+use Botble\Base\Forms\FormHelper;
 use Botble\Base\Hooks\EmailSettingHooks;
 use Botble\Base\Http\Middleware\CoreMiddleware;
 use Botble\Base\Http\Middleware\DisableInDemoModeMiddleware;
@@ -13,16 +18,17 @@ use Botble\Base\Http\Middleware\HttpsProtocolMiddleware;
 use Botble\Base\Http\Middleware\LocaleMiddleware;
 use Botble\Base\Models\AdminNotification;
 use Botble\Base\Models\MetaBox as MetaBoxModel;
-use Botble\Base\Repositories\Caches\MetaBoxCacheDecorator;
 use Botble\Base\Repositories\Eloquent\MetaBoxRepository;
 use Botble\Base\Repositories\Interfaces\MetaBoxInterface;
 use Botble\Base\Supports\Action;
 use Botble\Base\Supports\BreadcrumbsManager;
+use Botble\Base\Supports\Core;
 use Botble\Base\Supports\CustomResourceRegistrar;
 use Botble\Base\Supports\Database\Blueprint;
 use Botble\Base\Supports\Filter;
 use Botble\Base\Supports\GoogleFonts;
 use Botble\Base\Supports\Helper;
+use Botble\Base\Supports\ServiceProvider;
 use Botble\Base\Traits\LoadAndPublishDataTrait;
 use Botble\Base\Widgets\AdminWidget;
 use Botble\Base\Widgets\Contracts\AdminWidget as AdminWidgetContract;
@@ -39,11 +45,11 @@ use Illuminate\Foundation\Console\AboutCommand;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Routing\Events\RouteMatched;
 use Illuminate\Routing\ResourceRegistrar;
+use Illuminate\Routing\Route;
 use Illuminate\Routing\Router;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
-use Illuminate\Support\ServiceProvider;
-use MetaBox;
 use Throwable;
 
 class BaseServiceProvider extends ServiceProvider
@@ -69,7 +75,7 @@ class BaseServiceProvider extends ServiceProvider
         $this->app->singleton(BreadcrumbsManager::class, BreadcrumbsManager::class);
 
         $this->app->bind(MetaBoxInterface::class, function () {
-            return new MetaBoxCacheDecorator(new MetaBoxRepository(new MetaBoxModel()));
+            return new MetaBoxRepository(new MetaBoxModel());
         });
 
         $this->app['config']->set([
@@ -105,7 +111,12 @@ class BaseServiceProvider extends ServiceProvider
             'datatables-buttons.pdf_generator' => 'excel',
             'excel.exports.csv.use_bom' => true,
             'dompdf.public_path' => public_path(),
-            'debugbar.enabled' => $this->app->hasDebugModeEnabled() && ! $this->app->runningInConsole() && ! $this->app->environment(['testing', 'production']),
+            'debugbar.enabled' => $this->app->hasDebugModeEnabled() &&
+                ! $this->app->runningInConsole() &&
+                ! $this->app->environment(['testing', 'production']),
+            'laravel-form-builder.plain_form_class' => Form::class,
+            'laravel-form-builder.form_builder_class' => FormBuilder::class,
+            'laravel-form-builder.form_helper_class' => FormHelper::class,
         ]);
 
         $this->app->singleton('core:action', function () {
@@ -127,7 +138,32 @@ class BaseServiceProvider extends ServiceProvider
             );
         });
 
-        AliasLoader::getInstance()->alias('BaseHelper', BaseHelperFacade::class);
+        Route::macro('wherePrimaryKey', function (array|string|null $name = 'id') {
+            if (! $name) {
+                $name = 'id';
+            }
+
+            /**
+             * @var Route $this
+             */
+            if (config('core.base.general.using_uuids_for_id')) {
+                return $this->whereUuid($name);
+            }
+
+            if (config('core.base.general.using_ulids_for_id')) {
+                return $this->whereUlid($name);
+            }
+
+            return $this->whereNumber($name);
+        });
+
+        $aliasLoader = AliasLoader::getInstance();
+
+        if (! class_exists('BaseHelper')) {
+            $aliasLoader->alias('BaseHelper', BaseHelper::class);
+            $aliasLoader->alias('DashboardMenu', DashboardMenu::class);
+            $aliasLoader->alias('PageTitle', PageTitle::class);
+        }
     }
 
     public function boot(): void
@@ -135,6 +171,7 @@ class BaseServiceProvider extends ServiceProvider
         $this
             ->loadAndPublishConfigurations(['permissions', 'assets'])
             ->loadAndPublishViews()
+            ->loadAnonymousComponents()
             ->loadAndPublishTranslations()
             ->loadRoutes()
             ->loadMigrations()
@@ -144,14 +181,18 @@ class BaseServiceProvider extends ServiceProvider
 
         $config = $this->app['config'];
 
-        if ($this->app->environment('demo') || $config->get('core.base.general.disable_verify_csrf_token', false)) {
+        if (BaseHelper::hasDemoModeEnabled() || $config->get('core.base.general.disable_verify_csrf_token', false)) {
             $this->app->instance(VerifyCsrfToken::class, new BaseMiddleware());
         }
 
         $this->app->booted(function () use ($config) {
             do_action(BASE_ACTION_INIT);
             add_action(BASE_ACTION_META_BOXES, [MetaBox::class, 'doMetaBoxes'], 8, 2);
-            add_filter(BASE_FILTER_AFTER_SETTING_EMAIL_CONTENT, [EmailSettingHooks::class, 'addEmailTemplateSettings'], 99);
+            add_filter(
+                BASE_FILTER_AFTER_SETTING_EMAIL_CONTENT,
+                [EmailSettingHooks::class, 'addEmailTemplateSettings'],
+                99
+            );
 
             add_filter(BASE_FILTER_TOP_HEADER_LAYOUT, function ($options) {
                 try {
@@ -161,7 +202,11 @@ class BaseServiceProvider extends ServiceProvider
                 }
 
                 return $options . view('core/base::notification.notification', compact('countNotificationUnread'));
-            });
+            }, 99);
+
+            add_filter(BASE_FILTER_FOOTER_LAYOUT_TEMPLATE, function ($html) {
+                return $html . view('core/base::notification.notification-content');
+            }, 99);
 
             $setting = $this->app[SettingStore::class];
             $timezone = $setting->get('time_zone', $config->get('app.timezone'));
@@ -195,12 +240,14 @@ class BaseServiceProvider extends ServiceProvider
 
         Paginator::useBootstrap();
 
-        $forceUrl = $config->get('core.base.general.force_root_url');
+        $baseConfig = $config->get('core.base.general', []);
+
+        $forceUrl = Arr::get($baseConfig, 'force_root_url');
         if (! empty($forceUrl)) {
             URL::forceRootUrl($forceUrl);
         }
 
-        $forceSchema = $config->get('core.base.general.force_schema');
+        $forceSchema = Arr::get($baseConfig, 'force_schema');
         if (! empty($forceSchema)) {
             $this->app['request']->server->set('HTTPS', 'on');
 
@@ -212,13 +259,17 @@ class BaseServiceProvider extends ServiceProvider
         $config->set([
             'purifier.settings' => array_merge(
                 $config->get('purifier.settings', []),
-                $config->get('core.base.general.purifier', [])
+                Arr::get($baseConfig, 'purifier', [])
             ),
             'laravel-form-builder.defaults.wrapper_class' => 'form-group mb-3',
-            'database.connections.mysql.strict' => $config->get('core.base.general.db_strict_mode'),
+            'database.connections.mysql.strict' => Arr::get($baseConfig, 'db_strict_mode'),
         ]);
 
-        if (! $config->has('logging.channels.deprecations')) {
+        if (
+            ! $config->has('logging.channels.deprecations')
+            && $this->app->isLocal()
+            && $this->app->hasDebugModeEnabled()
+        ) {
             $config->set([
                 'logging.channels.deprecations' => [
                     'driver' => 'single',
@@ -241,14 +292,18 @@ class BaseServiceProvider extends ServiceProvider
 
             return $schema;
         });
+
+        $this->app->resolving(Core::class, function () {
+            require_once __DIR__ . '/../Supports/Core.php';
+        });
     }
 
     /**
      * Add default dashboard menu for core
      */
-    public function registerDefaultMenus()
+    public function registerDefaultMenus(): void
     {
-        dashboard_menu()
+        DashboardMenu::make()
             ->registerItem([
                 'id' => 'cms-core-platform-administration',
                 'priority' => 999,
@@ -277,36 +332,34 @@ class BaseServiceProvider extends ServiceProvider
                 'permissions' => [ACL_ROLE_SUPER_USER],
             ]);
 
-        if (config('core.base.general.enabled_cleanup_database', true)) {
-            dashboard_menu()
-                ->registerItem([
-                    'id' => 'cms-core-system-cleanup',
-                    'priority' => 999,
-                    'parent_id' => 'cms-core-platform-administration',
-                    'name' => 'core/base::system.cleanup.title',
-                    'icon' => null,
-                    'url' => route('system.cleanup'),
-                    'permissions' => [ACL_ROLE_SUPER_USER],
-                ]);
+        if (! config('core.base.general.hide_cleanup_system_menu', false)) {
+            DashboardMenu::registerItem([
+                'id' => 'cms-core-system-cleanup',
+                'priority' => 999,
+                'parent_id' => 'cms-core-platform-administration',
+                'name' => 'core/base::system.cleanup.title',
+                'icon' => null,
+                'url' => route('system.cleanup'),
+                'permissions' => [ACL_ROLE_SUPER_USER],
+            ]);
         }
 
         if (config('core.base.general.enable_system_updater')) {
-            dashboard_menu()
-                ->registerItem([
-                    'id' => 'cms-core-system-updater',
-                    'priority' => 999,
-                    'parent_id' => 'cms-core-platform-administration',
-                    'name' => 'core/base::system.updater',
-                    'icon' => null,
-                    'url' => route('system.updater'),
-                    'permissions' => [ACL_ROLE_SUPER_USER],
-                ]);
+            DashboardMenu::registerItem([
+                'id' => 'cms-core-system-updater',
+                'priority' => 999,
+                'parent_id' => 'cms-core-platform-administration',
+                'name' => 'core/base::system.updater',
+                'icon' => null,
+                'url' => route('system.updater'),
+                'permissions' => [ACL_ROLE_SUPER_USER],
+            ]);
         }
     }
 
-    protected function configureIni()
+    protected function configureIni(): void
     {
-        $currentLimit = ini_get('memory_limit');
+        $currentLimit = @ini_get('memory_limit');
         $currentLimitInt = Helper::convertHrToBytes($currentLimit);
 
         $memoryLimit = $this->app['config']->get('core.base.general.memory_limit');

@@ -13,7 +13,10 @@ if (! function_exists('table_checkbox')) {
 }
 
 if (! function_exists('table_actions')) {
-    function table_actions(?string $edit, ?string $delete, Model $item, ?string $extra = null): string
+    /**
+     * @deprecated
+     */
+    function table_actions(string|null $edit, string|null $delete, Model $item, string|null $extra = null): string
     {
         return view('core/table::partials.actions', compact('edit', 'delete', 'item', 'extra'))->render();
     }

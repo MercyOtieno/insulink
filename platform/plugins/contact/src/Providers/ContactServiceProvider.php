@@ -2,18 +2,17 @@
 
 namespace Botble\Contact\Providers;
 
-use EmailHandler;
-use Illuminate\Routing\Events\RouteMatched;
+use Botble\Base\Facades\DashboardMenu;
+use Botble\Base\Facades\EmailHandler;
+use Botble\Base\Supports\ServiceProvider;
 use Botble\Base\Traits\LoadAndPublishDataTrait;
-use Botble\Contact\Models\ContactReply;
-use Botble\Contact\Repositories\Caches\ContactReplyCacheDecorator;
-use Botble\Contact\Repositories\Eloquent\ContactReplyRepository;
-use Botble\Contact\Repositories\Interfaces\ContactInterface;
 use Botble\Contact\Models\Contact;
-use Botble\Contact\Repositories\Caches\ContactCacheDecorator;
+use Botble\Contact\Models\ContactReply;
+use Botble\Contact\Repositories\Eloquent\ContactReplyRepository;
 use Botble\Contact\Repositories\Eloquent\ContactRepository;
+use Botble\Contact\Repositories\Interfaces\ContactInterface;
 use Botble\Contact\Repositories\Interfaces\ContactReplyInterface;
-use Illuminate\Support\ServiceProvider;
+use Illuminate\Routing\Events\RouteMatched;
 
 class ContactServiceProvider extends ServiceProvider
 {
@@ -22,11 +21,11 @@ class ContactServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(ContactInterface::class, function () {
-            return new ContactCacheDecorator(new ContactRepository(new Contact()));
+            return new ContactRepository(new Contact());
         });
 
         $this->app->bind(ContactReplyInterface::class, function () {
-            return new ContactReplyCacheDecorator(new ContactReplyRepository(new ContactReply()));
+            return new ContactReplyRepository(new ContactReply());
         });
     }
 
@@ -43,7 +42,7 @@ class ContactServiceProvider extends ServiceProvider
             ->publishAssets();
 
         $this->app['events']->listen(RouteMatched::class, function () {
-            dashboard_menu()->registerItem([
+            DashboardMenu::registerItem([
                 'id' => 'cms-plugins-contact',
                 'priority' => 120,
                 'parent_id' => null,

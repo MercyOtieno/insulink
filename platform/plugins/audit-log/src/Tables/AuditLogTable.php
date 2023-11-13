@@ -2,28 +2,27 @@
 
 namespace Botble\AuditLog\Tables;
 
+use Botble\AuditLog\Models\AuditHistory;
+use Botble\Base\Facades\Html;
+use Botble\Table\Abstracts\TableAbstract;
+use Botble\Table\DataTables;
+use Illuminate\Contracts\Routing\UrlGenerator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
-use Botble\AuditLog\Repositories\Interfaces\AuditLogInterface;
-use Botble\Table\Abstracts\TableAbstract;
-use Html;
-use Illuminate\Contracts\Routing\UrlGenerator;
-use Yajra\DataTables\DataTables;
 
 class AuditLogTable extends TableAbstract
 {
-    protected $hasActions = true;
-
-    protected $hasFilter = false;
-
-    public function __construct(DataTables $table, UrlGenerator $urlGenerator, AuditLogInterface $auditLogRepository)
+    public function __construct(DataTables $table, UrlGenerator $urlGenerator, AuditHistory $auditHistory)
     {
         parent::__construct($table, $urlGenerator);
 
-        $this->repository = $auditLogRepository;
+        $this->model = $auditHistory;
+
+        $this->hasActions = true;
+        $this->hasFilter = false;
 
         if (! Auth::user()->hasPermission('audit-log.destroy')) {
             $this->hasOperations = false;
@@ -35,13 +34,13 @@ class AuditLogTable extends TableAbstract
     {
         $data = $this->table
             ->eloquent($this->query())
-            ->editColumn('checkbox', function ($item) {
-                return $this->getCheckbox($item->id);
+            ->editColumn('checkbox', function (AuditHistory $item) {
+                return $this->getCheckbox($item->getKey());
             })
-            ->editColumn('action', function ($history) {
-                return view('plugins/audit-log::activity-line', compact('history'))->render();
+            ->editColumn('action', function (AuditHistory $item) {
+                return view('plugins/audit-log::activity-line', ['history' => $item])->render();
             })
-            ->addColumn('operations', function ($item) {
+            ->addColumn('operations', function (AuditHistory $item) {
                 return $this->getOperations(null, 'audit-log.destroy', $item);
             });
 
@@ -50,7 +49,9 @@ class AuditLogTable extends TableAbstract
 
     public function query(): Relation|Builder|QueryBuilder
     {
-        $query = $this->repository->getModel()
+        $query = $this
+            ->getModel()
+            ->query()
             ->with(['user'])
             ->select(['*']);
 

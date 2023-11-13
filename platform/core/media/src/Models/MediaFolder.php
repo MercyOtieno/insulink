@@ -2,10 +2,13 @@
 
 namespace Botble\Media\Models;
 
+use Botble\Base\Casts\SafeContent;
 use Botble\Base\Models\BaseModel;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use RvMedia;
+use Illuminate\Support\Collection;
 
 class MediaFolder extends BaseModel
 {
@@ -20,33 +23,50 @@ class MediaFolder extends BaseModel
         'user_id',
     ];
 
+    protected $casts = [
+        'name' => SafeContent::class,
+    ];
+
     public function files(): HasMany
     {
         return $this->hasMany(MediaFile::class, 'folder_id', 'id');
     }
 
-    protected static function boot()
+    public function parent(): BelongsTo
     {
-        parent::boot();
+        return $this->belongsTo(MediaFolder::class, 'parent_id')->withDefault();
+    }
+
+    protected function parents(): Attribute
+    {
+        return Attribute::make(
+            get: function (): Collection {
+                $parents = collect();
+
+                $parent = $this->parent;
+
+                while ($parent->id) {
+                    $parents->push($parent);
+                    $parent = $parent->parent;
+                }
+
+                return $parents;
+            },
+        );
+    }
+
+    protected static function booted(): void
+    {
         static::deleting(function (MediaFolder $folder) {
             if ($folder->isForceDeleting()) {
-                $files = MediaFile::where('folder_id', $folder->getKey())->onlyTrashed()->get();
-
-                foreach ($files as $file) {
-                    RvMedia::deleteFile($file);
-                    $file->forceDelete();
-                }
+                $folder->files()->onlyTrashed()->each(fn (MediaFile $file) => $file->forceDelete());
             } else {
-                $files = MediaFile::where('folder_id', $folder->getKey())->withTrashed()->get();
-
-                foreach ($files as $file) {
-                    $file->delete();
-                }
+                $folder->files()->withTrashed()->each(fn (MediaFile $file) => $file->delete());
             }
         });
 
         static::restoring(function (MediaFolder $folder) {
-            MediaFile::where('folder_id', $folder->getKey())->restore();
+            $folder->files()->restore();
         });
     }
 }

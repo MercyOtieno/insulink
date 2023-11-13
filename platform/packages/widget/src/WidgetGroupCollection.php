@@ -2,12 +2,12 @@
 
 namespace Botble\Widget;
 
-use Botble\Widget\Repositories\Interfaces\WidgetInterface;
+use Botble\Language\Facades\Language;
+use Botble\Theme\Facades\Theme;
+use Botble\Widget\Models\Widget;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
-use Language;
-use Theme;
 
 class WidgetGroupCollection
 {
@@ -26,6 +26,7 @@ class WidgetGroupCollection
         if (isset($this->groups[$sidebarId])) {
             return $this->groups[$sidebarId];
         }
+
         $this->groups[$sidebarId] = new WidgetGroup(['id' => $sidebarId, 'name' => $sidebarId], $this->app);
 
         return $this->groups[$sidebarId];
@@ -88,7 +89,7 @@ class WidgetGroupCollection
             $languageCode = $currentLocale && $currentLocale != Language::getDefaultLocaleCode() ? '-' . $currentLocale : null;
         }
 
-        return app(WidgetInterface::class)->allBy(['theme' => Theme::getThemeName() . $languageCode]);
+        return Widget::query()->where(['theme' => Theme::getThemeName() . $languageCode])->get();
     }
 
     public function getData(): Collection

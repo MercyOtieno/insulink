@@ -2,26 +2,25 @@
 
 namespace Botble\Theme\Services;
 
-use BaseHelper;
+use Botble\Base\Facades\BaseHelper;
 use Botble\Base\Supports\Helper;
 use Botble\PluginManagement\Services\PluginService;
-use Botble\Setting\Repositories\Interfaces\SettingInterface;
+use Botble\Setting\Models\Setting;
 use Botble\Setting\Supports\SettingStore;
 use Botble\Theme\Events\ThemeRemoveEvent;
-use Botble\Widget\Repositories\Interfaces\WidgetInterface;
+use Botble\Theme\Facades\Theme;
+use Botble\Theme\Facades\ThemeOption;
+use Botble\Widget\Models\Widget;
 use Exception;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Arr;
-use Theme;
 
 class ThemeService
 {
     public function __construct(
         protected Filesystem $files,
         protected SettingStore $settingStore,
-        protected PluginService $pluginService,
-        protected WidgetInterface $widgetRepository,
-        protected SettingInterface $settingRepository
+        protected PluginService $pluginService
     ) {
     }
 
@@ -102,12 +101,12 @@ class ThemeService
         ];
     }
 
-    protected function getPath(string $theme, ?string $path = null): string
+    protected function getPath(string $theme, string|null $path = null): string
     {
         return rtrim(theme_path(), '/') . '/' . rtrim(ltrim(strtolower($theme), '/'), '/') . '/' . $path;
     }
 
-    public function publishAssets(?string $theme = null): array
+    public function publishAssets(string|null $theme = null): array
     {
         if ($theme) {
             $themes = [$theme];
@@ -162,12 +161,12 @@ class ThemeService
         $this->removeAssets($theme);
 
         $this->files->deleteDirectory($this->getPath($theme));
-        $this->widgetRepository->getModel()
+        Widget::query()
             ->where('theme', $theme)
-            ->orWhere('theme', 'like', $theme . '-%')
+            ->orWhere('theme', 'LIKE', $theme . '-%')
             ->delete();
-        $this->settingRepository->getModel()
-            ->where('key', 'like', 'theme-' . $theme . '-%')
+        Setting::query()
+            ->where('key', 'LIKE', ThemeOption::getOptionKey('%', theme: $theme))
             ->delete();
 
         event(new ThemeRemoveEvent($theme));

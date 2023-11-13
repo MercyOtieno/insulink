@@ -3,20 +3,20 @@
 namespace Botble\AuditLog\Listeners;
 
 use Botble\AuditLog\Events\AuditHandlerEvent;
+use Botble\AuditLog\Facades\AuditLog;
 use Botble\Base\Events\CreatedContentEvent;
 use Exception;
-use AuditLog;
 
 class CreatedContentListener
 {
     public function handle(CreatedContentEvent $event): void
     {
         try {
-            if ($event->data->id) {
+            if ($event->data->getKey()) {
                 event(new AuditHandlerEvent(
                     $event->screen,
                     'created',
-                    $event->data->id,
+                    $event->data->getKey(),
                     AuditLog::getReferenceName($event->screen, $event->data),
                     'info'
                 ));

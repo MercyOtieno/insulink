@@ -26,7 +26,7 @@ return [
     | You can hook a theme when event fired on activities
     | this is cool feature to set up a title, meta, default styles and scripts.
     |
-    | [Notice] these event can be override by package config.
+    | [Notice] these events can be overridden by package config.
     |
     */
 
@@ -52,10 +52,13 @@ return [
 
             // You may use this event to set up your assets.
             $theme->asset()->usePath()->add('style', 'css/style.css');
+
+            $theme->asset()->container('footer')->add('jquery', 'libraries/jquery.min.js');
+
             $theme->asset()->container('footer')->usePath()->add('script', 'js/script.js');
 
             if (function_exists('shortcode')) {
-                $theme->composer(['index', 'page', 'post'], function (\Botble\Shortcode\View\View $view) {
+                $theme->composer(['page', 'post'], function (\Botble\Shortcode\View\View $view) {
                     $view->withShortcodes();
                 });
             }

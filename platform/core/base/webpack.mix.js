@@ -1,23 +1,17 @@
-let mix = require('laravel-mix');
-let glob = require('glob');
+let mix = require('laravel-mix')
+let glob = require('glob')
 
-const path = require('path');
-let directory = path.basename(path.resolve(__dirname));
+const path = require('path')
+let directory = path.basename(path.resolve(__dirname))
 
-const source = 'platform/core/' + directory;
-const dist = 'public/vendor/core/core/' + directory;
+const source = 'platform/core/' + directory
+const dist = 'public/vendor/core/core/' + directory
 
-glob.sync(source + '/resources/assets/sass/base/themes/*.scss').forEach(item => {
-    mix.sass(item, dist + '/css/themes');
-});
+glob.sync(source + '/resources/assets/sass/base/themes/*.scss').forEach(
+    (item) => mix.sass(item, dist + '/css/themes')
+)
 
-mix.webpackConfig({
-    resolve: {
-        alias: {
-            '@base.marketplace': path.resolve('platform/core/base/resources/assets/js/marketplace'),
-        }
-    }
-});
+mix.vue();
 
 mix
     .sass(source + '/resources/assets/sass/core.scss', dist + '/css')
@@ -35,11 +29,20 @@ mix
     .js(source + '/resources/assets/js/form/phone-number-field.js', dist + '/js')
     .js(source + '/resources/assets/js/system-info.js', dist + '/js')
     .js(source + '/resources/assets/js/tree-category.js', dist + '/js')
-    .js(source + '/resources/assets/js/cleanup.js', dist + '/js');
+    .js(source + '/resources/assets/js/cleanup.js', dist + '/js')
 
 mix
-    .js(source + '/resources/assets/js/vue-app.js', dist + '/js').vue()
-    .js(source + '/resources/assets/js/repeater-field.js', dist + '/js').vue();
+    .js(source + '/resources/assets/js/vue-app.js', dist + '/js')
+    .js(source + '/resources/assets/js/repeater-field.js', dist + '/js')
+    .js(source + '/resources/assets/js/system-update.js', dist + '/js')
+
+mix
+    .copy('node_modules/jquery/dist/jquery.min.js', dist + '/libraries/jquery.min.js')
+    .copy(
+        mix.inProduction() ? './node_modules/vue/dist/vue.global.prod.js' : './node_modules/vue/dist/vue.global.js',
+        `${dist}/libraries/vue.global.min.js`
+    )
+
 
 if (mix.inProduction()) {
     mix
@@ -59,5 +62,8 @@ if (mix.inProduction()) {
         .copy(dist + '/js/system-info.js', source + '/public/js')
         .copy(dist + '/js/repeater-field.js', source + '/public/js')
         .copy(dist + '/js/tree-category.js', source + '/public/js')
-        .copy(dist + '/js/cleanup.js', source + '/public/js');
+        .copy(dist + '/js/cleanup.js', source + '/public/js')
+        .copy(dist + '/js/system-update.js', source + '/public/js')
+        .copy(dist + '/libraries/jquery.min.js', source + '/public/libraries/jquery.min.js')
+        .copy(dist + '/libraries/vue.global.min.js', source + '/public/libraries/vue.global.min.js')
 }

@@ -10,18 +10,9 @@ class NotificationController extends BaseController
     public function getNotification()
     {
         $notifications = AdminNotification::query()
+            ->hasPermission()
             ->latest()
             ->paginate(10);
-
-        $notificationCollection = $notifications->getCollection();
-
-        foreach ($notificationCollection as $key => $notification) {
-            if (! $notification->isAbleToAccess()) {
-                $notificationCollection->forget($key);
-            }
-        }
-
-        $notifications->setCollection($notificationCollection);
 
         return view('core/base::notification.partials.notification-item', compact('notifications'));
     }
@@ -33,12 +24,12 @@ class NotificationController extends BaseController
         return view('core/base::notification.partials.count-notification-unread', compact('countNotificationUnread'));
     }
 
-    public function delete($id)
+    public function delete(int|string $id)
     {
         $notificationItem = AdminNotification::query()->findOrFail($id);
         $notificationItem->delete();
 
-        if (! AdminNotification::query()->exists()) {
+        if (! AdminNotification::query()->hasPermission()->exists()) {
             return [
                 'view' => view('core/base::notification.partials.sidebar-notification')->render(),
             ];
@@ -54,7 +45,7 @@ class NotificationController extends BaseController
         return view('core/base::notification.partials.sidebar-notification');
     }
 
-    public function read($id)
+    public function read(int|string $id)
     {
         $notificationItem = AdminNotification::query()->findOrFail($id);
 

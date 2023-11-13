@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Country;
+use Theme\Insulink\Http\Controllers\HomeController;
 
 // Custom routes
 // You can delete this route group if you don't need to add your custom routes.
@@ -22,6 +23,7 @@ Route::group(['namespace' => 'Theme\Insulink\Http\Controllers', 'middleware' => 
          * Generate Motor Private Quotations
          */
         Route::group(['prefix' => 'quotations'], function () {
+            Route::post('/submit-form', [HomeController::class, 'storeForm']);
             Route::get('/motor/generate/{type}/{cover_type}/{v_value}/{v_make}/{v_model}/{v_manufacture}', 'QuotationController@getMotorRates')->name('generate.quote');
             Route::get('/motor/calculator/', 'QuotationController@getMotorRates');
             Route::get('/motor/generated/{type}, {cover_type}, {v_value}, {v_make}, {v_model}, {v_manufacture}', 'QuotationController@generatedmotorquotes')->name('generated.quote.motor');
@@ -35,8 +37,8 @@ Route::group(['namespace' => 'Theme\Insulink\Http\Controllers', 'middleware' => 
                 Route::get('/individual_family/generate/{ip}/{no_children}/{preexisting}/{dob}/{age}/{cover_type}/{cover_details}/', 'QuotationController@getHealthRates');
             });
         });
-        
-        Route::group(['prefix' => 'purchase'], function() { 
+
+        Route::group(['prefix' => 'purchase'], function() {
             Route::get('motor/private/initiate/{product}', 'QuotationController@PurchaseMotorPrivate');
             Route::get('motor/3rdparty/initiate/{product}', 'QuotationController@Purchasethirdparty');
             Route::get('motor/onlinecommercial/initiate/{product}', 'QuotationController@Purchasecommercialonline');
@@ -66,13 +68,13 @@ Route::group(['namespace' => 'Theme\Insulink\Http\Controllers', 'middleware' => 
 
         Route::get('/', 'InsulinkController@getIndex')
             ->name('public.index');
-        //Route::get('auth/login', 'InsulinkController@login')->name('login');
+        Route::get('auth/login', 'InsulinkController@login')->name('login');
         Route::get('sitemap.xml', 'InsulinkController@getSiteMap')
             ->name('public.sitemap');
 
         Route::get('{slug?}' . config('core.base.general.public_single_ending_url'), 'InsulinkController@getView')
             ->name('public.single');
-        
+
 
     });
 });

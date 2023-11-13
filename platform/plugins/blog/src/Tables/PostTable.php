@@ -2,14 +2,14 @@
 
 namespace Botble\Blog\Tables;
 
-use BaseHelper;
 use Botble\Base\Enums\BaseStatusEnum;
+use Botble\Base\Facades\BaseHelper;
+use Botble\Base\Facades\Html;
 use Botble\Blog\Exports\PostExport;
+use Botble\Blog\Models\Category;
 use Botble\Blog\Models\Post;
-use Botble\Blog\Repositories\Interfaces\CategoryInterface;
-use Botble\Blog\Repositories\Interfaces\PostInterface;
 use Botble\Table\Abstracts\TableAbstract;
-use Html;
+use Botble\Table\DataTables;
 use Illuminate\Contracts\Routing\UrlGenerator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
@@ -19,14 +19,9 @@ use Illuminate\Database\Eloquent\Relations\Relation as EloquentRelation;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
-use Yajra\DataTables\DataTables;
 
 class PostTable extends TableAbstract
 {
-    protected $hasActions = true;
-
-    protected $hasFilter = true;
-
     protected string $exportClass = PostExport::class;
 
     protected int $defaultSortColumn = 6;
@@ -34,12 +29,14 @@ class PostTable extends TableAbstract
     public function __construct(
         DataTables $table,
         UrlGenerator $urlGenerator,
-        PostInterface $postRepository,
-        protected CategoryInterface $categoryRepository
+        Post $post
     ) {
         parent::__construct($table, $urlGenerator);
 
-        $this->repository = $postRepository;
+        $this->model = $post;
+
+        $this->hasActions = true;
+        $this->hasFilter = true;
 
         if (! Auth::user()->hasAnyPermission(['posts.edit', 'posts.destroy'])) {
             $this->hasOperations = false;
@@ -51,23 +48,23 @@ class PostTable extends TableAbstract
     {
         $data = $this->table
             ->eloquent($this->query())
-            ->editColumn('name', function ($item) {
+            ->editColumn('name', function (Post $item) {
                 if (! Auth::user()->hasPermission('posts.edit')) {
                     return BaseHelper::clean($item->name);
                 }
 
-                return Html::link(route('posts.edit', $item->id), BaseHelper::clean($item->name));
+                return Html::link(route('posts.edit', $item->getKey()), BaseHelper::clean($item->name));
             })
-            ->editColumn('image', function ($item) {
+            ->editColumn('image', function (Post $item) {
                 return $this->displayThumbnail($item->image);
             })
-            ->editColumn('checkbox', function ($item) {
-                return $this->getCheckbox($item->id);
+            ->editColumn('checkbox', function (Post $item) {
+                return $this->getCheckbox($item->getKey());
             })
-            ->editColumn('created_at', function ($item) {
+            ->editColumn('created_at', function (Post $item) {
                 return BaseHelper::formatDate($item->created_at);
             })
-            ->editColumn('updated_at', function ($item) {
+            ->editColumn('updated_at', function (Post $item) {
                 $categories = '';
                 foreach ($item->categories as $category) {
                     $categories .= Html::link(route('categories.edit', $category->id), $category->name) . ', ';
@@ -75,17 +72,17 @@ class PostTable extends TableAbstract
 
                 return rtrim($categories, ', ');
             })
-            ->editColumn('author_id', function ($item) {
+            ->editColumn('author_id', function (Post $item) {
                 return $item->author && $item->author->name ? BaseHelper::clean($item->author->name) : '&mdash;';
             })
-            ->editColumn('status', function ($item) {
+            ->editColumn('status', function (Post $item) {
                 if ($this->request()->input('action') === 'excel') {
                     return $item->status->getValue();
                 }
 
                 return BaseHelper::clean($item->status->toHtml());
             })
-            ->addColumn('operations', function ($item) {
+            ->addColumn('operations', function (Post $item) {
                 return $this->getOperations('posts.edit', 'posts.destroy', $item);
             });
 
@@ -94,7 +91,9 @@ class PostTable extends TableAbstract
 
     public function query(): Relation|Builder|QueryBuilder
     {
-        $query = $this->repository->getModel()
+        $query = $this
+            ->getModel()
+            ->query()
             ->with([
                 'categories' => function ($query) {
                     $query->select(['categories.id', 'categories.name']);
@@ -182,39 +181,37 @@ class PostTable extends TableAbstract
             'category' => [
                 'title' => trans('plugins/blog::posts.category'),
                 'type' => 'select-search',
-                'validate' => 'required',
+                'validate' => 'required|string',
                 'callback' => 'getCategories',
             ],
             'created_at' => [
                 'title' => trans('core/base::tables.created_at'),
                 'type' => 'datePicker',
-                'validate' => 'required',
+                'validate' => 'required|string|date',
             ],
         ];
     }
 
     public function getCategories(): array
     {
-        return $this->categoryRepository->pluck('name', 'id');
+        return Category::query()->pluck('name', 'id')->all();
     }
 
-    public function applyFilterCondition(EloquentBuilder|QueryBuilder|EloquentRelation $query, string $key, string $operator, ?string $value): EloquentRelation|EloquentBuilder|QueryBuilder
+    public function applyFilterCondition(EloquentBuilder|QueryBuilder|EloquentRelation $query, string $key, string $operator, string|null $value): EloquentRelation|EloquentBuilder|QueryBuilder
     {
-        if ($key === 'category' && $value && ! BaseHelper::isJoined($query, 'post_categories')) {
-            $query = $query
-                ->join('post_categories', 'post_categories.post_id', '=', 'posts.id')
-                ->join('categories', 'post_categories.category_id', '=', 'categories.id')
-                ->select($query->getModel()->getTable() . '.*');
-
-            return $query->where('post_categories.category_id', $value);
+        if ($key === 'category' && $value) {
+            return $query->whereHas('categories', fn ($query) => $query->where('categories.id', $value));
         }
 
         return parent::applyFilterCondition($query, $key, $operator, $value);
     }
 
-    public function saveBulkChangeItem(Model|Post $item, string $inputKey, ?string $inputValue): Model|bool
+    public function saveBulkChangeItem(Model|Post $item, string $inputKey, string|null $inputValue): Model|bool
     {
         if ($inputKey === 'category') {
+            /**
+             * @var Post $item
+             */
             $item->categories()->sync([$inputValue]);
 
             return $item;

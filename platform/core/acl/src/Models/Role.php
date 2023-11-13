@@ -4,14 +4,15 @@ namespace Botble\ACL\Models;
 
 use Botble\ACL\Traits\PermissionTrait;
 use Botble\Base\Casts\SafeContent;
+use Botble\Base\Facades\BaseHelper;
 use Botble\Base\Models\BaseModel;
-use Exception;
-use Illuminate\Database\Eloquent\Casts\Attribute;
+use Botble\Base\Models\Concerns\HasSlug;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Role extends BaseModel
 {
+    use HasSlug;
     use PermissionTrait;
 
     protected $table = 'roles';
@@ -32,21 +33,7 @@ class Role extends BaseModel
         'description' => SafeContent::class,
     ];
 
-    protected function permissions(): Attribute
-    {
-        return Attribute::make(
-            get: function ($value) {
-                try {
-                    return json_decode($value ?: '', true) ?: [];
-                } catch (Exception) {
-                    return [];
-                }
-            },
-            set: fn ($value) => $value ? json_encode($value) : ''
-        );
-    }
-
-    public function delete(): ?bool
+    public function delete(): bool|null
     {
         if ($this->exists) {
             $this->users()->detach();
@@ -65,5 +52,32 @@ class Role extends BaseModel
     public function author(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by')->withDefault();
+    }
+
+    public function getAvailablePermissions(): array
+    {
+        $permissions = [];
+
+        $types = ['core', 'packages', 'plugins'];
+
+        foreach ($types as $type) {
+            foreach (BaseHelper::scanFolder(platform_path($type)) as $module) {
+                $configuration = config(strtolower($type . '.' . $module . '.permissions'));
+                if (! empty($configuration)) {
+                    foreach ($configuration as $config) {
+                        $permissions[$config['flag']] = $config;
+                    }
+                }
+            }
+        }
+
+        return $permissions;
+    }
+
+    protected static function booted(): void
+    {
+        self::saving(function (self $model) {
+            $model->slug = self::createSlug($model->slug ?: $model->name, $model->getKey());
+        });
     }
 }

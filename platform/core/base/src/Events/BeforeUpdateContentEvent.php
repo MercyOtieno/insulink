@@ -2,7 +2,7 @@
 
 namespace Botble\Base\Events;
 
-use Illuminate\Database\Eloquent\Model;
+use Botble\Base\Models\BaseModel;
 use Illuminate\Http\Request;
 use Illuminate\Queue\SerializesModels;
 
@@ -10,7 +10,7 @@ class BeforeUpdateContentEvent extends Event
 {
     use SerializesModels;
 
-    public function __construct(public Request $request, public false|Model|null $data)
+    public function __construct(public Request $request, public bool|BaseModel|null $data)
     {
     }
 }

@@ -2,7 +2,9 @@
 
 namespace Botble\Base\Forms;
 
-use Assets;
+use Botble\Base\Events\BeforeCreateContentEvent;
+use Botble\Base\Events\BeforeEditContentEvent;
+use Botble\Base\Facades\Assets;
 use Botble\Base\Forms\Fields\AutocompleteField;
 use Botble\Base\Forms\Fields\ColorField;
 use Botble\Base\Forms\Fields\CustomRadioField;
@@ -16,12 +18,11 @@ use Botble\Base\Forms\Fields\MediaImagesField;
 use Botble\Base\Forms\Fields\OnOffField;
 use Botble\Base\Forms\Fields\RepeaterField;
 use Botble\Base\Forms\Fields\TimeField;
+use Botble\JsValidation\Facades\JsValidator;
 use Botble\JsValidation\Javascript\JavascriptValidator;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
-use JsValidator;
-use Kris\LaravelFormBuilder\Fields\FormField;
-use Kris\LaravelFormBuilder\Form;
 
 abstract class FormAbstract extends Form
 {
@@ -90,7 +91,7 @@ abstract class FormAbstract extends Form
         return $this->metaBoxes;
     }
 
-    public function getMetaBox(string $name): string
+    public function getMetaBox(string $name): string|View
     {
         if (! Arr::get($this->metaBoxes, $name)) {
             return '';
@@ -98,7 +99,13 @@ abstract class FormAbstract extends Form
 
         $metaBox = $this->metaBoxes[$name];
 
-        return view('core/base::forms.partials.meta-box', compact('metaBox'))->render();
+        $view = view('core/base::forms.partials.meta-box', compact('metaBox'));
+
+        if (Arr::get($metaBox, 'render') === false) {
+            return $view;
+        }
+
+        return $view->render();
     }
 
     public function addMetaBoxes(array|string $boxes): self
@@ -203,11 +210,6 @@ abstract class FormAbstract extends Form
         return apply_filters('form_custom_fields', $this, $this->formHelper);
     }
 
-    /**
-     * @param string $name
-     * @param string $class
-     * @return $this
-     */
     public function addCustomField($name, $class): self
     {
         if (! $this->formHelper->hasCustomField($name)) {
@@ -260,7 +262,15 @@ abstract class FormAbstract extends Form
         $class = $this->getFormOption('class');
         $this->setFormOption('class', $class . ' dirty-check');
 
-        apply_filters(BASE_FILTER_BEFORE_RENDER_FORM, $this, $this->getModel());
+        $model = $this->getModel();
+
+        apply_filters(BASE_FILTER_BEFORE_RENDER_FORM, $this, $model);
+
+        if ($model->getKey()) {
+            event(new BeforeEditContentEvent($this->request, $model));
+        } else {
+            event(new BeforeCreateContentEvent($this->request, $model));
+        }
 
         return parent::renderForm($options, $showStart, $showFields, $showEnd);
     }

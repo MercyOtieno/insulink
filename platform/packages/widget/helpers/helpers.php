@@ -1,5 +1,7 @@
 <?php
 
+use Botble\Widget\Facades\Widget;
+use Botble\Widget\Facades\WidgetGroup;
 use Botble\Widget\Factories\WidgetFactory;
 use Botble\Widget\WidgetGroupCollection;
 

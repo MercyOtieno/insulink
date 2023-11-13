@@ -7,6 +7,7 @@ use Botble\ACL\Traits\PermissionTrait;
 use Botble\Base\Casts\SafeContent;
 use Botble\Base\Models\BaseModel;
 use Botble\Base\Supports\Avatar;
+use Botble\Media\Facades\RvMedia;
 use Botble\Media\Models\MediaFile;
 use Exception;
 use Illuminate\Auth\Authenticatable;
@@ -22,7 +23,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\Access\Authorizable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-use RvMedia;
 
 class User extends BaseModel implements
     AuthenticatableContract,
@@ -55,6 +55,7 @@ class User extends BaseModel implements
     ];
 
     protected $casts = [
+        'email_verified_at' => 'datetime',
         'permissions' => 'json',
         'username' => SafeContent::class,
         'first_name' => SafeContent::class,
@@ -84,6 +85,13 @@ class User extends BaseModel implements
         );
     }
 
+    protected function activated(): Attribute
+    {
+        return Attribute::make(
+            get: fn (): bool => $this->activations()->where('completed', true)->exists(),
+        );
+    }
+
     protected function avatarUrl(): Attribute
     {
         return Attribute::make(
@@ -98,20 +106,6 @@ class User extends BaseModel implements
                     return RvMedia::getDefaultImage();
                 }
             },
-        );
-    }
-
-    protected function permissions(): Attribute
-    {
-        return Attribute::make(
-            get: function ($value) {
-                try {
-                    return json_decode($value ?: '', true) ?: [];
-                } catch (Exception) {
-                    return [];
-                }
-            },
-            set: fn ($value) => $value ? json_encode($value) : ''
         );
     }
 
@@ -180,7 +174,7 @@ class User extends BaseModel implements
         return false;
     }
 
-    public function delete(): ?bool
+    public function delete(): bool|null
     {
         if ($this->exists) {
             $this->activations()->delete();

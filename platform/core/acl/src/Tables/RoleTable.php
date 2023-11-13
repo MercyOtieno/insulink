@@ -2,18 +2,17 @@
 
 namespace Botble\ACL\Tables;
 
-use BaseHelper;
-use Html;
+use Botble\ACL\Models\Role;
+use Botble\Base\Facades\BaseHelper;
+use Botble\Base\Facades\Html;
+use Botble\Table\Abstracts\TableAbstract;
+use Botble\Table\DataTables;
+use Illuminate\Contracts\Routing\UrlGenerator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
-use Botble\ACL\Repositories\Interfaces\RoleInterface;
-use Botble\ACL\Repositories\Interfaces\UserInterface;
-use Botble\Table\Abstracts\TableAbstract;
-use Illuminate\Contracts\Routing\UrlGenerator;
-use Yajra\DataTables\DataTables;
 
 class RoleTable extends TableAbstract
 {
@@ -24,12 +23,11 @@ class RoleTable extends TableAbstract
     public function __construct(
         DataTables $table,
         UrlGenerator $urlGenerator,
-        RoleInterface $repository,
-        protected UserInterface $userRepository
+        Role $role
     ) {
         parent::__construct($table, $urlGenerator);
 
-        $this->repository = $repository;
+        $this->model = $role;
 
         if (! Auth::user()->hasAnyPermission(['roles.edit', 'roles.destroy'])) {
             $this->hasOperations = false;
@@ -41,26 +39,26 @@ class RoleTable extends TableAbstract
     {
         $data = $this->table
             ->eloquent($this->query())
-            ->editColumn('name', function ($item) {
+            ->editColumn('name', function (Role $item) {
                 if (! Auth::user()->hasPermission('roles.edit')) {
                     return BaseHelper::clean($item->name);
                 }
 
-                return Html::link(route('roles.edit', $item->id), BaseHelper::clean($item->name));
+                return Html::link(route('roles.edit', $item->getKey()), BaseHelper::clean($item->name));
             })
-            ->editColumn('checkbox', function ($item) {
-                return $this->getCheckbox($item->id);
+            ->editColumn('checkbox', function (Role $item) {
+                return $this->getCheckbox($item->getKey());
             })
-            ->editColumn('description', function ($item) {
+            ->editColumn('description', function (Role $item) {
                 return $item->description;
             })
-            ->editColumn('created_at', function ($item) {
+            ->editColumn('created_at', function (Role $item) {
                 return BaseHelper::formatDate($item->created_at);
             })
-            ->editColumn('created_by', function ($item) {
+            ->editColumn('created_by', function (Role $item) {
                 return BaseHelper::clean($item->author->name);
             })
-            ->addColumn('operations', function ($item) {
+            ->addColumn('operations', function (Role $item) {
                 return $this->getOperations('roles.edit', 'roles.destroy', $item);
             });
 
@@ -69,7 +67,9 @@ class RoleTable extends TableAbstract
 
     public function query(): Relation|Builder|QueryBuilder
     {
-        $query = $this->repository->getModel()
+        $query = $this
+            ->getModel()
+            ->query()
             ->with('author')
             ->select([
                 'id',

@@ -3,17 +3,17 @@
     'flag' => '{-name}.index',
 ],
 [
-    'name'        => 'Create',
-    'flag'        => '{-name}.create',
+    'name' => 'Create',
+    'flag' => '{-name}.create',
     'parent_flag' => '{-name}.index',
 ],
 [
-    'name'        => 'Edit',
-    'flag'        => '{-name}.edit',
+    'name' => 'Edit',
+    'flag' => '{-name}.edit',
     'parent_flag' => '{-name}.index',
 ],
 [
-    'name'        => 'Delete',
-    'flag'        => '{-name}.destroy',
+    'name' => 'Delete',
+    'flag' => '{-name}.destroy',
     'parent_flag' => '{-name}.index',
 ],

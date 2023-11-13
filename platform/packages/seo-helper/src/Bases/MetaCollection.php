@@ -72,7 +72,7 @@ abstract class MetaCollection extends Collection implements MetaCollectionContra
     /**
      * Add a meta to collection.
      *
-     * @param Meta $item
+     * @param Meta|array $item
      *
      * @return MetaCollection
      */

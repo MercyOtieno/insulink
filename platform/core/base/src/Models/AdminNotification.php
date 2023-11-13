@@ -2,11 +2,11 @@
 
 namespace Botble\Base\Models;
 
+use Botble\Base\Casts\SafeContent;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\MassPrunable;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Route;
 
 class AdminNotification extends BaseModel
 {
@@ -19,11 +19,16 @@ class AdminNotification extends BaseModel
         'action_label',
         'action_url',
         'description',
+        'permission',
         'read_at',
     ];
 
     protected $casts = [
         'read_at' => 'datetime',
+        'title' => SafeContent::class,
+        'action_label' => SafeContent::class,
+        'action_url' => SafeContent::class,
+        'description' => SafeContent::class,
     ];
 
     public function markAsRead(): void
@@ -35,40 +40,40 @@ class AdminNotification extends BaseModel
 
     public function prunable(): Builder|BaseQueryBuilder
     {
-        return $this->whereDate('created_at', '>', Carbon::now()->subDays(30)->toDateString());
-    }
-
-    public function isAbleToAccess(): bool
-    {
-        $route = collect(Route::getRoutes())->first(function ($route) {
-            return $route->matches(request()->create($this->action_url));
-        });
-
-        $routeName = $route ? $route->getName() : null;
-
-        return ! $routeName || Auth::user()->hasPermission($routeName);
+        return static::where('created_at', '<=', Carbon::now()->subMonth());
     }
 
     public static function countUnread(): int
     {
-        $notificationUnread = AdminNotification::query()
+        return AdminNotification::query()
             ->whereNull('read_at')
+            ->hasPermission()
             ->select('action_url')
-            ->get();
-
-        foreach ($notificationUnread as $key => $notification) {
-            if (! $notification->isAbleToAccess()) {
-                $notificationUnread->forget($key);
-            }
-        }
-
-        return $notificationUnread->count();
+            ->count();
     }
 
-    protected static function boot()
+    public function scopeHasPermission(BaseQueryBuilder $query): void
     {
-        parent::boot();
+        $user = Auth::user();
 
+        if (! $user->isSuperUser()) {
+            $query->where(function (BaseQueryBuilder $query) use ($user) {
+                $query
+                    ->whereNull('permission')
+                    ->orWhereIn('permission', $user->permissions);
+            });
+        }
+    }
+
+    public function isAbleToAccess(): bool
+    {
+        $user = Auth::user();
+
+        return ! $this->permission || $user->isSuperUser() || $user->hasPermission($this->permission);
+    }
+
+    protected static function booted(): void
+    {
         static::creating(function (AdminNotification $notification) {
             if ($notification->action_url) {
                 $notification->action_url = str_replace(url(''), '', $notification->action_url);

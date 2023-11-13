@@ -4,13 +4,13 @@
             @if ($i != (count($crumbs) - 1))
                 <li class="breadcrumb-item">
                     <a href="{{ $crumb['url'] }}" title="{{ $crumb['label'] }}">
-                        {!! BaseHelper::clean($crumb['label']) !!}
+                        {{ $crumb['label'] }}
                     </a>
                 </li>
             @else
                 <li class="breadcrumb-item active">
                     <span>
-                        {!! BaseHelper::clean($crumb['label']) !!}
+                        {{ $crumb['label'] }}
                     </span>
                 </li>
             @endif

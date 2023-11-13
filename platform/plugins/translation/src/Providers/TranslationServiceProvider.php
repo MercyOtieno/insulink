@@ -2,17 +2,22 @@
 
 namespace Botble\Translation\Providers;
 
-use Botble\Translation\Console\DownloadLocaleCommand;
-use Botble\Translation\Console\RemoveUnusedTranslationsCommand;
-use Botble\Translation\Console\UpdateThemeTranslationCommand;
-use Illuminate\Routing\Events\RouteMatched;
+use Botble\Base\Facades\DashboardMenu;
+use Botble\Base\Supports\ServiceProvider;
 use Botble\Base\Traits\LoadAndPublishDataTrait;
 use Botble\Translation\Console\CleanCommand;
+use Botble\Translation\Console\DownloadLocaleCommand;
 use Botble\Translation\Console\ExportCommand;
 use Botble\Translation\Console\ImportCommand;
+use Botble\Translation\Console\RemoveLocaleCommand;
+use Botble\Translation\Console\RemoveUnusedTranslationsCommand;
 use Botble\Translation\Console\ResetCommand;
+use Botble\Translation\Console\UpdateThemeTranslationCommand;
 use Botble\Translation\Manager;
-use Illuminate\Support\ServiceProvider;
+use Botble\Translation\Models\Translation;
+use Botble\Translation\Repositories\Eloquent\TranslationRepository;
+use Botble\Translation\Repositories\Interfaces\TranslationInterface;
+use Illuminate\Routing\Events\RouteMatched;
 
 class TranslationServiceProvider extends ServiceProvider
 {
@@ -20,6 +25,10 @@ class TranslationServiceProvider extends ServiceProvider
 
     public function register(): void
     {
+        $this->app->bind(TranslationInterface::class, function () {
+            return new TranslationRepository(new Translation());
+        });
+
         $this->app->bind('translation-manager', Manager::class);
 
         $this->commands([
@@ -34,6 +43,7 @@ class TranslationServiceProvider extends ServiceProvider
                 UpdateThemeTranslationCommand::class,
                 RemoveUnusedTranslationsCommand::class,
                 DownloadLocaleCommand::class,
+                RemoveLocaleCommand::class,
             ]);
         }
     }
@@ -49,7 +59,7 @@ class TranslationServiceProvider extends ServiceProvider
             ->publishAssets();
 
         $this->app['events']->listen(RouteMatched::class, function () {
-            dashboard_menu()
+            DashboardMenu::make()
                 ->registerItem([
                     'id' => 'cms-plugin-translation',
                     'priority' => 997,

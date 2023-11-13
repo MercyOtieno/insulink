@@ -2,39 +2,38 @@
 
 namespace Botble\ACL\Tables;
 
-use BaseHelper;
+use Botble\ACL\Enums\UserStatusEnum;
+use Botble\ACL\Models\User;
+use Botble\ACL\Services\ActivateUserService;
+use Botble\Base\Events\UpdatedContentEvent;
+use Botble\Base\Exceptions\DisabledInDemoModeException;
+use Botble\Base\Facades\BaseHelper;
+use Botble\Base\Facades\Html;
+use Botble\Table\Abstracts\TableAbstract;
+use Botble\Table\DataTables;
+use Exception;
+use Illuminate\Contracts\Routing\UrlGenerator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Auth;
-use Botble\ACL\Enums\UserStatusEnum;
-use Botble\ACL\Repositories\Interfaces\ActivationInterface;
-use Botble\ACL\Repositories\Interfaces\UserInterface;
-use Botble\ACL\Services\ActivateUserService;
-use Botble\Base\Events\UpdatedContentEvent;
-use Botble\Table\Abstracts\TableAbstract;
-use Exception;
-use Html;
-use Illuminate\Contracts\Routing\UrlGenerator;
 use Illuminate\Support\Arr;
-use Yajra\DataTables\DataTables;
+use Illuminate\Support\Facades\Auth;
 
 class UserTable extends TableAbstract
 {
-    protected $hasActions = true;
-
-    protected $hasFilter = true;
-
     public function __construct(
         DataTables $table,
         UrlGenerator $urlGenerator,
-        UserInterface $repository,
+        User $user,
         protected ActivateUserService $service
     ) {
         parent::__construct($table, $urlGenerator);
 
-        $this->repository = $repository;
+        $this->model = $user;
+
+        $this->hasActions = true;
+        $this->hasFilter = true;
 
         if (! Auth::user()->hasAnyPermission(['users.edit', 'users.destroy'])) {
             $this->hasOperations = false;
@@ -46,49 +45,49 @@ class UserTable extends TableAbstract
     {
         $data = $this->table
             ->eloquent($this->query())
-            ->editColumn('checkbox', function ($item) {
-                return $this->getCheckbox($item->id);
+            ->editColumn('checkbox', function (User $item) {
+                return $this->getCheckbox($item->getKey());
             })
-            ->editColumn('username', function ($item) {
+            ->editColumn('username', function (User $item) {
                 if (! Auth::user()->hasPermission('users.edit')) {
                     return $item->username;
                 }
 
-                return Html::link(route('users.profile.view', $item->id), $item->username);
+                return Html::link(route('users.profile.view', $item->getKey()), $item->username);
             })
-            ->editColumn('created_at', function ($item) {
+            ->editColumn('created_at', function (User $item) {
                 return BaseHelper::formatDate($item->created_at);
             })
-            ->editColumn('role_name', function ($item) {
+            ->editColumn('role_name', function (User $item) {
                 if (! Auth::user()->hasPermission('users.edit')) {
                     return $item->role_name;
                 }
 
                 return view('core/acl::users.partials.role', ['item' => $item])->render();
             })
-            ->editColumn('super_user', function ($item) {
+            ->editColumn('super_user', function (User $item) {
                 return $item->super_user ? trans('core/base::base.yes') : trans('core/base::base.no');
             })
-            ->editColumn('status', function ($item) {
-                if (app(ActivationInterface::class)->completed($item)) {
+            ->editColumn('status', function (User $item) {
+                if ($item->activations()->where('completed', true)->exists()) {
                     return UserStatusEnum::ACTIVATED()->toHtml();
                 }
 
                 return UserStatusEnum::DEACTIVATED()->toHtml();
             })
             ->removeColumn('role_id')
-            ->addColumn('operations', function ($item) {
+            ->addColumn('operations', function (User $item) {
                 $action = null;
                 if (Auth::user()->isSuperUser()) {
                     $action = Html::link(
-                        route('users.make-super', $item->id),
+                        route('users.make-super', $item->getKey()),
                         trans('core/acl::users.make_super'),
                         ['class' => 'btn btn-info']
                     )->toHtml();
 
                     if ($item->super_user) {
                         $action = Html::link(
-                            route('users.remove-super', $item->id),
+                            route('users.remove-super', $item->getKey()),
                             trans('core/acl::users.remove_super'),
                             ['class' => 'btn btn-danger']
                         )->toHtml();
@@ -107,7 +106,9 @@ class UserTable extends TableAbstract
 
     public function query(): Relation|Builder|QueryBuilder
     {
-        $query = $this->repository->getModel()
+        $query = $this
+            ->getModel()
+            ->query()
             ->leftJoin('role_users', 'users.id', '=', 'role_users.user_id')
             ->leftJoin('roles', 'roles.id', '=', 'role_users.role_id')
             ->select([
@@ -160,7 +161,7 @@ class UserTable extends TableAbstract
         return $this->addCreateButton(route('users.create'), 'users.create');
     }
 
-    public function htmlDrawCallbackFunction(): ?string
+    public function htmlDrawCallbackFunction(): string|null
     {
         return parent::htmlDrawCallbackFunction() . '$(".editable").editable({mode: "inline"});';
     }
@@ -219,10 +220,10 @@ class UserTable extends TableAbstract
         ];
     }
 
-    public function saveBulkChanges(array $ids, string $inputKey, ?string $inputValue): bool
+    public function saveBulkChanges(array $ids, string $inputKey, string|null $inputValue): bool
     {
-        if (app()->environment('demo')) {
-            throw new Exception(trans('core/base::system.disabled_in_demo_mode'));
+        if (BaseHelper::hasDemoModeEnabled()) {
+            throw new DisabledInDemoModeException();
         }
 
         if ($inputKey === 'status') {
@@ -233,12 +234,15 @@ class UserTable extends TableAbstract
                     $hasWarning = true;
                 }
 
-                $user = $this->repository->findOrFail($id);
+                /**
+                 * @var User $user
+                 */
+                $user = $this->getModel()->query()->findOrFail($id);
 
                 if ($inputValue == UserStatusEnum::ACTIVATED) {
                     $this->service->activate($user);
                 } else {
-                    app(ActivationInterface::class)->remove($user);
+                    $this->service->remove($user);
                 }
 
                 event(new UpdatedContentEvent(USER_MODULE_SCREEN_NAME, request(), $user));

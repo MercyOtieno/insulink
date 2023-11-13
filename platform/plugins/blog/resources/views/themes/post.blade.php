@@ -21,13 +21,15 @@
         @endif
     </div>
 </header>
-{!! BaseHelper::clean($post->content) !!}
+<div class='ck-content'>
+    {!! BaseHelper::clean($post->content) !!}
+</div>
 <br />
 {!! apply_filters(BASE_FILTER_PUBLIC_COMMENT_AREA, null) !!}
 
-@php $relatedPosts = get_related_posts($post->id, 2); @endphp
+@php $relatedPosts = get_related_posts($post->getKey(), 2); @endphp
 
-@if ($relatedPosts->count())
+@if ($relatedPosts->isNotEmpty())
     <footer>
         @foreach ($relatedPosts as $relatedItem)
             <div>

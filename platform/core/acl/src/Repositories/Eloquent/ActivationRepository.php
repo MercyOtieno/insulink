@@ -5,8 +5,10 @@ namespace Botble\ACL\Repositories\Eloquent;
 use Botble\ACL\Models\Activation;
 use Botble\ACL\Models\User;
 use Botble\ACL\Repositories\Interfaces\ActivationInterface;
+use Botble\Base\Models\BaseModel;
 use Botble\Support\Repositories\Eloquent\RepositoriesAbstract;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Str;
 
@@ -17,8 +19,11 @@ class ActivationRepository extends RepositoriesAbstract implements ActivationInt
      */
     protected int $expires = 259200;
 
-    public function createUser(User $user): Activation
+    public function createUser(User $user): BaseModel|Model
     {
+        /**
+         * @var Model $activation
+         */
         $activation = $this->model;
 
         $code = $this->generateActivationCode();
@@ -34,7 +39,7 @@ class ActivationRepository extends RepositoriesAbstract implements ActivationInt
         return $activation;
     }
 
-    public function exists(User $user, $code = null): Activation|bool
+    public function exists(User $user, $code = null): BaseModel|bool
     {
         $expires = $this->expires();
 
@@ -89,7 +94,7 @@ class ActivationRepository extends RepositoriesAbstract implements ActivationInt
         return true;
     }
 
-    public function completed(User $user): Activation|bool
+    public function completed(User $user): BaseModel|bool
     {
         $activation = $this
             ->model

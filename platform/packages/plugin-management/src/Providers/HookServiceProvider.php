@@ -2,10 +2,10 @@
 
 namespace Botble\PluginManagement\Providers;
 
-use BaseHelper;
+use Botble\Base\Facades\BaseHelper;
+use Botble\Base\Supports\ServiceProvider;
 use Botble\Dashboard\Supports\DashboardWidgetInstance;
 use Illuminate\Support\Collection;
-use Illuminate\Support\ServiceProvider;
 
 class HookServiceProvider extends ServiceProvider
 {

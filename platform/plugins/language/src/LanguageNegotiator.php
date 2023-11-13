@@ -7,18 +7,12 @@ use Locale;
 
 class LanguageNegotiator
 {
-    protected string $defaultLocale;
-
     protected array $supportedLanguages = [];
-
-    protected Request $request;
 
     protected bool $useIntl = false;
 
-    public function __construct(string $defaultLocale, array $supportedLanguages, Request $request)
+    public function __construct(protected string $defaultLocale, array $supportedLanguages, protected Request $request)
     {
-        $this->defaultLocale = $defaultLocale;
-
         if (extension_loaded('intl') && class_exists('Locale')) {
             $this->useIntl = true;
 
@@ -37,8 +31,6 @@ class LanguageNegotiator
         } else {
             $this->supportedLanguages = $supportedLanguages;
         }
-
-        $this->request = $request;
     }
 
     /**
@@ -138,7 +130,7 @@ class LanguageNegotiator
 
                 //If for some reason the Accept-Language header only sends language with country
                 //we should make the language without country an accepted option, with a value
-                //less than it's parent.
+                //less than its parent.
                 $lOps = explode('-', $la);
                 array_pop($lOps);
                 while (! empty($lOps)) {

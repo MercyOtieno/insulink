@@ -2,15 +2,16 @@
 
 namespace Botble\Media\Models;
 
-use BaseHelper;
+use Botble\Base\Casts\SafeContent;
+use Botble\Base\Facades\BaseHelper;
 use Botble\Base\Models\BaseModel;
+use Botble\Media\Facades\RvMedia;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Str;
-use Request;
-use RvMedia;
 
 class MediaFile extends BaseModel
 {
@@ -32,15 +33,13 @@ class MediaFile extends BaseModel
 
     protected $casts = [
         'options' => 'json',
+        'name' => SafeContent::class,
     ];
 
-    protected static function boot()
+    protected static function booted(): void
     {
-        parent::boot();
-        static::deleting(function (MediaFile $file) {
-            if ($file->isForceDeleting()) {
-                RvMedia::deleteFile($file);
-            }
+        static::forceDeleting(function (MediaFile $file) {
+            RvMedia::deleteFile($file);
         });
     }
 
@@ -93,7 +92,7 @@ class MediaFile extends BaseModel
     protected function previewUrl(): Attribute
     {
         return Attribute::make(
-            get: function (): ?string {
+            get: function (): string|null {
                 $preview = null;
                 switch ($this->type) {
                     case 'image':

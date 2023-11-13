@@ -11,6 +11,14 @@ p {
   margin-bottom: 22px !important;
 }
 
+.text-orange {
+  color: #F15115 !important;
+}
+
+.text-blue {
+  color: #048ABF;
+}
+
 .quoteresults li {
   border-bottom: 1px solid #ddd;
   padding-bottom: 2rem;
@@ -275,11 +283,11 @@ footer .help {
 }
 
 #dsc__slideshow {
-  padding: 4rem 0;
+  padding: 20rem 0;
   padding-bottom: 5.5rem;
   background-size: cover;
   background-attachment: fixed;
-  background-image: url(/images/slider-1.png);
+  background-image: url(/images/slider.webp);
   background-repeat: no-repeat;
 }
 #dsc__slideshow .widget .svg-icon {
@@ -754,4 +762,23 @@ h4,
   font-size: 15px;
   color: #F15115;
   content: "\f05d";
+}
+
+.btn-orange {
+  background-color: #F15115;
+  border-color: #F15115;
+  color: #fff;
+}
+.btn-orange:hover {
+  border-color: #F15115;
+  border-width: 2px;
+  color: #F15115;
+  background: none;
+}
+
+a {
+  text-decoration: none !important;
+}
+a:hover {
+  text-decoration: none;
 }

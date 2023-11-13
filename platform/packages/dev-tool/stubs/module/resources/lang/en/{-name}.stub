@@ -1,7 +1,6 @@
 <?php
 
 return [
-    'name'   => '{++Names}',
+    'name' => '{++Names}',
     'create' => 'New {++name}',
-    'edit'   => 'Edit {++name}',
 ];

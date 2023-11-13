@@ -2,30 +2,29 @@
 
 namespace Botble\Blog\Tables;
 
-use BaseHelper;
 use Botble\Base\Enums\BaseStatusEnum;
-use Botble\Blog\Repositories\Interfaces\TagInterface;
+use Botble\Base\Facades\BaseHelper;
+use Botble\Base\Facades\Html;
+use Botble\Blog\Models\Tag;
 use Botble\Table\Abstracts\TableAbstract;
-use Html;
+use Botble\Table\DataTables;
 use Illuminate\Contracts\Routing\UrlGenerator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
-use Yajra\DataTables\DataTables;
 
 class TagTable extends TableAbstract
 {
-    protected $hasActions = true;
-
-    protected $hasFilter = true;
-
-    public function __construct(DataTables $table, UrlGenerator $urlGenerator, TagInterface $tagRepository)
+    public function __construct(DataTables $table, UrlGenerator $urlGenerator, Tag $tag)
     {
         parent::__construct($table, $urlGenerator);
 
-        $this->repository = $tagRepository;
+        $this->model = $tag;
+
+        $this->hasActions = true;
+        $this->hasFilter = true;
 
         if (! Auth::user()->hasAnyPermission(['tags.edit', 'tags.destroy'])) {
             $this->hasOperations = false;
@@ -37,27 +36,27 @@ class TagTable extends TableAbstract
     {
         $data = $this->table
             ->eloquent($this->query())
-            ->editColumn('name', function ($item) {
+            ->editColumn('name', function (Tag $item) {
                 if (! Auth::user()->hasPermission('tags.edit')) {
                     return BaseHelper::clean($item->name);
                 }
 
-                return Html::link(route('tags.edit', $item->id), BaseHelper::clean($item->name));
+                return Html::link(route('tags.edit', $item->getKey()), BaseHelper::clean($item->name));
             })
-            ->editColumn('checkbox', function ($item) {
-                return $this->getCheckbox($item->id);
+            ->editColumn('checkbox', function (Tag $item) {
+                return $this->getCheckbox($item->getKey());
             })
-            ->editColumn('created_at', function ($item) {
+            ->editColumn('created_at', function (Tag $item) {
                 return BaseHelper::formatDate($item->created_at);
             })
-            ->editColumn('status', function ($item) {
+            ->editColumn('status', function (Tag $item) {
                 if ($this->request()->input('action') === 'excel') {
                     return $item->status->getValue();
                 }
 
                 return BaseHelper::clean($item->status->toHtml());
             })
-            ->addColumn('operations', function ($item) {
+            ->addColumn('operations', function (Tag $item) {
                 return $this->getOperations('tags.edit', 'tags.destroy', $item);
             });
 
@@ -66,12 +65,15 @@ class TagTable extends TableAbstract
 
     public function query(): Relation|Builder|QueryBuilder
     {
-        $query = $this->repository->getModel()->select([
-            'id',
-            'name',
-            'created_at',
-            'status',
-        ]);
+        $query = $this
+            ->getModel()
+            ->query()
+            ->select([
+                'id',
+                'name',
+                'created_at',
+                'status',
+            ]);
 
         return $this->applyScopes($query);
     }

@@ -11,6 +11,8 @@ import Domestic from "./components/DomesticInsurance";
 import HealthIndividual from "./components/Health-Individual";
 import HealthCorporate from "./components/Health-Corporate";
 import Travel from "./components/Travel";
+import Business from "./components/Business.vue";
+import Callback from "./components/Creatives.vue";
 import Paccident from "./components/PersonalGroupAccident";
 import Claims from "./components/Claims";
 import Genform from "./components/GenForm";
@@ -43,7 +45,7 @@ window.DomesticSwiper = DomesticSwiper;
 window.HealthSwiper = HealthSwiper;
 Vue.use(BootstrapVue, IconsPlugin);
 Vue.use(VeeValidate);
-Vue.use(VueTelInput); 
+Vue.use(VueTelInput);
 Vue.use(Element, { locale });
 Vue.use(Vuikit);
 Vue.use(VuikitIcons);
@@ -111,7 +113,7 @@ Vue.filter('formatCurrency', function(n) {
 
 Vue.filter('formartDate', function (date) {
     return moment(date).format("DD/MM/YYYY");
-}) 
+})
 
 Vue.filter('getPercentage', function(n) {
     n *= 100;
@@ -174,6 +176,8 @@ const app = new Vue({
         Travel,
         Paccident,
         Claims,
-        Genform
+        Genform,
+        Business,
+        Callback
     }
 });

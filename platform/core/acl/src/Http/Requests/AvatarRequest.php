@@ -2,8 +2,8 @@
 
 namespace Botble\ACL\Http\Requests;
 
+use Botble\Media\Facades\RvMedia;
 use Botble\Support\Http\Requests\Request;
-use RvMedia;
 
 class AvatarRequest extends Request
 {
@@ -11,7 +11,7 @@ class AvatarRequest extends Request
     {
         return [
             'avatar_file' => RvMedia::imageValidationRule(),
-            'avatar_data' => 'required',
+            'avatar_data' => 'required|string',
         ];
     }
 }

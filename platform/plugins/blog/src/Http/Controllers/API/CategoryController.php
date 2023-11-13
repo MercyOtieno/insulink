@@ -10,8 +10,8 @@ use Botble\Blog\Http\Resources\ListCategoryResource;
 use Botble\Blog\Models\Category;
 use Botble\Blog\Repositories\Interfaces\CategoryInterface;
 use Botble\Blog\Supports\FilterCategory;
+use Botble\Slug\Facades\SlugHelper;
 use Illuminate\Http\Request;
-use SlugHelper;
 
 class CategoryController extends Controller
 {
@@ -31,8 +31,8 @@ class CategoryController extends Controller
                 'with' => ['slugable'],
                 'condition' => ['status' => BaseStatusEnum::PUBLISHED],
                 'paginate' => [
-                    'per_page' => (int)$request->input('per_page', 10),
-                    'current_paged' => (int)$request->input('page', 1),
+                    'per_page' => $request->integer('per_page', 10),
+                    'current_paged' => $request->integer('page', 1),
                 ],
             ]);
 

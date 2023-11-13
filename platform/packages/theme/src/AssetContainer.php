@@ -2,42 +2,31 @@
 
 namespace Botble\Theme;
 
+use Botble\Base\Facades\Html;
+use Botble\Theme\Contracts\Theme as ThemeContract;
+use Botble\Theme\Facades\Theme as ThemeFacade;
 use Exception;
-use Html;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\File;
-use Theme as ThemeFacade;
 
 class AssetContainer
 {
-    /**
-     * Use a theme path.
-     */
     protected bool $usePath = false;
 
-    /**
-     * Path to theme.
-     */
     protected string $path;
-
-    /**
-     * The asset container name.
-     */
-    protected string $name;
 
     protected array $assets = [];
 
-    public function __construct(string $name)
+    public function __construct(protected string $name)
     {
-        $this->name = $name;
     }
 
-    public function originUrl(?string $uri): string
+    public function originUrl(string|null $uri): string
     {
         return $this->configAssetUrl($uri);
     }
 
-    protected function configAssetUrl(?string $path): string
+    protected function configAssetUrl(string|null $path): string
     {
         return asset($path);
     }
@@ -45,7 +34,7 @@ class AssetContainer
     /**
      * Return asset path with current theme path.
      */
-    public function url(?string $uri): string
+    public function url(string|null $uri): string
     {
         // If path is full, so we just return.
         if (preg_match('#^http|//:#', $uri)) {
@@ -88,7 +77,7 @@ class AssetContainer
         string|array $source,
         array $dependencies = [],
         array $attributes = [],
-        ?string $version = null
+        string|null $version = null
     ): self {
         if (is_array($source)) {
             foreach ($source as $path) {
@@ -135,7 +124,7 @@ class AssetContainer
         string|array $source,
         array $dependencies = [],
         array $attributes = [],
-        ?string $version = null
+        string|null $version = null
     ): self {
         return $this
             ->usePath()
@@ -285,7 +274,7 @@ class AssetContainer
 
         // Make theme to use few features.
         if (! $theme) {
-            $theme = app('theme');
+            $theme = app(ThemeContract::class);
         }
 
         $currentTheme = ThemeFacade::getThemeName();
@@ -447,7 +436,7 @@ class AssetContainer
     /**
      * Get the HTML link to a registered asset.
      */
-    protected function asset(string $group, string $name): ?string
+    protected function asset(string $group, string $name): string|null
     {
         if (! isset($this->assets[$group][$name])) {
             return '';
@@ -484,7 +473,7 @@ class AssetContainer
     /**
      * Render asset as HTML.
      */
-    public function html(string $group, string $source, array $attributes): ?string
+    public function html(string $group, string $source, array $attributes): string|null
     {
         switch ($group) {
             case 'script':
@@ -528,7 +517,7 @@ class AssetContainer
     /**
      * Build a single attribute element.
      */
-    protected function attributeElement(string $key, ?string $value): ?string
+    protected function attributeElement(string $key, string|null $value): string|null
     {
         if (is_numeric($key)) {
             return $value;

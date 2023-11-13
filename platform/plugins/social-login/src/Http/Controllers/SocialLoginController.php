@@ -2,10 +2,13 @@
 
 namespace Botble\SocialLogin\Http\Controllers;
 
-use Assets;
+use Botble\Base\Facades\Assets;
+use Botble\Base\Facades\PageTitle;
 use Botble\Base\Http\Controllers\BaseController;
 use Botble\Base\Http\Responses\BaseHttpResponse;
+use Botble\Media\Facades\RvMedia;
 use Botble\Setting\Supports\SettingStore;
+use Botble\SocialLogin\Facades\SocialService;
 use Botble\SocialLogin\Http\Requests\SocialLoginRequest;
 use Carbon\Carbon;
 use Exception;
@@ -15,9 +18,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Laravel\Socialite\AbstractUser;
-use RvMedia;
-use Socialite;
-use SocialService;
+use Laravel\Socialite\Facades\Socialite;
 
 class SocialLoginController extends BaseController
 {
@@ -157,7 +158,7 @@ class SocialLoginController extends BaseController
 
     public function getSettings()
     {
-        page_title()->setTitle(trans('plugins/social-login::social-login.settings.title'));
+        PageTitle::setTitle(trans('plugins/social-login::social-login.settings.title'));
 
         Assets::addScriptsDirectly('vendor/core/plugins/social-login/js/social-login.js');
 

@@ -2,29 +2,26 @@
 
 namespace Botble\Blog\Providers;
 
-use ApiHelper;
-use Botble\LanguageAdvanced\Supports\LanguageAdvancedManager;
-use Botble\Shortcode\View\View;
-use Illuminate\Routing\Events\RouteMatched;
+use Botble\Api\Facades\ApiHelper;
+use Botble\Base\Facades\DashboardMenu;
+use Botble\Base\Supports\ServiceProvider;
 use Botble\Base\Traits\LoadAndPublishDataTrait;
-use Botble\Blog\Models\Post;
-use Botble\Blog\Repositories\Caches\PostCacheDecorator;
-use Botble\Blog\Repositories\Eloquent\PostRepository;
-use Botble\Blog\Repositories\Interfaces\PostInterface;
-use Illuminate\Support\ServiceProvider;
 use Botble\Blog\Models\Category;
-use Botble\Blog\Repositories\Caches\CategoryCacheDecorator;
-use Botble\Blog\Repositories\Eloquent\CategoryRepository;
-use Botble\Blog\Repositories\Interfaces\CategoryInterface;
+use Botble\Blog\Models\Post;
 use Botble\Blog\Models\Tag;
-use Botble\Blog\Repositories\Caches\TagCacheDecorator;
+use Botble\Blog\Repositories\Eloquent\CategoryRepository;
+use Botble\Blog\Repositories\Eloquent\PostRepository;
 use Botble\Blog\Repositories\Eloquent\TagRepository;
+use Botble\Blog\Repositories\Interfaces\CategoryInterface;
+use Botble\Blog\Repositories\Interfaces\PostInterface;
 use Botble\Blog\Repositories\Interfaces\TagInterface;
-use Language;
-use Note;
-use SeoHelper;
-use SiteMapManager;
-use SlugHelper;
+use Botble\Language\Facades\Language;
+use Botble\LanguageAdvanced\Supports\LanguageAdvancedManager;
+use Botble\SeoHelper\Facades\SeoHelper;
+use Botble\Shortcode\View\View;
+use Botble\Slug\Facades\SlugHelper;
+use Botble\Theme\Facades\SiteMapManager;
+use Illuminate\Routing\Events\RouteMatched;
 
 /**
  * @since 02/07/2016 09:50 AM
@@ -36,15 +33,15 @@ class BlogServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(PostInterface::class, function () {
-            return new PostCacheDecorator(new PostRepository(new Post()));
+            return new PostRepository(new Post());
         });
 
         $this->app->bind(CategoryInterface::class, function () {
-            return new CategoryCacheDecorator(new CategoryRepository(new Category()));
+            return new CategoryRepository(new Category());
         });
 
         $this->app->bind(TagInterface::class, function () {
-            return new TagCacheDecorator(new TagRepository(new Tag()));
+            return new TagRepository(new Tag());
         });
     }
 
@@ -72,10 +69,15 @@ class BlogServiceProvider extends ServiceProvider
         }
 
         $this->app->register(EventServiceProvider::class);
-        SiteMapManager::registerKey(['blog-posts', 'blog-categories', 'blog-tags']);
+
+        SiteMapManager::registerKey([
+            'blog-categories',
+            'blog-tags',
+            'blog-posts-((?:19|20|21|22)\d{2})-(0?[1-9]|1[012])',
+        ]);
 
         $this->app['events']->listen(RouteMatched::class, function () {
-            dashboard_menu()
+            DashboardMenu::make()
                 ->registerItem([
                     'id' => 'cms-plugins-blog',
                     'priority' => 3,
@@ -114,42 +116,36 @@ class BlogServiceProvider extends ServiceProvider
                 ]);
         });
 
-        $useLanguageV2 = $this->app['config']->get('plugins.blog.general.use_language_v2', false) &&
-            defined('LANGUAGE_ADVANCED_MODULE_SCREEN_NAME');
+        if (defined('LANGUAGE_MODULE_SCREEN_NAME')) {
+            if (
+                defined('LANGUAGE_ADVANCED_MODULE_SCREEN_NAME') &&
+                $this->app['config']->get('plugins.blog.general.use_language_v2')
+            ) {
+                LanguageAdvancedManager::registerModule(Post::class, [
+                    'name',
+                    'description',
+                    'content',
+                ]);
 
-        if (defined('LANGUAGE_MODULE_SCREEN_NAME') && $useLanguageV2) {
-            LanguageAdvancedManager::registerModule(Post::class, [
-                'name',
-                'description',
-                'content',
-            ]);
+                LanguageAdvancedManager::registerModule(Category::class, [
+                    'name',
+                    'description',
+                ]);
 
-            LanguageAdvancedManager::registerModule(Category::class, [
-                'name',
-                'description',
-            ]);
-
-            LanguageAdvancedManager::registerModule(Tag::class, [
-                'name',
-                'description',
-            ]);
+                LanguageAdvancedManager::registerModule(Tag::class, [
+                    'name',
+                    'description',
+                ]);
+            } else {
+                Language::registerModule([Post::class, Category::class, Tag::class]);
+            }
         }
 
-        $this->app->booted(function () use ($useLanguageV2) {
-            $models = [Post::class, Category::class, Tag::class];
-
-            if (defined('LANGUAGE_MODULE_SCREEN_NAME') && ! $useLanguageV2) {
-                Language::registerModule($models);
-            }
-
-            SeoHelper::registerModule($models);
+        $this->app->booted(function () {
+            SeoHelper::registerModule([Post::class, Category::class, Tag::class]);
 
             $configKey = 'packages.revision.general.supported';
             config()->set($configKey, array_merge(config($configKey, []), [Post::class]));
-
-            if (defined('NOTE_FILTER_MODEL_USING_NOTE')) {
-                Note::registerModule(Post::class);
-            }
 
             $this->app->register(HookServiceProvider::class);
         });

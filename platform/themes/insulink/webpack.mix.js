@@ -10,11 +10,11 @@ var MergePlugin = require("merge-webpack-plugin");
 
 mix.sass(source + "/assets/sass/application.scss", dist + "/css")
     .sass(source + "/assets/sass/theme.scss", dist + "/css")
-   
+
     .postCss(source + "/assets/sass/tailwind.css", dist + "/css", [
         require("tailwindcss")
     ])
-   
+
     .styles([
         source + "/assets/sass/vendor/bootstrap/css/bootstrap.min.css",
         dist + "/css/application.css",
@@ -30,11 +30,11 @@ mix.sass(source + "/assets/sass/application.scss", dist + "/css")
         source + "/assets/js/popper.js",
         source + "/assets/js/application.js",
         source + "/assets/sass/vendor/uikit/js/uikit.min.js",
-        dist + "/vendor/uikit/js/uikit-icons.min.js",
+        dist + "/assets/sass/vendor/uikit/js/uikit-icons.min.js",
         source + "/assets/sass/vendor/uikit/js/uikit-icons.min.js",
         dist + "/js/custom.js"
     ], dist + "/js/bundled.js")
-    
+
     // .extend(
     //     "ziggy",
     //     new (class {
