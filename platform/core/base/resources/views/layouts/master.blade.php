@@ -1,7 +1,11 @@
 @extends('core/base::layouts.base')
 
 @section ('page')
-    @include('core/base::layouts.partials.svg-icon')
+    <div style="display: none;">
+        <svg xmlns="http://www.w3.org/2000/svg">
+            <symbol id="select-chevron" class="icon-symbol--loaded"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M10 16l-4-4h8l-4 4zm0-12L6 8h8l-4-4z"></path></svg></symbol>
+        </svg>
+    </div>
 
     <div class="page-wrapper">
 
@@ -22,10 +26,12 @@
 
             <div class="page-content-wrapper">
                 <div class="page-content @if (Route::currentRouteName() == 'media.index') rv-media-integrate-wrapper @endif" style="min-height: 100vh">
-                    {!! Breadcrumbs::render('main', page_title()->getTitle(false)) !!}
+                    {!! Breadcrumbs::render('main', PageTitle::getTitle(false)) !!}
                     <div class="clearfix"></div>
                     <div id="main">
+                        {!! apply_filters('core_layout_before_content', null) !!}
                         @yield('content')
+                        {!! apply_filters('core_layout_after_content', null) !!}
                     </div>
                 </div>
             </div>

@@ -2,7 +2,7 @@
 
 namespace Botble\SeoHelper\Helpers;
 
-use BaseHelper;
+use Botble\Base\Facades\BaseHelper;
 use Botble\SeoHelper\Contracts\Helpers\MetaContract;
 use Botble\SeoHelper\Exceptions\InvalidArgumentException;
 use Illuminate\Support\Str;

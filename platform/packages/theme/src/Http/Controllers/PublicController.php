@@ -2,18 +2,19 @@
 
 namespace Botble\Theme\Http\Controllers;
 
-use BaseHelper;
+use Botble\Base\Facades\BaseHelper;
 use Botble\Page\Models\Page;
 use Botble\Page\Services\PageService;
+use Botble\SeoHelper\Facades\SeoHelper;
+use Botble\Slug\Facades\SlugHelper;
 use Botble\Theme\Events\RenderingHomePageEvent;
 use Botble\Theme\Events\RenderingSingleEvent;
 use Botble\Theme\Events\RenderingSiteMapEvent;
+use Botble\Theme\Facades\SiteMapManager;
+use Botble\Theme\Facades\Theme;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Arr;
-use SeoHelper;
-use SiteMapManager;
-use SlugHelper;
-use Theme;
+use Illuminate\Support\Str;
 
 class PublicController extends Controller
 {
@@ -26,6 +27,10 @@ class PublicController extends Controller
 
                 if ($slug) {
                     $data = (new PageService())->handleFrontRoutes($slug);
+
+                    if (! $data) {
+                        return Theme::scope('index')->render();
+                    }
 
                     event(new RenderingSingleEvent($slug));
 
@@ -43,7 +48,7 @@ class PublicController extends Controller
         return Theme::scope('index')->render();
     }
 
-    public function getView(?string $key = null)
+    public function getView(string|null $key = null)
     {
         if (empty($key)) {
             return $this->getIndex();
@@ -63,7 +68,7 @@ class PublicController extends Controller
 
         $result = apply_filters(BASE_FILTER_PUBLIC_SINGLE_DATA, $slug);
 
-        if (isset($result['slug']) && $result['slug'] !== $key) {
+        if (isset($result['slug']) && $result['slug'] !== Str::replaceLast(SlugHelper::getPublicSingleEndingURL(), '', $key)) {
             return redirect()->route('public.single', $result['slug']);
         }
 

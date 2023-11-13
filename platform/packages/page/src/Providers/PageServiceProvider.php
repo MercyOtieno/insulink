@@ -2,14 +2,16 @@
 
 namespace Botble\Page\Providers;
 
+use Botble\Base\Facades\DashboardMenu;
+use Botble\Base\Supports\ServiceProvider;
 use Botble\Base\Traits\LoadAndPublishDataTrait;
 use Botble\Page\Models\Page;
-use Botble\Page\Repositories\Caches\PageCacheDecorator;
 use Botble\Page\Repositories\Eloquent\PageRepository;
 use Botble\Page\Repositories\Interfaces\PageInterface;
 use Botble\Shortcode\View\View;
+use Botble\Theme\Facades\AdminBar;
 use Illuminate\Routing\Events\RouteMatched;
-use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\View as ViewFacade;
 
 /**
  * @since 02/07/2016 09:50 AM
@@ -27,7 +29,7 @@ class PageServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->app->bind(PageInterface::class, function () {
-            return new PageCacheDecorator(new PageRepository(new Page()));
+            return new PageRepository(new Page());
         });
 
         $this
@@ -38,7 +40,7 @@ class PageServiceProvider extends ServiceProvider
             ->loadMigrations();
 
         $this->app['events']->listen(RouteMatched::class, function () {
-            dashboard_menu()->registerItem([
+            DashboardMenu::registerItem([
                 'id' => 'cms-core-page',
                 'priority' => 2,
                 'parent_id' => null,
@@ -49,12 +51,17 @@ class PageServiceProvider extends ServiceProvider
             ]);
 
             if (function_exists('admin_bar')) {
-                admin_bar()->registerLink(trans('packages/page::pages.menu_name'), route('pages.create'), 'add-new', 'pages.create');
+                AdminBar::registerLink(
+                    trans('packages/page::pages.menu_name'),
+                    route('pages.create'),
+                    'add-new',
+                    'pages.create'
+                );
             }
         });
 
         if (function_exists('shortcode')) {
-            view()->composer(['packages/page::themes.page'], function (View $view) {
+            ViewFacade::composer(['packages/page::themes.page'], function (View $view) {
                 $view->withShortcodes();
             });
         }

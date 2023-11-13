@@ -9,9 +9,9 @@ use Botble\Blog\Http\Resources\PostResource;
 use Botble\Blog\Models\Post;
 use Botble\Blog\Repositories\Interfaces\PostInterface;
 use Botble\Blog\Supports\FilterPost;
+use Botble\Slug\Facades\SlugHelper;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use SlugHelper;
 
 class PostController extends Controller
 {
@@ -31,8 +31,8 @@ class PostController extends Controller
                 'with' => ['tags', 'categories', 'author', 'slugable'],
                 'condition' => ['status' => BaseStatusEnum::PUBLISHED],
                 'paginate' => [
-                    'per_page' => (int)$request->input('per_page', 10),
-                    'current_paged' => (int)$request->input('page', 1),
+                    'per_page' => $request->integer('per_page', 10),
+                    'current_paged' => $request->integer('page', 1),
                 ],
             ]);
 

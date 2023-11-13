@@ -7,9 +7,11 @@ use Botble\ACL\Models\User;
 use App\Mail\SendClaimAdmin;
 use Illuminate\Http\Request;
 use App\Mail\SendClaimCustomer;
+use App\Mail\FormSubmissionMail;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Mail;
 use Theme\Insulink\Dsc\Helpers\MotorHelper;
+use Theme\Insulink\Http\Models\RequestCallback;
 
 class HomeController extends Controller
 {
@@ -33,9 +35,9 @@ class HomeController extends Controller
         return view('home');
     }
 
-    public function fileClaim(Request $request) 
+    public function fileClaim(Request $request)
     {
-        
+
         $this->validate($request, [
             'name' => 'required',
             'cellphone' => 'required',
@@ -79,7 +81,7 @@ class HomeController extends Controller
             $file->move($destinationPathe, $logbook);
             $claim->logbook = $logbook;
         }
-        
+
         $claim->status = 'filed';
         $claim->save();
         $this->sendEmails($claim);
@@ -109,5 +111,29 @@ class HomeController extends Controller
             //throw $th;
             echo 'Error - ' . $th;
         }
+    }
+
+    public function storeForm(Request $request)
+    {
+        // Validation
+        $request->validate([
+            'name' => 'required|string',
+            'email' => 'required|email',
+            'phone' => 'required|string',
+            'contactPreference' => 'required|array',
+            'contactDate' => 'required|date',
+        ]);
+
+        // Store the form data
+        $formData = new RequestCallback();
+        $formData->subject = str_replace("-", " ", $request->currentPage);
+        $formData->name = $request->input('name');
+        $formData->email = $request->input('email');
+        $formData->phone = $request->input('phone');
+        $formData->contact_preference = json_encode($request->input('contactPreference'));
+        $formData->contact_date = $request->input('contactDate');
+        $formData->save();
+        Mail::to(['fredrickboaz@gmail.com'])->send(new FormSubmissionMail($request->all()));
+        return response()->json(['message' => 'Request sent! We will respond to your email soon'], 200);
     }
 }

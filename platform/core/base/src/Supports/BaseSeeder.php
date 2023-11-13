@@ -2,32 +2,47 @@
 
 namespace Botble\Base\Supports;
 
-use BaseHelper;
 use Botble\Base\Events\FinishedSeederEvent;
+use Botble\Base\Facades\BaseHelper;
+use Botble\Base\Models\MetaBox as MetaBoxModel;
+use Botble\Media\Facades\RvMedia;
 use Botble\Media\Models\MediaFile;
 use Botble\Media\Models\MediaFolder;
 use Botble\PluginManagement\Services\PluginService;
+use Botble\Setting\Facades\Setting;
+use Botble\Slug\Models\Slug;
+use Botble\Theme\Facades\Theme;
+use Botble\Theme\Facades\ThemeOption;
 use Exception;
+use Faker\Generator;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Composer;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Mimey\MimeTypes;
-use RvMedia;
-use Setting;
+use Symfony\Component\Process\Process;
+use Throwable;
 
 class BaseSeeder extends Seeder
 {
-    public function uploadFiles(string $folder, ?string $basePath = null): array
+    protected Generator $faker;
+
+    public function uploadFiles(string $folder, string|null $basePath = null): array
     {
-        Storage::deleteDirectory($folder);
-        MediaFile::where('url', 'LIKE', $folder . '/%')->forceDelete();
-        MediaFolder::where('name', $folder)->forceDelete();
+        $storage = Storage::disk('public');
+
+        if ($storage->exists($folder)) {
+            $storage->deleteDirectory($folder);
+        }
+
+        MediaFile::query()->where('url', 'LIKE', $folder . '/%')->forceDelete();
+        MediaFolder::query()->where('name', $folder)->forceDelete();
 
         $mimeType = new MimeTypes();
 
         $files = [];
 
-        $folderPath = ($basePath ?: database_path('seeders/files')) . '/' . $folder;
+        $folderPath = ($basePath ?: database_path('seeders/files/' . $folder));
 
         if (! File::isDirectory($folderPath)) {
             return [];
@@ -58,11 +73,44 @@ class BaseSeeder extends Seeder
         }
     }
 
-    public function prepareRun(): array
+    public function prepareRun(): void
     {
+        if (! class_exists(\Faker\Factory::class)) {
+            $this->command->warn('It requires <info>fakerphp/faker</info> to run seeder. Need to run <info>composer install</info> to install it first.');
+
+            try {
+                $composer = new Composer($this->command->getLaravel()['files']);
+
+                $process = new Process(array_merge($composer->findComposer(), ['install']));
+
+                $process->start();
+
+                $process->wait(function ($type, $buffer) {
+                    $this->command->line($buffer);
+                });
+
+                $this->command->warn('Please re-run <info>php artisan db:seed</info> command.');
+            } catch (Throwable) {
+            }
+
+            exit(1);
+        }
+
+        Setting::newQuery()->truncate();
+
         Setting::forgetAll();
 
-        return $this->activateAllPlugins();
+        $this->activateAllPlugins();
+
+        Setting::set([
+            'media_random_hash' => md5((string)time()),
+            'api_enabled' => 0,
+            'show_admin_bar' => 1,
+            'theme' => Theme::getThemeName(),
+        ])->save();
+
+        Slug::query()->truncate();
+        MetaBoxModel::query()->truncate();
     }
 
     protected function random(int $from, int $to, array $exceptions = []): int
@@ -84,5 +132,25 @@ class BaseSeeder extends Seeder
     protected function finished(): void
     {
         event(new FinishedSeederEvent());
+    }
+
+    protected function prepareThemeOptions(array $options, string $locale = null, string $defaultLocale = null): array
+    {
+        return collect($options)
+            ->mapWithKeys(function (string $value, string $key) use ($locale, $defaultLocale) {
+                return [ThemeOption::getOptionKey($key, $locale != $defaultLocale ? $locale : null) => $value];
+            })
+            ->all();
+    }
+
+    protected function fake(): Generator
+    {
+        if (isset($this->faker)) {
+            return $this->faker;
+        }
+
+        $this->faker = fake();
+
+        return $this->faker;
     }
 }

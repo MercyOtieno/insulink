@@ -2,10 +2,10 @@
 
 namespace Botble\Slug\Providers;
 
-use Assets;
+use Botble\Base\Facades\Assets;
+use Botble\Base\Supports\ServiceProvider;
+use Botble\Slug\Facades\SlugHelper;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\ServiceProvider;
-use SlugHelper;
 
 class HookServiceProvider extends ServiceProvider
 {
@@ -14,13 +14,13 @@ class HookServiceProvider extends ServiceProvider
         add_filter(BASE_FILTER_SLUG_AREA, [$this, 'addSlugBox'], 17, 2);
     }
 
-    public function addSlugBox(?string $html = null, ?Model $object = null): ?string
+    public function addSlugBox(string|null $html = null, ?Model $object = null): string|null
     {
-        if ($object && SlugHelper::isSupportedModel(get_class($object))) {
+        if ($object && SlugHelper::isSupportedModel($class = get_class($object))) {
             Assets::addScriptsDirectly('vendor/core/packages/slug/js/slug.js')
                 ->addStylesDirectly('vendor/core/packages/slug/css/slug.css');
 
-            $prefix = SlugHelper::getPrefix(get_class($object));
+            $prefix = SlugHelper::getPrefix($class);
 
             return $html . view('packages/slug::partials.slug', compact('object', 'prefix'))->render();
         }

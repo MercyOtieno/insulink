@@ -2,8 +2,8 @@
 
 namespace Botble\Backup\Supports;
 
-use BaseHelper;
 use Botble\Backup\Supports\MySql\MySqlDump;
+use Botble\Base\Facades\BaseHelper;
 use Botble\Base\Supports\Zipper;
 use Carbon\Carbon;
 use Exception;
@@ -14,19 +14,13 @@ use Symfony\Component\Process\Process;
 
 class Backup
 {
-    protected Filesystem $files;
+    protected string|null $folder = null;
 
-    protected ?string $folder = null;
-
-    protected Zipper $zipper;
-
-    public function __construct(Filesystem $file, Zipper $zipper)
+    public function __construct(protected Filesystem $files, protected Zipper $zipper)
     {
-        $this->files = $file;
-        $this->zipper = $zipper;
     }
 
-    public function createBackupFolder(string $name, ?string $description = null): array
+    public function createBackupFolder(string $name, string|null $description = null): array
     {
         $backupFolder = $this->createFolder($this->getBackupPath());
         $now = Carbon::now()->format('Y-m-d-H-i-s');
@@ -60,7 +54,7 @@ class Backup
         return $folder;
     }
 
-    public function getBackupPath(?string $path = null): string
+    public function getBackupPath(string|null $path = null): string
     {
         return storage_path('app/backup') . ($path ? '/' . $path : null);
     }
@@ -98,7 +92,7 @@ class Backup
             $mysqlPath = $mysqlPath . '/';
         }
 
-        $config = config('database.connections.mysql', []);
+        $config = DB::connection('mysql')->getConfig();
 
         if (! $config) {
             return false;
@@ -112,7 +106,11 @@ class Backup
             Process::fromShellCommandline($sql)->mustRun();
         } catch (Exception) {
             try {
-                system($sql);
+                if (function_exists('system')) {
+                    system($sql);
+                } else {
+                    $this->processMySqlDumpPHP($path, $config);
+                }
             } catch (Exception) {
                 $this->processMySqlDumpPHP($path, $config);
             }
@@ -206,10 +204,12 @@ class Backup
             return false;
         }
 
+        $databaseName = DB::connection('mysql')->getConfig()['database'];
+
         // Force the new login to be used
         DB::purge();
-        DB::unprepared('USE `' . config('database.connections.mysql.database') . '`');
-        DB::connection()->setDatabaseName(config('database.connections.mysql.database'));
+        DB::unprepared('USE `' . $databaseName . '`');
+        DB::connection()->setDatabaseName($databaseName);
         DB::getSchemaBuilder()->dropAllTables();
         DB::unprepared(file_get_contents($file));
 

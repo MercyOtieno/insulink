@@ -41,7 +41,6 @@ class Post extends BaseModel
 
     protected $casts = [
         'status' => BaseStatusEnum::class,
-        'content' => SafeContent::class,
         'name' => SafeContent::class,
         'description' => SafeContent::class,
     ];
@@ -72,10 +71,8 @@ class Post extends BaseModel
         return $this->morphTo()->withDefault();
     }
 
-    protected static function boot()
+    protected static function booted(): void
     {
-        parent::boot();
-
         static::deleting(function (Post $post) {
             $post->categories()->detach();
             $post->tags()->detach();

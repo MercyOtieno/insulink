@@ -2,8 +2,8 @@
 
 namespace Botble\Base\Enums;
 
+use Botble\Base\Facades\Html;
 use Botble\Base\Supports\Enum;
-use Html;
 use Illuminate\Support\HtmlString;
 
 /**

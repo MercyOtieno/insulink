@@ -24,7 +24,7 @@ class Assets extends BaseAssets
         $this->styles = $this->config['styles'];
     }
 
-    public function setConfig(array $config)
+    public function setConfig(array $config): void
     {
         $this->config = $config;
     }
@@ -52,10 +52,6 @@ class Assets extends BaseAssets
             }
         }
 
-        if (empty($themes)) {
-            $themes['default'] = $themeFolder . '/default.css';
-        }
-
         return $themes;
     }
 
@@ -75,14 +71,14 @@ class Assets extends BaseAssets
 
     public function usingVueJS(): self
     {
-        $this->addScripts(['vue-app']);
+        $this->addScripts(['vue', 'vue-app']);
 
         return $this;
     }
 
     public function disableVueJS(): self
     {
-        $this->removeScripts(['vue-app']);
+        $this->removeScripts(['vue', 'vue-app']);
 
         return $this;
     }

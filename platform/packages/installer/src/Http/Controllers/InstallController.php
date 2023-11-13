@@ -2,9 +2,9 @@
 
 namespace Botble\Installer\Http\Controllers;
 
-use BaseHelper;
 use Botble\ACL\Models\User;
 use Botble\ACL\Services\ActivateUserService;
+use Botble\Base\Facades\BaseHelper;
 use Botble\Installer\Events\EnvironmentSaved;
 use Botble\Installer\Events\InstallerFinished;
 use Botble\Installer\Http\Requests\SaveAccountRequest;
@@ -13,14 +13,14 @@ use Botble\Installer\Supports\EnvironmentManager;
 use Botble\Installer\Supports\RequirementsChecker;
 use Carbon\Carbon;
 use Exception;
-use File;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\MessageBag;
-use URL;
 
 class InstallController extends Controller
 {
@@ -39,7 +39,7 @@ class InstallController extends Controller
             return redirect()->route('installers.welcome');
         }
 
-        $phpSupportInfo = $this->requirements->checkPhpVersion(config('packages.installer.installer.core.php_version'));
+        $phpSupportInfo = $this->requirements->checkPhpVersion(get_minimum_php_version());
         $requirements = $this->requirements->check(config('packages.installer.installer.requirements'));
 
         return view('packages/installer::.requirements', compact('requirements', 'phpSupportInfo'));
@@ -140,6 +140,8 @@ class InstallController extends Controller
 
         File::delete(storage_path(INSTALLING_SESSION_NAME));
         BaseHelper::saveFileData(storage_path(INSTALLED_SESSION_NAME), Carbon::now()->toDateTimeString());
+
+        $this->environmentManager->turnOffDebugMode();
 
         return view('packages/installer::finished');
     }

@@ -4,10 +4,10 @@ namespace Botble\Page\Http\Controllers;
 
 use Botble\Page\Models\Page;
 use Botble\Page\Services\PageService;
+use Botble\Slug\Facades\SlugHelper;
 use Botble\Theme\Events\RenderingSingleEvent;
+use Botble\Theme\Facades\Theme;
 use Illuminate\Routing\Controller;
-use SlugHelper;
-use Theme;
 
 class PublicController extends Controller
 {

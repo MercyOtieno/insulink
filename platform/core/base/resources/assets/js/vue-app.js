@@ -1,65 +1,81 @@
-import Vue from 'vue';
-import sanitizeHTML from 'sanitize-html';
-import _ from 'lodash';
-import emitter from 'tiny-emitter/instance';
-import {BootstrapVue} from 'bootstrap-vue'
+import emitter from 'tiny-emitter/instance'
+import sanitizeHTML from 'sanitize-html'
+import _ from 'lodash'
 
 class VueApp {
     constructor() {
-        this.vue = Vue;
-        this.vue.use(BootstrapVue);
-
-        this.vue.prototype.__ = key => {
-            if (typeof window.trans === 'undefined') {
-                return key;
+        const { createApp } = Vue
+        this.vue = createApp({
+            mounted() {
+                $event.on('vue-app:force-update', () => {
+                    this.$forceUpdate()
+                })
             }
+        })
 
-            return _.get(window.trans, key, key);
-        };
+        this.vue.use({
+            install: (app) => {
+                app.config.globalProperties.__ = (key) => {
+                    if (typeof window.trans === 'undefined') {
+                        return key
+                    }
 
-        this.vue.prototype.$sanitize = sanitizeHTML;
+                    return _.get(window.trans, key, key)
+                }
 
-        this.bootingCallbacks = [];
-        this.bootedCallbacks = [];
-        this.vueInstance = null;
+                app.config.globalProperties.$sanitize = sanitizeHTML
+            }
+        })
+
         this.eventBus = {
-            $on: (...args) => emitter.on(...args),
-            $once: (...args) => emitter.once(...args),
-            $off: (...args) => emitter.off(...args),
-            $emit: (...args) => emitter.emit(...args)
-        };
-        this.hasBooted = false;
+            $on: (...args) => $event.on(...args),
+            $once: (...args) => $event.once(...args),
+            $off: (...args) => $event.off(...args),
+            $emit: (...args) => $event.emit(...args),
+        }
+
+        this.vuePlugins = []
+        this.bootingCallbacks = []
+        this.bootedCallbacks = []
+        this.hasBooted = false
+    }
+
+    registerVuePlugins(plugin) {
+        this.vuePlugins.push(plugin)
     }
 
     booting(callback) {
-        this.bootingCallbacks.push(callback);
+        this.bootingCallbacks.push(callback)
     }
 
     booted(callback) {
-        this.bootedCallbacks.push(callback);
+        this.bootedCallbacks.push(callback)
     }
 
     boot() {
         for (const callback of this.bootingCallbacks) {
-            callback(this.vue);
+            callback(this.vue)
         }
 
-        this.vueInstance = new this.vue({
-            el: '#app'
-        });
+        for (const vuePlugin of this.vuePlugins) {
+            this.vue.use(vuePlugin)
+        }
 
         for (const callback of this.bootedCallbacks) {
-            callback(this);
+            callback(this)
         }
 
-        this.hasBooted = true;
+        this.vue.mount('#app')
+
+        this.hasBooted = true
     }
 }
 
-window.vueApp = new VueApp();
+window.vueApp = new VueApp()
+window.$event = emitter
 
 document.addEventListener('DOMContentLoaded', () => {
-    if (!window.vueApp.hasBooted) {
-        window.vueApp.boot();
+    if (! window.vueApp.hasBooted) {
+        window.vueApp.boot()
     }
-});
+})

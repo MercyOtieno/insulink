@@ -2,10 +2,10 @@
 
 namespace Botble\Language\Commands;
 
+use Botble\Language\Facades\Language;
 use Botble\Language\Models\LanguageMeta;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Console\Command;
-use Language;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputArgument;
@@ -36,7 +36,7 @@ class SyncOldDataCommand extends Command
             return self::FAILURE;
         }
 
-        $ids = LanguageMeta::where('reference_type', $this->argument('class'))
+        $ids = LanguageMeta::query()->where('reference_type', $class)
             ->pluck('reference_id')
             ->all();
 
@@ -55,7 +55,7 @@ class SyncOldDataCommand extends Command
             ];
         }
 
-        LanguageMeta::insert($data);
+        LanguageMeta::query()->insert($data);
 
         $this->components->info('Processed ' . count($data) . ' item(s)!');
 

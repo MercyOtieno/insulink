@@ -5,9 +5,11 @@ namespace Botble\Sitemap\Providers;
 use Botble\Base\Events\CreatedContentEvent;
 use Botble\Base\Events\DeletedContentEvent;
 use Botble\Base\Events\UpdatedContentEvent;
+use Botble\Base\Supports\ServiceProvider;
 use Botble\Base\Traits\LoadAndPublishDataTrait;
 use Botble\Sitemap\Sitemap;
-use Illuminate\Support\ServiceProvider;
+use Illuminate\Contracts\Cache\Repository;
+use Illuminate\Contracts\Routing\ResponseFactory;
 
 class SitemapServiceProvider extends ServiceProvider
 {
@@ -22,15 +24,11 @@ class SitemapServiceProvider extends ServiceProvider
             ->loadAndPublishViews()
             ->publishAssets();
 
-        $this->app['events']->listen(CreatedContentEvent::class, function () {
-            cache()->forget('cache_site_map_key');
-        });
-
-        $this->app['events']->listen(UpdatedContentEvent::class, function () {
-            cache()->forget('cache_site_map_key');
-        });
-
-        $this->app['events']->listen(DeletedContentEvent::class, function () {
+        $this->app['events']->listen([
+            CreatedContentEvent::class,
+            UpdatedContentEvent::class,
+            DeletedContentEvent::class,
+        ], function () {
             cache()->forget('cache_site_map_key');
         });
     }
@@ -42,10 +40,10 @@ class SitemapServiceProvider extends ServiceProvider
 
             return new Sitemap(
                 $config,
-                $app['Illuminate\Cache\Repository'],
+                $app[Repository::class],
                 $app['config'],
                 $app['files'],
-                $app['Illuminate\Contracts\Routing\ResponseFactory'],
+                $app[ResponseFactory::class],
                 $app['view']
             );
         });

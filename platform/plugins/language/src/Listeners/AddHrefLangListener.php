@@ -2,13 +2,13 @@
 
 namespace Botble\Language\Listeners;
 
-use BaseHelper;
+use Botble\Base\Facades\BaseHelper;
+use Botble\Language\Facades\Language;
 use Botble\Language\Models\LanguageMeta;
 use Botble\Page\Models\Page;
 use Botble\Slug\Models\Slug;
 use Botble\Theme\Events\RenderingSingleEvent;
 use Exception;
-use Language;
 
 class AddHrefLangListener
 {
@@ -30,7 +30,7 @@ class AddHrefLangListener
                                 }
                             }
                         } else {
-                            $languageMeta = LanguageMeta::where(
+                            $languageMeta = LanguageMeta::query()->where(
                                 'language_meta.lang_meta_code',
                                 '!=',
                                 Language::getCurrentLocaleCode()
@@ -42,7 +42,7 @@ class AddHrefLangListener
                                 ])
                                 ->pluck('language_meta.lang_meta_code', 'language_meta.reference_id')->all();
 
-                            $slug = Slug::whereIn('reference_id', array_keys($languageMeta))
+                            $slug = Slug::query()->whereIn('reference_id', array_keys($languageMeta))
                                 ->where('reference_type', $event->slug->reference_type)
                                 ->select(['key', 'prefix', 'reference_id'])
                                 ->get();

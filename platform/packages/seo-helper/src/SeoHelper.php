@@ -2,8 +2,8 @@
 
 namespace Botble\SeoHelper;
 
-use Arr;
-use BaseHelper;
+use Botble\Base\Facades\BaseHelper;
+use Botble\Base\Facades\MetaBox;
 use Botble\Base\Models\BaseModel;
 use Botble\SeoHelper\Contracts\SeoHelperContract;
 use Botble\SeoHelper\Contracts\SeoMetaContract;
@@ -11,24 +11,15 @@ use Botble\SeoHelper\Contracts\SeoOpenGraphContract;
 use Botble\SeoHelper\Contracts\SeoTwitterContract;
 use Exception;
 use Illuminate\Http\Request;
-use MetaBox;
+use Illuminate\Support\Arr;
 
 class SeoHelper implements SeoHelperContract
 {
-    protected SeoMetaContract $seoMeta;
-
-    protected SeoOpenGraphContract $seoOpenGraph;
-
-    protected SeoTwitterContract $seoTwitter;
-
     public function __construct(
-        SeoMetaContract $seoMeta,
-        SeoOpenGraphContract $seoOpenGraph,
-        SeoTwitterContract $seoTwitter
+        protected SeoMetaContract $seoMeta,
+        protected SeoOpenGraphContract $seoOpenGraph,
+        protected SeoTwitterContract $seoTwitter
     ) {
-        $this->setSeoMeta($seoMeta);
-        $this->setSeoOpenGraph($seoOpenGraph);
-        $this->setSeoTwitter($seoTwitter);
         $this->openGraph()->addProperty('type', 'website');
     }
 

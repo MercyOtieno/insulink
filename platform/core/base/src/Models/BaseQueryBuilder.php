@@ -3,13 +3,18 @@
 namespace Botble\Base\Models;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 
+/**
+ * @template TModelClass of \Illuminate\Database\Eloquent\Model
+ * @extends Builder<TModelClass>
+ */
 class BaseQueryBuilder extends Builder
 {
-    public function addSearch(string $column, ?string $term, bool $isPartial = true): BaseQueryBuilder
+    public function addSearch(string $column, string|null $term, bool $isPartial = true, bool $or = true): BaseQueryBuilder
     {
         if (! $isPartial) {
-            $this->orWhere($column, 'LIKE', '%' . trim($term) . '%');
+            $this->{$or ? 'orWhere' : 'where'}($column, 'LIKE', '%' . trim($term) . '%');
 
             return $this;
         }
@@ -31,7 +36,7 @@ class BaseQueryBuilder extends Builder
 
     protected function getBackslashByPdo(): string
     {
-        if (config('database.default') === 'sqlite') {
+        if (DB::getDefaultConnection() === 'sqlite') {
             return '\\\\';
         }
 

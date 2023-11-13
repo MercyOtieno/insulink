@@ -2,7 +2,7 @@
 
 namespace Botble\Blog\Repositories\Interfaces;
 
-use Botble\Blog\Models\Category;
+use Botble\Blog\Models\Post;
 use Botble\Support\Repositories\Interfaces\RepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -15,11 +15,11 @@ interface PostInterface extends RepositoryInterface
 
     public function getRelated(int|string $id, int $limit = 3): Collection;
 
-    public function getRelatedCategoryIds(Category|int|string $model): array;
+    public function getRelatedCategoryIds(Post|int|string $model): array;
 
     public function getByCategory(array|int|string $categoryId, int $paginate = 12, int $limit = 0): Collection|LengthAwarePaginator;
 
-    public function getByUserId(int|string $authorId, int $limit = 6): Collection|LengthAwarePaginator;
+    public function getByUserId(int|string $authorId, int $paginate = 6): Collection|LengthAwarePaginator;
 
     public function getDataSiteMap(): Collection|LengthAwarePaginator;
 

@@ -2,13 +2,13 @@
 
 namespace Botble\SeoHelper\Providers;
 
-use Assets;
-use BaseHelper;
+use Botble\Base\Facades\Assets;
+use Botble\Base\Facades\BaseHelper;
+use Botble\Base\Facades\MetaBox;
+use Botble\Base\Models\BaseModel;
+use Botble\Base\Supports\ServiceProvider;
 use Botble\Page\Models\Page;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\ServiceProvider;
-use MetaBox;
-use SeoHelper;
+use Botble\SeoHelper\Facades\SeoHelper;
 
 class HookServiceProvider extends ServiceProvider
 {
@@ -20,7 +20,7 @@ class HookServiceProvider extends ServiceProvider
         });
     }
 
-    public function addMetaBox(string $priority, ?Model $data): void
+    public function addMetaBox(string $priority, BaseModel|null $data): void
     {
         if ($priority == 'advanced' && ! empty($data) && in_array(get_class($data), config('packages.seo-helper.general.supported', []))) {
             if (get_class($data) == Page::class && BaseHelper::isHomepage($data->id)) {
@@ -62,7 +62,7 @@ class HookServiceProvider extends ServiceProvider
         return view('packages/seo-helper::meta-box', compact('meta', 'object'));
     }
 
-    public function setSeoMeta(string $screen, ?Model $object): bool
+    public function setSeoMeta(string $screen, BaseModel|null $object): bool
     {
         if (get_class($object) == Page::class && BaseHelper::isHomepage($object->id)) {
             return false;

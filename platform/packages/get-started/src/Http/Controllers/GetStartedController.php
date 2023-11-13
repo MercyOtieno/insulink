@@ -3,13 +3,13 @@
 namespace Botble\GetStarted\Http\Controllers;
 
 use Botble\ACL\Models\User;
-use Botble\ACL\Repositories\Interfaces\UserInterface;
 use Botble\Base\Events\UpdatedContentEvent;
 use Botble\Base\Http\Controllers\BaseController;
 use Botble\Base\Http\Responses\BaseHttpResponse;
 use Botble\GetStarted\Http\Requests\GetStartedRequest;
+use Botble\Theme\Facades\ThemeOption;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use ThemeOption;
 
 class GetStartedController extends BaseController
 {
@@ -51,10 +51,7 @@ class GetStartedController extends BaseController
 
                 setting()->save();
 
-                /**
-                 * @var User $user
-                 */
-                $user = auth()->user();
+                $user = Auth::user();
 
                 if ($user->username != config('core.base.general.demo.account.username', 'botble') &&
                     ! Hash::check($user->getAuthPassword(), config('core.base.general.demo.account.password', '159357'))
@@ -64,16 +61,10 @@ class GetStartedController extends BaseController
 
                 break;
             case 3:
-                /**
-                 * @var User $user
-                 */
-                $user = auth()->user();
-
-                $userRepository = app(UserInterface::class);
+                $user = Auth::user();
 
                 if ($user->email !== $request->input('email')) {
-                    $users = $userRepository
-                        ->getModel()
+                    $users = User::query()
                         ->where('email', $request->input('email'))
                         ->where('id', '<>', $user->id)
                         ->exists();
@@ -87,8 +78,7 @@ class GetStartedController extends BaseController
                 }
 
                 if ($user->username !== $request->input('username')) {
-                    $users = $userRepository
-                        ->getModel()
+                    $users = User::query()
                         ->where('username', $request->input('username'))
                         ->where('id', '<>', $user->id)
                         ->exists();
@@ -104,7 +94,7 @@ class GetStartedController extends BaseController
                 $user->fill($request->only(['username', 'email']));
                 $user->password = Hash::make($request->input('password'));
 
-                $userRepository->createOrUpdate($user);
+                $user->save();
 
                 do_action(USER_ACTION_AFTER_UPDATE_PROFILE, USER_MODULE_SCREEN_NAME, $request, $user);
                 do_action(USER_ACTION_AFTER_UPDATE_PASSWORD, USER_MODULE_SCREEN_NAME, $request, $user);

@@ -3,18 +3,17 @@
 namespace Botble\Page\Providers;
 
 use Botble\Base\Enums\BaseStatusEnum;
+use Botble\Base\Facades\Html;
+use Botble\Base\Supports\RepositoryHelper;
+use Botble\Base\Supports\ServiceProvider;
 use Botble\Dashboard\Supports\DashboardWidgetInstance;
+use Botble\Media\Facades\RvMedia;
+use Botble\Menu\Facades\Menu;
 use Botble\Page\Models\Page;
-use Botble\Page\Repositories\Interfaces\PageInterface;
 use Botble\Page\Services\PageService;
-use Eloquent;
-use Html;
-use Illuminate\Database\Query\Builder;
+use Botble\Slug\Models\Slug;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\ServiceProvider;
-use Menu;
-use RvMedia;
 
 class HookServiceProvider extends ServiceProvider
 {
@@ -34,7 +33,7 @@ class HookServiceProvider extends ServiceProvider
 
         if (defined('THEME_FRONT_HEADER')) {
             add_action(BASE_ACTION_PUBLIC_RENDER_SINGLE, function ($screen, $page): void {
-                add_filter(THEME_FRONT_HEADER, function (?string $html) use ($page): ?string {
+                add_filter(THEME_FRONT_HEADER, function (string|null $html) use ($page): string|null {
                     if (get_class($page) != Page::class) {
                         return $html;
                     }
@@ -55,12 +54,18 @@ class HookServiceProvider extends ServiceProvider
                 }, 2);
             }, 2, 2);
         }
+
+        add_filter(PAGE_FILTER_FRONT_PAGE_CONTENT, fn (string|null $html) => (string) $html, 1, 2);
     }
 
     public function addThemeOptions(): void
     {
-        $pages = $this->app->make(PageInterface::class)
-            ->pluck('name', 'id', ['status' => BaseStatusEnum::PUBLISHED]);
+        $pages = Page::query()
+            ->where('status', BaseStatusEnum::PUBLISHED);
+
+        $pages = RepositoryHelper::applyBeforeExecuteQuery($pages, new Page())
+            ->pluck('name', 'id')
+            ->all();
 
         theme_option()
             ->setSection([
@@ -96,7 +101,7 @@ class HookServiceProvider extends ServiceProvider
 
     public function addPageStatsWidget(array $widgets, Collection $widgetSettings): array
     {
-        $pages = $this->app->make(PageInterface::class)->count(['status' => BaseStatusEnum::PUBLISHED]);
+        $pages = Page::query()->where('status', BaseStatusEnum::PUBLISHED)->count();
 
         return (new DashboardWidgetInstance())
             ->setType('stats')
@@ -110,7 +115,7 @@ class HookServiceProvider extends ServiceProvider
             ->init($widgets, $widgetSettings);
     }
 
-    public function handleSingleView(Eloquent|array $slug): Eloquent|array|Builder
+    public function handleSingleView(Slug|array $slug): Slug|array
     {
         return (new PageService())->handleFrontRoutes($slug);
     }

@@ -2,18 +2,23 @@
     <div class="container">
         <div class="flex flex-wrap overflow-hidden -mx-4 elementor-row">
             <div class="w-full overflow-hidden md:w-1/2 lg:w-1/2 xl:w-1/2 px-4">
-                <img src="/images/motor-insurance.png" alt="" srcset="/images/motor-insurance.png">
+                <h3 class="text-orange mb-3 font-bold">Comprehensive Insurance: Individuals, Family, and Business.</h3>
+                <img src="/images/homeinsurance.jpg" alt="" srcset="/images/homeinsurance.jpg">
             </div>
-        
+
             <div class="w-full overflow-hidden md:w-1/2 lg:w-1/2 xl:w-1/2 px-4">
-                <h4 class="elementor-heading-title mb-3">Choose from the best in Motor Insurance</h4>
-                <p>Car insurance ensures that you do not suffer a setback financially in case of an accident. But remember, it
-                    is not a one-size-fits-all requirement. Choose the most suitable plan for you and include the benefits that
-                    you would like to have.</p>
-                <p>It is also a legal requirement to have car insurance in Kenya.</p>
+                <h4 class="elementor-heading-title mb-3">PERSONAL MEDICAL INSURANCE</h4>
+                <ul>
+                    <li><strong>Individual Insurance:</strong> Choose from a range of packages for your personal health needs and annual checkups.</li>
+                    <li><strong>Family Medical Insurance:</strong> Covers spouses and children, with shared coverage for inpatient and outpatient services, including maternity, consultation, drugs, optical, and dental care.</li>
+                    <li><strong>Seniors Cover:</strong> Take control of your parents’ health or secure insurance after retirement with tailored coverage options.</li>
+                </ul>
+                <h4 class="elementor-heading-title mb-3">BUSINESS MEDICAL INSURANCE</h4>
+                <p><strong>Lower-Income Medical Insurance:</strong> Ideal for small businesses or Chama groups, offering both inpatient and outpatient coverage for employees and their families.</p>
+                <p><strong>Note:</strong> Review benefits, and riders, and clarify any concerns before selecting a package.</p>
                 <div class="mt-3">
                     <a class="btn btn-local-orange rounded-pill transition ease-in-out duration-150"
-                        href="/motor-private-comprehensive">Buy Motor Insurance now</a>
+                        href="/individual-family-health">Get a Quote</a>
                 </div>
             </div>
         </div>

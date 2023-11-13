@@ -7,10 +7,11 @@ use Botble\ACL\Events\RoleUpdateEvent;
 use Botble\ACL\Forms\RoleForm;
 use Botble\ACL\Http\Requests\AssignRoleRequest;
 use Botble\ACL\Http\Requests\RoleCreateRequest;
-use Botble\ACL\Repositories\Interfaces\RoleInterface;
-use Botble\ACL\Repositories\Interfaces\UserInterface;
+use Botble\ACL\Models\Role;
+use Botble\ACL\Models\User;
 use Botble\ACL\Tables\RoleTable;
-use Botble\Base\Events\BeforeEditContentEvent;
+use Botble\Base\Facades\BaseHelper;
+use Botble\Base\Facades\PageTitle;
 use Botble\Base\Forms\FormBuilder;
 use Botble\Base\Http\Controllers\BaseController;
 use Botble\Base\Http\Responses\BaseHttpResponse;
@@ -19,20 +20,16 @@ use Illuminate\Http\Request;
 
 class RoleController extends BaseController
 {
-    public function __construct(protected RoleInterface $roleRepository, protected UserInterface $userRepository)
-    {
-    }
-
     public function index(RoleTable $dataTable)
     {
-        page_title()->setTitle(trans('core/acl::permissions.role_permission'));
+        PageTitle::setTitle(trans('core/acl::permissions.role_permission'));
 
         return $dataTable->renderTable();
     }
 
     public function destroy(int|string $id, BaseHttpResponse $response)
     {
-        $role = $this->roleRepository->findOrFail($id);
+        $role = Role::query()->findOrFail($id);
 
         $role->delete();
 
@@ -51,7 +48,7 @@ class RoleController extends BaseController
         }
 
         foreach ($ids as $id) {
-            $role = $this->roleRepository->findOrFail($id);
+            $role = Role::query()->findOrFail($id);
             $role->delete();
         }
 
@@ -60,31 +57,29 @@ class RoleController extends BaseController
         return $response->setMessage(trans('core/base::notices.delete_success_message'));
     }
 
-    public function edit(int|string $id, FormBuilder $formBuilder, Request $request)
+    public function edit(int|string $id, FormBuilder $formBuilder)
     {
-        $role = $this->roleRepository->findOrFail($id);
+        $role = Role::query()->findOrFail($id);
 
-        event(new BeforeEditContentEvent($request, $role));
-
-        page_title()->setTitle(trans('core/acl::permissions.details') . ' - ' . e($role->name));
+        PageTitle::setTitle(trans('core/acl::permissions.details') . ' - ' . BaseHelper::clean($role->name));
 
         return $formBuilder->create(RoleForm::class, ['model' => $role])->renderForm();
     }
 
     public function update(int|string $id, RoleCreateRequest $request, BaseHttpResponse $response)
     {
-        if ($request->input('is_default')) {
-            $this->roleRepository->getModel()->where('id', '!=', $id)->update(['is_default' => 0]);
-        }
+        $role = Role::query()->findOrFail($id);
 
-        $role = $this->roleRepository->findOrFail($id);
+        if ($request->input('is_default')) {
+            Role::query()->getModel()->where('id', '!=', $role->getKey())->update(['is_default' => 0]);
+        }
 
         $role->name = $request->input('name');
         $role->permissions = $this->cleanPermission((array)$request->input('flags', []));
         $role->description = $request->input('description');
         $role->updated_by = $request->user()->getKey();
         $role->is_default = $request->input('is_default');
-        $this->roleRepository->createOrUpdate($role);
+        $role->save();
 
         Helper::clearCache();
 
@@ -92,7 +87,7 @@ class RoleController extends BaseController
 
         return $response
             ->setPreviousUrl(route('roles.index'))
-            ->setNextUrl(route('roles.edit', $id))
+            ->setNextUrl(route('roles.edit', $role->getKey()))
             ->setMessage(trans('core/acl::permissions.modified_success'));
     }
 
@@ -112,7 +107,7 @@ class RoleController extends BaseController
 
     public function create(FormBuilder $formBuilder)
     {
-        page_title()->setTitle(trans('core/acl::permissions.create_role'));
+        PageTitle::setTitle(trans('core/acl::permissions.create_role'));
 
         return $formBuilder->create(RoleForm::class)->renderForm();
     }
@@ -120,12 +115,11 @@ class RoleController extends BaseController
     public function store(RoleCreateRequest $request, BaseHttpResponse $response)
     {
         if ($request->input('is_default')) {
-            $this->roleRepository->getModel()->where('id', '>', 0)->update(['is_default' => 0]);
+            Role::query()->getModel()->where('id', '>', 0)->update(['is_default' => 0]);
         }
 
-        $role = $this->roleRepository->createOrUpdate([
+        $role = Role::query()->create([
             'name' => $request->input('name'),
-            'slug' => $this->roleRepository->createSlug($request->input('name'), 0),
             'permissions' => $this->cleanPermission((array)$request->input('flags', [])),
             'description' => $request->input('description'),
             'is_default' => $request->input('is_default'),
@@ -135,17 +129,17 @@ class RoleController extends BaseController
 
         return $response
             ->setPreviousUrl(route('roles.index'))
-            ->setNextUrl(route('roles.edit', $role->id))
+            ->setNextUrl(route('roles.edit', $role->getKey()))
             ->setMessage(trans('core/acl::permissions.create_success'));
     }
 
     public function getDuplicate(int|string $id, BaseHttpResponse $response)
     {
-        $baseRole = $this->roleRepository->findOrFail($id);
+        $baseRole = Role::query()->findOrFail($id);
 
-        $role = $this->roleRepository->createOrUpdate([
+        $role = Role::query()->create([
             'name' => $baseRole->name . ' (Duplicate)',
-            'slug' => $this->roleRepository->createSlug($baseRole->slug, 0),
+            'slug' => $baseRole->slug,
             'permissions' => $baseRole->permissions,
             'description' => $baseRole->description,
             'created_by' => $baseRole->created_by,
@@ -153,17 +147,17 @@ class RoleController extends BaseController
         ]);
 
         return $response
-            ->setPreviousUrl(route('roles.edit', $baseRole->id))
-            ->setNextUrl(route('roles.edit', $role->id))
+            ->setPreviousUrl(route('roles.edit', $baseRole->getKey()))
+            ->setNextUrl(route('roles.edit', $role->getKey()))
             ->setMessage(trans('core/acl::permissions.duplicated_success'));
     }
 
     public function getJson(): array
     {
         $pl = [];
-        foreach ($this->roleRepository->all() as $role) {
+        foreach (Role::query()->get() as $role) {
             $pl[] = [
-                'value' => $role->id,
+                'value' => $role->getKey(),
                 'text' => $role->name,
             ];
         }
@@ -173,10 +167,10 @@ class RoleController extends BaseController
 
     public function postAssignMember(AssignRoleRequest $request, BaseHttpResponse $response): BaseHttpResponse
     {
-        $user = $this->userRepository->findOrFail($request->input('pk'));
-        $role = $this->roleRepository->findOrFail($request->input('value'));
+        $user = User::query()->findOrFail($request->input('pk'));
+        $role = Role::query()->findOrFail($request->input('value'));
 
-        $user->roles()->sync([$role->id]);
+        $user->roles()->sync([$role->getKey()]);
 
         event(new RoleAssignmentEvent($role, $user));
 

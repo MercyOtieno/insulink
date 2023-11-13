@@ -2,8 +2,8 @@
 
 namespace Botble\Theme\Providers;
 
+use Botble\Theme\Facades\Theme;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
-use Theme;
 
 class RouteServiceProvider extends ServiceProvider
 {

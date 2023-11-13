@@ -2,10 +2,12 @@ const defaultTheme = require('tailwindcss/defaultTheme');
 const colors = require('tailwindcss/colors')
 
 module.exports = {
-    purge: [
+    content: [
         "./resources/**/*.blade.php",
         "./resources/**/*.js",
-        "./resources/**/*.vue",
+        "./resources/**/*.js",
+        "./platform/themes/insulink/assets/js/**/*.vue",
+        "./platform/themes/insulink/**/*.blade.php",
         "/assets/js/components/*.vue",
         "/layouts/*.blade.php",
         "/partials/*.blade.php",

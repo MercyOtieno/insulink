@@ -2,12 +2,12 @@
 
 namespace Botble\Theme\Forms;
 
-use BaseHelper;
+use Botble\Base\Facades\BaseHelper;
 use Botble\Base\Forms\FormAbstract;
 use Botble\Base\Models\BaseModel;
+use Botble\Theme\Facades\Theme;
 use Botble\Theme\Http\Requests\CustomCssRequest;
 use Illuminate\Support\Facades\File;
-use Theme;
 
 class CustomCSSForm extends FormAbstract
 {

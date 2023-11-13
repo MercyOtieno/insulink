@@ -2,32 +2,22 @@
 
 namespace Theme\{Theme}\Http\Controllers;
 
-use Botble\Base\Http\Responses\BaseHttpResponse;
 use Botble\Theme\Http\Controllers\PublicController;
 
 class {Theme}Controller extends PublicController
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function getIndex(BaseHttpResponse $response)
+    public function getIndex()
     {
-        return parent::getIndex($response);
+        return parent::getIndex();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function getView(BaseHttpResponse $response, $key = null)
+    public function getView(?string $key = null)
     {
-        return parent::getView($response, $key);
+        return parent::getView($key);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function getSiteMap()
+    public function getSiteMapIndex(string $key = null, string $extension = 'xml')
     {
-        return parent::getSiteMap();
+        return parent::getSiteMapIndex();
     }
 }

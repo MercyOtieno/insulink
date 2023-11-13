@@ -1,72 +1,21 @@
 <template>
   <section id="dsc__slideshow">
     <div class="container">
-      <div class="flex flex-wrap overflow-hidden">
-        <div class="w-full overflow-hidden sm:w-full md:w-3/5 lg:w-3/5 xl:w-3/5"></div>
-        <div class="lg:w-2/5 w-full overflow-hidden sm:w-full md:w-2/5 xl:w-2/5">
+      <div class="row">
+        <div class="col-sm-3">
           <div class="widget">
-            <h4>Pick a Product to get a Quote</h4>
-            <div style="padding: 1rem 1.5rem;background: rgba(243,247,250,.3);">
-              <div class="flex -mx-4 flex-wrap overflow-hidden">
-                <div class="w-full px-3 overflow-hidden sm:w-full md:w-full lg:w-full xl:w-1/2 mb-3">
-                  <div class="card">
-                    <div class="card-body text-center">
-                      <div class="svg-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0M12 12.75h.008v.008H12v-.008z" />
-                        </svg>
+            <h4>Travel Insurance</h4>
+            <div style="padding: 1rem 1.5rem;background: rgba(255,255,255,1);">
+              <div class="d-block overflow-hidden">
+                <div class="w-full px-3 overflow-hidden mb-3">
+                  <div class="flex mb-4">
+                        <svg
+                          id="slider_products_icons"
+                          xmlns="http://www.w3.org/2000/svg"
 
-                      </div>
-                      <h5>Business Insurance</h5>
-                      <a
-                        href="/motor-private-comprehensive"
-                        class="btn btn-mini btn-secondary rounded-pill"
-                        >Get Quote</a
-                      >
-                    </div>
-                  </div>
-                </div>
-                <div class="w-full px-3 overflow-hidden sm:w-full md:w-full lg:w-full xl:w-1/2 mb-3">
-                  <div class="card">
-                    <div class="card-body text-center">
-                      <div class="svg-icon">
-                        <svg
-                          id="slider_products_icons"
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="24"
-                          height="24"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          class="feather feather-heart"
-                        >
-                          <path
-                            d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
-                          ></path>
-                        </svg>
-                      </div>
-                      <h5>Medical Insurance</h5>
-                      <a
-                        href="/individual-family-health"
-                        class="btn btn-mini btn-secondary rounded-pill"
-                        >Get Quote</a
-                      >
-                    </div>
-                  </div>
-                </div>
-                <div class="w-full px-3 overflow-hidden sm:w-full md:w-full lg:w-full xl:w-1/2 mb-3">
-                  <div class="card">
-                    <div class="card-body text-center">
-                      <div class="svg-icon">
-                        <svg
-                          id="slider_products_icons"
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="63.494"
-                          height="45.499"
+                          height="64"
                           viewBox="0 0 63.494 45.499"
+                          class="mx-auto"
                         >
                           <path
                             id="plane"
@@ -76,32 +25,68 @@
                           ></path>
                         </svg>
                       </div>
-                      <h5>Travel Insurance</h5>
                       <a
                         href="/travel-insurance"
-                        class="btn btn-mini btn-secondary rounded-pill"
+                        class="btn btn-orange rounded-pill block"
                         >Get Quote</a
                       >
-                    </div>
-                  </div>
                 </div>
-                <div class="w-full px-3 overflow-hidden sm:w-full md:w-full lg:w-full xl:w-1/2 mb-3">
-                  <div class="card">
-                    <div class="card-body text-center">
-                      <div class="svg-icon">
-                        <svg id="slider_products_icons" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-</svg>
-
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-3">
+          <div class="widget">
+            <h4>Medical Insurance</h4>
+            <div style="padding: 1rem 1.5rem;background: rgba(255,255,255,1);">
+              <div class="d-block overflow-hidden">
+                <div class="w-full px-3 overflow-hidden mb-3">
+                  <div class="flex mb-4">
+                    <svg width="64" id="slider_products_icons" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-heart mx-auto"><path data-v-afc2a3ae="" d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
                       </div>
-                      <h5>Home Insurance</h5>
+                      <a
+                        href="/individual-family-health"
+                        class="btn btn-orange rounded-pill block"
+                        >Get Quote</a
+                      >
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-3">
+          <div class="widget">
+            <h4>WIBA Insurance</h4>
+            <div style="padding: 1rem 1.5rem;background: rgba(255,255,255,1);">
+              <div class="d-block overflow-hidden">
+                <div class="w-full px-3 overflow-hidden mb-3">
+                  <div class="flex mb-4">
+                    <svg width="64" class="mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path data-v-afc2a3ae="" stroke-linecap="round" stroke-linejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0M12 12.75h.008v.008H12v-.008z"></path></svg>
+                      </div>
+                      <a
+                        href="/wiba-work-injury-benefits-act-insurance"
+                        class="btn btn-orange rounded-pill block"
+                        >Get Quote</a
+                      >
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-3">
+          <div class="widget">
+            <h4>Home Insurance</h4>
+            <div style="padding: 1rem 1.5rem;background: rgba(255,255,255,1);">
+              <div class="d-block overflow-hidden">
+                <div class="w-full px-3 overflow-hidden mb-3">
+                  <div class="flex mb-4">
+                    <svg width="64" class="mx-auto" id="slider_products_icons" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path data-v-afc2a3ae="" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                      </div>
                       <a
                         href="/domestic-insurance"
-                        class="btn btn-mini btn-secondary rounded-pill"
+                        class="btn btn-orange rounded-pill block"
                         >Get Quote</a
                       >
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>

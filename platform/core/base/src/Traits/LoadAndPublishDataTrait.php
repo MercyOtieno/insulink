@@ -3,8 +3,8 @@
 namespace Botble\Base\Traits;
 
 use Botble\Base\Supports\Helper;
+use Botble\Base\Supports\ServiceProvider;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use ReflectionClass;
 
@@ -13,9 +13,9 @@ use ReflectionClass;
  */
 trait LoadAndPublishDataTrait
 {
-    protected ?string $namespace = null;
+    protected string|null $namespace = null;
 
-    public function setNamespace(string $namespace): self
+    protected function setNamespace(string $namespace): self
     {
         $this->namespace = ltrim(rtrim($namespace, '/'), '/');
 
@@ -37,7 +37,7 @@ trait LoadAndPublishDataTrait
         return $modulePath . ($path ? '/' . ltrim($path, '/') : '');
     }
 
-    public function loadAndPublishConfigurations(array|string $fileNames): self
+    protected function loadAndPublishConfigurations(array|string $fileNames): self
     {
         if (! is_array($fileNames)) {
             $fileNames = [$fileNames];
@@ -71,7 +71,7 @@ trait LoadAndPublishDataTrait
         return str_replace('/', '.', $this->namespace);
     }
 
-    public function loadRoutes(array|string $fileNames = ['web']): self
+    protected function loadRoutes(array|string $fileNames = ['web']): self
     {
         if (! is_array($fileNames)) {
             $fileNames = [$fileNames];
@@ -89,7 +89,7 @@ trait LoadAndPublishDataTrait
         return $this->getPath('routes/' . $file . '.php');
     }
 
-    public function loadAndPublishViews(): self
+    protected function loadAndPublishViews(): self
     {
         $this->loadViewsFrom($this->getViewsPath(), $this->getDashedNamespace());
         if ($this->app->runningInConsole()) {
@@ -123,7 +123,7 @@ trait LoadAndPublishDataTrait
         return $this->getPath('/resources/lang');
     }
 
-    public function loadMigrations(): self
+    protected function loadMigrations(): self
     {
         $this->loadMigrationsFrom($this->getMigrationsPath());
 
@@ -135,15 +135,13 @@ trait LoadAndPublishDataTrait
         return $this->getPath('/database/migrations');
     }
 
-    public function publishAssets(string $path = null): self
+    protected function publishAssets(string $path = null): self
     {
-        if ($this->app->runningInConsole()) {
-            if (empty($path)) {
-                $path = 'vendor/core/' . $this->getDashedNamespace();
-            }
-
-            $this->publishes([$this->getAssetsPath() => public_path($path)], 'cms-public');
+        if (empty($path)) {
+            $path = 'vendor/core/' . $this->getDashedNamespace();
         }
+
+        $this->publishes([$this->getAssetsPath() => public_path($path)], 'cms-public');
 
         return $this;
     }
@@ -153,9 +151,19 @@ trait LoadAndPublishDataTrait
         return $this->getPath('public');
     }
 
-    public function loadHelpers(): self
+    protected function loadHelpers(): self
     {
         Helper::autoload($this->getPath('/helpers'));
+
+        return $this;
+    }
+
+    protected function loadAnonymousComponents(): self
+    {
+        $this->app['blade.compiler']->anonymousComponentPath(
+            $this->getViewsPath() . '/components',
+            str_replace('/', '-', $this->namespace)
+        );
 
         return $this;
     }

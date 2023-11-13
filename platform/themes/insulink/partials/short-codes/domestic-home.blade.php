@@ -1,18 +1,32 @@
 <section class="py-12 pattern-1">
     <div class="container">
-        <div class="flex flex-wrap overflow-hidden -mx-4 elementor-row">
-            <div class="w-full overflow-hidden md:w-1/2 lg:w-1/2 xl:w-1/2 px-4">
-                <img src="/images/homeinsurance.jpg" alt="" srcset="/images/homeinsurance.jpg">
-            </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="elementor-row">
+                    <h3>Our Services</h3>
 
-            <div class="w-full overflow-hidden md:w-1/2 lg:w-1/2 xl:w-1/2 px-4">
-                <h4 class="elementor-heading-title mb-3">Secure your Property from the best in Home Insurance</h4>
-                <p>There is no such place like home in the entire Universe. After all, it is a place where you and your loved ones can rejoice, weave thousands of memories that last for a lifetime. While we put our life’s savings into buying or constructing a home but we rarely realize that our home needs a protection in the form of insurance too. By investing in a good home insurance policy, also referred as home owners insurance, you can protect your home from threats. Situations like burglary, fire, earthquake or destruction of house due to riots are quite common in Kenya.</p>
-               <p>Don’t wait for a calamity to remind you the need of buying a home insurance, opt for it beforehand!</p>
-                <div class="mt-3">
-                    <a class="btn btn-local-orange rounded-pill transition ease-in-out duration-150"
-                        href="/domestic-insurance">Buy Home Insurance now</a>
+                    <div class="row">
+                        <div class="col-12 col-md-4">
+                            <h4 class="text-sm text-orange text-uppercase">Bundled Solutions</h4>
+                            <div class="text-justify text-gray-500">
+                                We take pride in delivering comprehensive bundled insurance solutions. Our approach combines multiple insurance coverages into a unified package, offering our clients convenience, cost-effectiveness, and enhanced coverage. With a deep understanding of the local market and a commitment to meeting our clients' unique needs, we provide tailored, bundled insurance solutions that provide security and peace of mind across various aspects of life and business.
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <h4 class="text-sm text-orange text-uppercase">Industry-Specific Policies</h4>
+                            <div class="text-justify text-gray-500">
+                                Our expertise allows us to offer comprehensive coverage that addresses the specific risks and challenges faced by different industries. Whether you're in manufacturing, hospitality, technology, or any other sector, our goal is to ensure that you have the right insurance solutions in place to safeguard your business and assets. With a deep understanding of industry dynamics and a commitment to personalized service, we are dedicated to helping businesses thrive by mitigating risks through our specialized insurance offerings.
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <h4 class="text-sm text-orange text-uppercase">Customized Policies</h4>
+                            <div class="text-justify text-gray-500">
+                                We understand the diverse requirements of different groups. Our commitment lies in crafting customized insurance offerings that provide comprehensive coverage, ensuring peace of mind and security for your valuable endeavors. Whether you're an artist, designer, or part of a chama group, we're here to provide insurance solutions that align with your specific aspirations and safeguard what matters most to you.
+                            </div>
+                        </div>
+                    </div>
                 </div>
+
             </div>
         </div>
     </div>

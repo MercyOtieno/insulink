@@ -2,7 +2,7 @@
 
 namespace Botble\Installer\Http\Middleware;
 
-use BaseHelper;
+use Botble\Base\Facades\BaseHelper;
 use Carbon\Carbon;
 use Closure;
 use Exception;

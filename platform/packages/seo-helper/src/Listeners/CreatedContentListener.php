@@ -3,8 +3,8 @@
 namespace Botble\SeoHelper\Listeners;
 
 use Botble\Base\Events\CreatedContentEvent;
+use Botble\SeoHelper\Facades\SeoHelper;
 use Exception;
-use SeoHelper;
 
 class CreatedContentListener
 {

@@ -1,5 +1,8 @@
 <?php
 
+use Botble\Base\Facades\BaseHelper;
+use Illuminate\Support\Facades\Route;
+
 Route::group(['namespace' => 'Botble\Language\Http\Controllers', 'middleware' => ['web', 'core']], function () {
     Route::group(['prefix' => BaseHelper::getAdminPrefix(), 'middleware' => 'auth'], function () {
         Route::group(['prefix' => 'settings/languages'], function () {
@@ -10,7 +13,7 @@ Route::group(['namespace' => 'Botble\Language\Http\Controllers', 'middleware' =>
 
             Route::post('store', [
                 'as' => 'languages.store',
-                'uses' => 'LanguageController@postStore',
+                'uses' => 'LanguageController@store',
                 'permission' => 'languages.create',
                 'middleware' => 'preventDemo',
             ]);
@@ -25,7 +28,7 @@ Route::group(['namespace' => 'Botble\Language\Http\Controllers', 'middleware' =>
                 'as' => 'languages.destroy',
                 'uses' => 'LanguageController@destroy',
                 'middleware' => 'preventDemo',
-            ])->where('id', BaseHelper::routeIdRegex());
+            ])->wherePrimaryKey();
 
             Route::get('set-default', [
                 'as' => 'languages.set.default',

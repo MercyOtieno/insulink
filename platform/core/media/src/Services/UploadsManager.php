@@ -2,23 +2,20 @@
 
 namespace Botble\Media\Services;
 
+use Botble\Media\Facades\RvMedia;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 use League\Flysystem\FilesystemException;
 use League\Flysystem\UnableToRetrieveMetadata;
 use Mimey\MimeTypes;
-use RvMedia;
-use Storage;
 
 class UploadsManager
 {
-    protected MimeTypes $mimeType;
-
-    public function __construct(MimeTypes $mimeType)
+    public function __construct(protected MimeTypes $mimeType)
     {
-        $this->mimeType = $mimeType;
     }
 
     public function fileDetails(string $path): array
@@ -32,13 +29,17 @@ class UploadsManager
         ];
     }
 
-    public function fileMimeType(string $path): ?string
+    public function fileMimeType(string $path): string|null
     {
         if (File::extension($path) == 'jfif') {
             return 'image/jpeg';
         }
 
-        return $this->mimeType->getMimeType(File::extension(RvMedia::getRealPath($path)));
+        try {
+            return $this->mimeType->getMimeType(File::extension(RvMedia::getRealPath($path)));
+        } catch (UnableToRetrieveMetadata) {
+            return null;
+        }
     }
 
     public function fileSize(string $path): int
@@ -52,7 +53,11 @@ class UploadsManager
 
     public function fileModified(string $path): string
     {
-        return Carbon::createFromTimestamp(Storage::lastModified($path));
+        try {
+            return Carbon::createFromTimestamp(Storage::lastModified($path));
+        } catch (UnableToRetrieveMetadata) {
+            return Carbon::now();
+        }
     }
 
     public function createDirectory(string $folder): bool|string

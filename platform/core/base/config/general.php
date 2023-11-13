@@ -37,7 +37,6 @@ return [
         'date' => env('CMS_DATE_FORMAT', 'Y-m-d'),
         'date_time' => env('CMS_DATE_TIME_FORMAT', 'Y-m-d H:i:s'),
     ],
-    'public_single_ending_url' => env('PUBLIC_SINGLE_ENDING_URL'),
     'locale' => env('APP_LOCALE', 'en'),
     'demo' => [
         'account' => [
@@ -164,6 +163,7 @@ return [
         'Luckiest Guy',
         'Maiden Orange',
         'Mako',
+        'Manrope',
         'Maven Pro',
         'Maven Pro:500',
         'Maven Pro:700',
@@ -192,6 +192,7 @@ return [
         'Nobile',
         'Noto Sans',
         'Noto Sans JP',
+        'Noto Sans Bengali',
         'Nova Cut',
         'Nova Flat',
         'Nova Mono',
@@ -293,6 +294,7 @@ return [
     ],
 
     'custom_google_fonts' => env('CMS_CUSTOM_GOOGLE_FONTS', ''),
+    'custom_fonts' => env('CMS_CUSTOM_FONTS', ''),
 
     'countries' => [
         'AF' => 'Afghanistan',
@@ -610,7 +612,7 @@ return [
             'HTML.SafeIframe' => 'true',
             // Add to .env if you want to allow all.
             // CMS_IFRAME_FILTER_URL_REGEX=/^(.*)/
-            'URI.SafeIframeRegexp' => env('CMS_IFRAME_FILTER_URL_REGEX', '%^(http://|https://|//)(' . env('CMS_IFRAME_ALLOWED_URLS', 'www.youtube.com/embed/|player.vimeo.com/video/') . ')%'),
+            'URI.SafeIframeRegexp' => env('CMS_IFRAME_FILTER_URL_REGEX', '%^(http://|https://|//)(' . env('CMS_IFRAME_ALLOWED_URLS', 'www.youtube.com/embed/|player.vimeo.com/video/|maps.google.com/maps|www.google.com/maps') . ')%'),
             'Attr.AllowedFrameTargets' => ['_blank'],
             'CSS.AllowedProperties' => [
                 'font',
@@ -684,16 +686,18 @@ return [
         ],
     ],
     'enable_system_updater' => env('CMS_ENABLE_SYSTEM_UPDATER', true),
-    'enable_marketplace_feature' => env('CMS_ENABLE_MARKETPLACE_FEATURE', true),
     'phone_validation_rule' => env('CMS_PHONE_VALIDATION_RULE', 'min:8|max:15|regex:/^([0-9\s\-\+\(\)]*)$/'),
     'disable_verify_csrf_token' => env('CMS_DISABLE_VERIFY_CSRF_TOKEN', false),
     'enable_less_secure_web' => env('CMS_ENABLE_LESS_SECURE_WEB', false),
     'db_strict_mode' => env('DB_STRICT', true),
     'enable_ini_set' => env('CMS_ENABLE_INI_SET', true),
     'upgrade_php_require_disabled' => env('CMS_UPGRADE_PHP_REQUIRE_DISABLED', false),
-    'enabled_cleanup_database' => env('CMS_ENABLED_CLEANUP_DATABASE', true),
+    'enabled_cleanup_database' => env('CMS_ENABLED_CLEANUP_DATABASE', false),
+    'hide_cleanup_system_menu' => env('CMS_HIDE_CLEANUP_SYSTEM_MENU', false),
     'google_fonts_url' => env('CMS_GOOGLE_FONTS_URL', 'https://fonts.bunny.net'),
+    'google_fonts_enabled' => env('CMS_GOOGLE_FONTS_ENABLED', true),
     'google_fonts_enabled_cache' => env('CMS_GOOGLE_FONTS_ENABLED_CACHE', true),
     'using_uuids_for_id' => env('CMS_USING_UUIDS_FOR_ID', false),
-    'route_id_regex' => env('CMS_ROUTE_ID_REGEX', '^\d+|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'),
+    'using_ulids_for_id' => env('CMS_USING_ULIDS_FOR_ID', false),
+    'type_id' => env('CMS_USING_TYPE_ID', 'BIGINT'),
 ];

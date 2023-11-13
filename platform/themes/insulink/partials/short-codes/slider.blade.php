@@ -16,7 +16,7 @@
                             <h4 class="elementor-icon-box-title">
                                 <span>Convenience</span>
                             </h4>
-                            <p class="elementor-icon-box-description">To allow our clients to get the best policies, compare the rates, the benefits from different insurance providers in one platform.</p>
+                            <p class="elementor-icon-box-description">We strive to provide convenient features and services that will help you save time and make the insurance process more streamlined and efficient: online quotes, automatic renewals, and reminders, online policy management, digital documentation, live chat, or email support.</p>
                         </div>
                     </div>
                 </div>
@@ -32,7 +32,7 @@
                             <h4 class="elementor-icon-box-title">
                                 <span>Credibility</span>
                             </h4>
-                            <p class="elementor-icon-box-description">We work closely with insurance providers to ensure credible data and information are passed to you from your insurance providers.</p>
+                            <p class="elementor-icon-box-description">We understand that credibility and trust are vital components of our business. We strive to earn and maintain your trust by providing reliable coverage options and excellent customer service. We are dedicated to earning and maintaining your trust through our commitment to excellent service, transparency, and ethical business practices.</p>
                         </div>
                     </div>
                 </div>
@@ -48,7 +48,7 @@
                             <h4 class="elementor-icon-box-title">
                                 Customer-centric
                             </h4>
-                            <p class="elementor-icon-box-description">Our team of experts will always be here to offer a remarkable customer experience all through your customer life cycle as well as your insurance journey.</p>
+                            <p class="elementor-icon-box-description">Our goal is to provide exceptional customer experiences and build long-term relationships with our customers. We intend to achieve, this by understanding customer needs, preferences, and behaviors and tailoring products and services to meet those needs.</p>
                         </div>
                     </div>
                 </div>

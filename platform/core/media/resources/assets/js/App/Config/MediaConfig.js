@@ -1,7 +1,7 @@
-let MediaConfig = $.parseJSON(localStorage.getItem('MediaConfig')) || {};
+let MediaConfig = $.parseJSON(localStorage.getItem('MediaConfig')) || {}
 
 let defaultConfig = {
-    app_key: (RV_MEDIA_CONFIG.random_hash ? RV_MEDIA_CONFIG.random_hash : '21d06709fe1d3abdf0e35ddda89c4b279'),
+    app_key: RV_MEDIA_CONFIG.random_hash ? RV_MEDIA_CONFIG.random_hash : '21d06709fe1d3abdf0e35ddda89c4b279',
     request_params: {
         view_type: 'tiles',
         filter: 'everything',
@@ -106,15 +106,15 @@ let defaultConfig = {
                 class: 'rv-action-restore',
             },
         ],
-    }
-};
-
-if (!MediaConfig.app_key || MediaConfig.app_key !== defaultConfig.app_key) {
-    MediaConfig = defaultConfig;
+    },
 }
 
-MediaConfig.request_params.search = '';
+if (!MediaConfig.app_key || MediaConfig.app_key !== defaultConfig.app_key) {
+    MediaConfig = defaultConfig
+}
 
-let RecentItems = $.parseJSON(localStorage.getItem('RecentItems')) || [];
+MediaConfig.request_params.search = ''
 
-export {MediaConfig, RecentItems};
+let RecentItems = $.parseJSON(localStorage.getItem('RecentItems')) || []
+
+export { MediaConfig, RecentItems }

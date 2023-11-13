@@ -15,7 +15,7 @@ class SlugHelper
     {
     }
 
-    public function registerModule(string|array $model, ?string $name = null): self
+    public function registerModule(string|array $model, string|null $name = null): self
     {
         $supported = $this->supportedModels();
 
@@ -48,7 +48,7 @@ class SlugHelper
         return config('packages.slug.general.supported', []);
     }
 
-    public function setPrefix(string $model, ?string $prefix, bool $canEmptyPrefix = false): self
+    public function setPrefix(string $model, string|null $prefix, bool $canEmptyPrefix = false): self
     {
         $prefixes = config('packages.slug.general.prefixes', []);
         $prefixes[$model] = $prefix;
@@ -99,15 +99,21 @@ class SlugHelper
     }
 
     public function getSlug(
-        ?string $key,
-        ?string $prefix = null,
-        ?string $model = null,
+        string|null $key,
+        string|null $prefix = null,
+        string|null $model = null,
         $referenceId = null
     ) {
         $condition = [];
 
+        $extension = $this->getPublicSingleEndingURL();
+
         if ($key !== null) {
             $condition = ['key' => $key];
+
+            if (! empty($extension)) {
+                $condition = ['key' => Str::replaceLast($extension, '', $key)];
+            }
         }
 
         if ($model !== null) {
@@ -125,7 +131,7 @@ class SlugHelper
         return app(SlugInterface::class)->getFirstBy($condition);
     }
 
-    public function getPrefix(string $model, string $default = '', bool $translate = true): ?string
+    public function getPrefix(string $model, string $default = '', bool $translate = true): string|null
     {
         $prefix = setting($this->getPermalinkSettingKey($model));
 
@@ -144,7 +150,7 @@ class SlugHelper
         return $default;
     }
 
-    public function getColumnNameToGenerateSlug(string|object $model): ?string
+    public function getColumnNameToGenerateSlug(string|object $model): string|null
     {
         if (is_object($model)) {
             $model = get_class($model);
@@ -167,6 +173,13 @@ class SlugHelper
     public function turnOffAutomaticUrlTranslationIntoLatin(): bool
     {
         return setting('slug_turn_off_automatic_url_translation_into_latin', 0) == 1;
+    }
+
+    public function getPublicSingleEndingURL(): string|null
+    {
+        $endingURL = setting('public_single_ending_url', config('packages.theme.general.public_single_ending_url'));
+
+        return ! empty($endingURL) ? '.' . $endingURL : null;
     }
 
     public function getCanEmptyPrefixes(): array

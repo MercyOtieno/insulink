@@ -3,17 +3,17 @@
 namespace Botble\Blog\Repositories\Interfaces;
 
 use Botble\Base\Enums\BaseStatusEnum;
+use Botble\Base\Models\BaseModel;
 use Botble\Blog\Models\Category;
 use Botble\Support\Repositories\Interfaces\RepositoryInterface;
-use Eloquent;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Collection;
 
 interface CategoryInterface extends RepositoryInterface
 {
     public function getDataSiteMap(): Collection;
 
-    public function getFeaturedCategories(?int $limit, array $with = []): Collection;
+    public function getFeaturedCategories(int|null $limit, array $with = []): Collection;
 
     public function getAllCategories(array $condition = [], array $with = []): Collection;
 
@@ -21,7 +21,7 @@ interface CategoryInterface extends RepositoryInterface
 
     public function getCategories(array $select, array $orderBy, array $conditions = ['status' => BaseStatusEnum::PUBLISHED]): Collection;
 
-    public function getAllRelatedChildrenIds(int|string|null|Eloquent $id): array;
+    public function getAllRelatedChildrenIds(int|string|null|BaseModel $id): array;
 
     public function getAllCategoriesWithChildren(array $condition = [], array $with = [], array $select = ['*']): Collection;
 

@@ -42,6 +42,11 @@ trait HasUuidsOrIntegerIds
 
     public static function determineIfUsingUuidsForId(): bool
     {
-        return config('core.base.general.using_uuids_for_id', false);
+        return (bool)config('core.base.general.using_uuids_for_id', false);
+    }
+
+    public static function getTypeOfId(): string
+    {
+        return strtoupper(config('core.base.general.type_id', 'BIGINT'));
     }
 }

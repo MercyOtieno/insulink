@@ -4,10 +4,12 @@ namespace Botble\SeoHelper\Entities\OpenGraph;
 
 use Botble\SeoHelper\Contracts\Entities\MetaCollectionContract;
 use Botble\SeoHelper\Contracts\Entities\OpenGraphContract;
+use Botble\SeoHelper\Contracts\Helpers\MetaContract;
+use Illuminate\Support\Collection;
 
 class Graph implements OpenGraphContract
 {
-    protected MetaCollectionContract $meta;
+    protected MetaCollectionContract|Collection|MetaContract $meta;
 
     public function __construct()
     {

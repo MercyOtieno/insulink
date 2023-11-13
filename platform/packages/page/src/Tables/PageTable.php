@@ -2,11 +2,12 @@
 
 namespace Botble\Page\Tables;
 
-use BaseHelper;
 use Botble\Base\Enums\BaseStatusEnum;
-use Botble\Page\Repositories\Interfaces\PageInterface;
+use Botble\Base\Facades\BaseHelper;
+use Botble\Base\Facades\Html;
+use Botble\Page\Models\Page;
 use Botble\Table\Abstracts\TableAbstract;
-use Html;
+use Botble\Table\DataTables;
 use Illuminate\Contracts\Routing\UrlGenerator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -15,19 +16,17 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
-use Yajra\DataTables\DataTables;
 
 class PageTable extends TableAbstract
 {
-    protected $hasActions = true;
-
-    protected $hasFilter = true;
-
-    public function __construct(DataTables $table, UrlGenerator $urlGenerator, PageInterface $pageRepository)
+    public function __construct(DataTables $table, UrlGenerator $urlGenerator, Page $page)
     {
         parent::__construct($table, $urlGenerator);
 
-        $this->repository = $pageRepository;
+        $this->model = $page;
+
+        $this->hasActions = true;
+        $this->hasFilter = true;
 
         if (! Auth::user()->hasAnyPermission(['pages.edit', 'pages.destroy'])) {
             $this->hasOperations = false;
@@ -41,14 +40,14 @@ class PageTable extends TableAbstract
 
         $data = $this->table
             ->eloquent($this->query())
-            ->editColumn('name', function ($item) {
+            ->editColumn('name', function (Page $item) {
                 if (! Auth::user()->hasPermission('posts.edit')) {
                     $name = BaseHelper::clean($item->name);
                 } else {
-                    $name = Html::link(route('pages.edit', $item->id), BaseHelper::clean($item->name));
+                    $name = Html::link(route('pages.edit', $item->getKey()), BaseHelper::clean($item->name));
                 }
 
-                if (function_exists('theme_option') && BaseHelper::isHomepage($item->id)) {
+                if (function_exists('theme_option') && BaseHelper::isHomepage($item->getKey())) {
                     $name .= Html::tag('span', ' — ' . trans('packages/page::pages.front_page'), [
                         'class' => 'additional-page-name',
                     ])->toHtml();
@@ -56,19 +55,19 @@ class PageTable extends TableAbstract
 
                 return apply_filters(PAGE_FILTER_PAGE_NAME_IN_ADMIN_LIST, $name, $item);
             })
-            ->editColumn('checkbox', function ($item) {
-                return $this->getCheckbox($item->id);
+            ->editColumn('checkbox', function (Page $item) {
+                return $this->getCheckbox($item->getKey());
             })
-            ->editColumn('template', function ($item) use ($pageTemplates) {
+            ->editColumn('template', function (Page $item) use ($pageTemplates) {
                 return Arr::get($pageTemplates, $item->template ?: 'default');
             })
-            ->editColumn('created_at', function ($item) {
+            ->editColumn('created_at', function (Page $item) {
                 return BaseHelper::formatDate($item->created_at);
             })
-            ->editColumn('status', function ($item) {
+            ->editColumn('status', function (Page $item) {
                 return $item->status->toHtml();
             })
-            ->addColumn('operations', function ($item) {
+            ->addColumn('operations', function (Page $item) {
                 return $this->getOperations('pages.edit', 'pages.destroy', $item);
             });
 
@@ -77,13 +76,16 @@ class PageTable extends TableAbstract
 
     public function query(): Relation|Builder|QueryBuilder
     {
-        $query = $this->repository->getModel()->select([
-            'id',
-            'name',
-            'template',
-            'created_at',
-            'status',
-        ]);
+        $query = $this
+            ->getModel()
+            ->query()
+            ->select([
+                'id',
+                'name',
+                'template',
+                'created_at',
+                'status',
+            ]);
 
         return $this->applyScopes($query);
     }

@@ -31181,7 +31181,6 @@ video {
 }
 
 .sppb-animated.flip {
-  -webkit-backface-visibility: visible;
   backface-visibility: visible;
   animation-name: flip
 }
@@ -31213,7 +31212,6 @@ video {
 }
 
 .flipInX {
-  -webkit-backface-visibility: visible !important;
   backface-visibility: visible !important;
   animation-name: flipInX
 }
@@ -31245,7 +31243,6 @@ video {
 }
 
 .flipInY {
-  -webkit-backface-visibility: visible !important;
   backface-visibility: visible !important;
   animation-name: flipInY
 }
@@ -31269,7 +31266,6 @@ video {
 .flipOutX {
   animation-name: flipOutX;
   animation-duration: .75s;
-  -webkit-backface-visibility: visible !important;
   backface-visibility: visible !important
 }
 
@@ -31290,7 +31286,6 @@ video {
 }
 
 .flipOutY {
-  -webkit-backface-visibility: visible !important;
   backface-visibility: visible !important;
   animation-name: flipOutY;
   animation-duration: .75s
@@ -32558,7 +32553,7 @@ a {
     display: inline-flex;
     /* flex: 0 0 auto; */
     float: left;
-    margin-bottom: 50px;
+    margin-bottom: 121px;
   }
 
   .domestic-insurance .parent-height {
@@ -180422,3 +180417,4 @@ body .scrollup {
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
+

@@ -1,15 +1,19 @@
-@extends(Theme::getThemeNamespace() . '::views.error-master')
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="robots" content="noindex,nofollow,noarchive" />
+    <title>{{ __('An Error Occurred: Internal Server Error') }}</title>
+    <link rel="stylesheet" href="{{ asset('vendor/core/core/base/css/error-pages.css') }}">
+</head>
+<body>
+<div class="container">
+    <h1>{{ __('Oops! An Error Occurred') }}</h1>
+    <h2>{{ __('The server returned a "500 Internal Server Error".') }}</h2>
 
-@section('code', '500')
-@section('title', __('Page could not be loaded'))
-
-@section('message')
-    <h4>{{ __('This may have occurred because of several reasons') }}</h4>
-    <ul>
-        <li>{{ __('The page you requested does not exist.') }}</li>
-        <li>{{ __('The link you clicked is no longer.') }}</li>
-        <li>{{ __('The page may have moved to a new location.') }}</li>
-        <li>{{ __('An error may have occurred.') }}</li>
-        <li>{{ __('You are not authorized to view the requested resource.') }}</li>
-    </ul>
-@endsection
+    <p>
+        {{ __('Something is broken. Please let us know what you were doing when this error occurred. We will fix it as soon as possible. Sorry for any inconvenience caused.') }}
+    </p>
+</div>
+</body>
+</html>

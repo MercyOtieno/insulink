@@ -409,7 +409,7 @@ h4.modal-title {
     }
 }
 
-.form-group .ui-select-wrapper {
+.form-group .ui-select-wrapper, .form-group.ui-select-wrapper {
     .select2-container {
         z-index: 0;
     }
@@ -664,7 +664,6 @@ h4.modal-title {
     text-align: left;
 
     .note {
-        border-left: 5px solid #eee;
         border-right: none;
         border-radius: 0 4px 4px 0;
         padding: 15px 30px 15px 15px;
@@ -843,4 +842,58 @@ h4.modal-title {
 .select2-container--default .select2-selection--single .select2-selection__clear {
     height: 34px;
     margin-right: 10px;
+}
+
+.tags.tagify {
+    width: 100%;
+}
+
+.user-profile {
+    .mt-element-card.mt-card-round {
+        height: 100%;
+
+        .mt-card-item {
+            &.profile-userpic {
+                text-align: center;
+                margin-bottom: 0;
+                padding: 25px;
+                background: #fff;
+                border: 1px solid #dddddd;
+                height: 100%;
+
+                .mt-card-avatar {
+                    width: 150px;
+                    display: inline-block;
+                    float: none;
+
+                    .mt-overlay, img {
+                        width: 150px;
+                        display: inline-block;
+                    }
+                }
+            }
+        }
+    }
+
+    .profile-content {
+        .tabbable-custom {
+            margin-bottom: 0;
+
+            > .tab-content {
+                height: calc(100% - 40px);
+            }
+        }
+    }
+}
+
+@media (max-width: 768px) {
+    .user-profile {
+        .crop-avatar {
+            margin-bottom: 25px;
+        }
+    }
+}
+
+.tagify__dropdown.users-list {
+    z-index: 9999999;
 }

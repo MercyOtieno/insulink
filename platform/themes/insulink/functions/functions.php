@@ -47,7 +47,7 @@ theme_option()
         'label'      => __('Copyright'),
         'attributes' => [
             'name'    => 'copyright',
-            'value'   => '© 2020 Botble Technologies. All right reserved.',
+            'value'   => '© 2023 Insulink LTD. All right reserved.',
             'options' => [
                 'class'        => 'form-control',
                 'placeholder'  => __('Change copyright'),
@@ -192,6 +192,12 @@ add_shortcode('motor_private_home', 'Motor Private Home', 'Motor Private Home', 
 });
 add_shortcode('domestic_home', 'Domestic Home', 'Domestic Home', function() {
     return Theme::partial('short-codes.domestic-home');
+});
+add_shortcode('business', 'Business', 'Business', function() {
+    return Theme::partial('short-codes.business');
+});
+add_shortcode('callback', 'Call Back form', 'Call Back form', function() {
+    return Theme::partial('short-codes.callback');
 });
 
 add_shortcode('faqs', 'Frequently Asked Questions', 'Frequently Asked Questions', function() {

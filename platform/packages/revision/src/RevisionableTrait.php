@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 /**
- * @mixin \Eloquent|SoftDeletes
+ * @mixin BaseModel|SoftDeletes
  */
 trait RevisionableTrait
 {
@@ -263,6 +263,7 @@ trait RevisionableTrait
     {
         if ((! isset($this->revisionEnabled) || $this->revisionEnabled)
             && $this->isSoftDelete()
+            && method_exists($this, 'getDeletedAtColumn')
             && $this->isRevisionable($this->getDeletedAtColumn())
         ) {
             $revisions[] = [
@@ -299,12 +300,12 @@ trait RevisionableTrait
         return false;
     }
 
-    public function getRevisionFormattedFields(): ?array
+    public function getRevisionFormattedFields(): array|null
     {
         return $this->revisionFormattedFields;
     }
 
-    public function getRevisionFormattedFieldNames(): ?array
+    public function getRevisionFormattedFieldNames(): array|null
     {
         return $this->revisionFormattedFieldNames;
     }

@@ -2,11 +2,11 @@
 
 namespace Botble\Shortcode\Providers;
 
+use Botble\Base\Supports\ServiceProvider;
 use Botble\Base\Traits\LoadAndPublishDataTrait;
 use Botble\Shortcode\Compilers\ShortcodeCompiler;
 use Botble\Shortcode\Shortcode;
 use Botble\Shortcode\View\Factory;
-use Illuminate\Support\ServiceProvider;
 
 class ShortcodeServiceProvider extends ServiceProvider
 {

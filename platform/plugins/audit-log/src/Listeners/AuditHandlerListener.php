@@ -3,13 +3,15 @@
 namespace Botble\AuditLog\Listeners;
 
 use Botble\AuditLog\Events\AuditHandlerEvent;
-use Botble\AuditLog\Repositories\Interfaces\AuditLogInterface;
+use Botble\AuditLog\Models\AuditHistory;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class AuditHandlerListener
 {
-    public function __construct(protected AuditLogInterface $auditLogRepository, protected Request $request)
+    public function __construct(protected Request $request)
     {
     }
 
@@ -26,6 +28,8 @@ class AuditHandlerListener
                 'reference_id' => $event->referenceId,
                 'reference_name' => $event->referenceName,
                 'type' => $event->type,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
             ];
 
             if (! in_array($event->action, ['loggedin', 'password'])) {
@@ -43,7 +47,13 @@ class AuditHandlerListener
                 ]));
             }
 
-            $this->auditLogRepository->createOrUpdate($data);
+            if (! Cache::has('pruned_audit_logs_table')) {
+                (new AuditHistory())->pruneAll();
+
+                Cache::put('pruned_audit_logs_table', 1, Carbon::now()->addDay());
+            }
+
+            AuditHistory::query()->insert($data);
         } catch (Exception $exception) {
             info($exception->getMessage());
         }

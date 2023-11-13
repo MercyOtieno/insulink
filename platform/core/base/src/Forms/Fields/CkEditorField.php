@@ -2,8 +2,8 @@
 
 namespace Botble\Base\Forms\Fields;
 
+use Botble\Base\Forms\FormField;
 use Illuminate\Support\Arr;
-use Kris\LaravelFormBuilder\Fields\FormField;
 
 class CkEditorField extends FormField
 {

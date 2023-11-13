@@ -2,9 +2,11 @@
 
 namespace Botble\AuditLog\Http\Controllers;
 
+use Botble\AuditLog\Models\AuditHistory;
 use Botble\AuditLog\Repositories\Interfaces\AuditLogInterface;
 use Botble\AuditLog\Tables\AuditLogTable;
 use Botble\Base\Events\DeletedContentEvent;
+use Botble\Base\Facades\PageTitle;
 use Botble\Base\Http\Controllers\BaseController;
 use Botble\Base\Http\Responses\BaseHttpResponse;
 use Botble\Base\Traits\HasDeleteManyItemsTrait;
@@ -21,7 +23,7 @@ class AuditLogController extends BaseController
 
     public function getWidgetActivities(BaseHttpResponse $response, Request $request)
     {
-        $limit = (int)$request->input('paginate', 10);
+        $limit = $request->integer('paginate', 10);
         $limit = $limit > 0 ? $limit : 10;
 
         $histories = $this->auditLogRepository
@@ -30,7 +32,7 @@ class AuditLogController extends BaseController
                 'order_by' => ['created_at' => 'DESC'],
                 'paginate' => [
                     'per_page' => $limit,
-                    'current_paged' => (int)$request->input('page', 1),
+                    'current_paged' => $request->integer('page', 1),
                 ],
             ]);
 
@@ -40,15 +42,14 @@ class AuditLogController extends BaseController
 
     public function index(AuditLogTable $dataTable)
     {
-        page_title()->setTitle(trans('plugins/audit-log::history.name'));
+        PageTitle::setTitle(trans('plugins/audit-log::history.name'));
 
         return $dataTable->renderTable();
     }
 
-    public function destroy(int|string $id, Request $request, BaseHttpResponse $response)
+    public function destroy(AuditHistory $log, Request $request, BaseHttpResponse $response)
     {
         try {
-            $log = $this->auditLogRepository->findOrFail($id);
             $this->auditLogRepository->delete($log);
 
             event(new DeletedContentEvent(AUDIT_LOG_MODULE_SCREEN_NAME, $request, $log));
@@ -63,7 +64,7 @@ class AuditLogController extends BaseController
 
     public function deletes(Request $request, BaseHttpResponse $response)
     {
-        return $this->executeDeleteItems($request, $response, $this->auditLogRepository, AUDIT_LOG_MODULE_SCREEN_NAME);
+        return $this->executeDeleteItems($request, $response, new AuditHistory(), AUDIT_LOG_MODULE_SCREEN_NAME);
     }
 
     public function deleteAll(BaseHttpResponse $response)

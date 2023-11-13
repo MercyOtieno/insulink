@@ -1,5 +1,5 @@
 <div class="col-lg-7 mb-2">
-    @if ($stats->count())
+    @if ($stats->isNotEmpty())
         <div class="chart" id="stats-chart"></div>
     @else
         <div class="h-100 d-flex align-items-center justify-content-center bg-light">
@@ -59,56 +59,6 @@
         </div>
     </div>
 </div>
-
-@if (setting('analytics_type', 'ua') == 'ua')
-    <div class="col-lg-3 col-md-4 col-sm-6">
-        <div class="info-box">
-            <div class="info-box-icon bg-purple">
-                <i class="fas fa-chart-pie"></i>
-            </div>
-            <div class="info-box-content">
-                <span class="info-box-text">{{ trans('plugins/analytics::analytics.percent_new_session') }}</span>
-                <span class="info-box-number" id="percent_new_session_total">{{ round($total['ga:percentNewSessions'], 2) }}%</span>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-lg-3 col-md-4 col-sm-6">
-        <div class="info-box">
-            <div class="info-box-icon bg-yellow-crusta font-white">
-                <i class="icon-graph"></i>
-            </div>
-            <div class="info-box-content">
-                <span class="info-box-text">{{ trans('plugins/analytics::analytics.page_session') }}</span>
-                <span class="info-box-number" id="page_views_per_visit_total">{{ round($total['ga:pageviewsPerVisit'], 2) }}</span>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-lg-3 col-md-4 col-sm-6">
-        <div class="info-box">
-            <div class="info-box-icon bg-red">
-                <i class="fa fa-clock"></i>
-            </div>
-            <div class="info-box-content">
-                <span class="info-box-text">{{ trans('plugins/analytics::analytics.avg_duration') }}</span>
-                <span class="info-box-number" id="session_duration_total">{{ gmdate('H:i:s', $total['ga:avgSessionDuration']) }}</span>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-lg-3 col-md-4 col-sm-6">
-        <div class="info-box">
-            <div class="info-box-icon bg-yellow-casablanca">
-                <i class="fa fa-user-plus"></i>
-            </div>
-            <div class="info-box-content">
-                <span class="info-box-text">{{ trans('plugins/analytics::analytics.new_users') }}</span>
-                <span class="info-box-number" id="session_duration_total">{{ $total['ga:newUsers'] }}</span>
-            </div>
-        </div>
-    </div>
-@endif
 
 <div class="clearfix"></div>
 

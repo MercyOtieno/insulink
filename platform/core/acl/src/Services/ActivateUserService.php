@@ -7,16 +7,13 @@ use Botble\ACL\Repositories\Interfaces\ActivationInterface;
 
 class ActivateUserService
 {
-    protected ActivationInterface $activationRepository;
-
-    public function __construct(ActivationInterface $activationRepository)
+    public function __construct(protected ActivationInterface $activationRepository)
     {
-        $this->activationRepository = $activationRepository;
     }
 
     public function activate(User $user): bool
     {
-        if ($this->activationRepository->completed($user)) {
+        if ($user->activated) {
             return false;
         }
 
@@ -27,5 +24,20 @@ class ActivateUserService
         event('acl.activated', [$user, $activation]);
 
         return $this->activationRepository->complete($user, $activation->code);
+    }
+
+    public function remove(User $user): bool|null
+    {
+        if (! $user->activated) {
+            return false;
+        }
+
+        event('acl.deactivating', $user);
+
+        $removed = $this->activationRepository->remove($user);
+
+        event('acl.deactivated', $user);
+
+        return $removed;
     }
 }

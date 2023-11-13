@@ -35,6 +35,10 @@
     array (
       0 => 'Botble\\Api\\Providers\\ApiServiceProvider',
     ),
+    'aliases' => 
+    array (
+      'ApiHelper' => 'Botble\\Api\\Facades\\ApiHelper',
+    ),
   ),
   'botble/assets' => 
   array (
@@ -54,6 +58,13 @@
       0 => 'Botble\\DevTool\\Providers\\DevToolServiceProvider',
     ),
   ),
+  'botble/get-started' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'Botble\\GetStarted\\Providers\\GetStartedServiceProvider',
+    ),
+  ),
   'botble/git-commit-checker' => 
   array (
     'providers' => 
@@ -69,7 +80,7 @@
     ),
     'aliases' => 
     array (
-      'Menu' => 'Botble\\Menu\\Facades\\MenuFacade',
+      'Menu' => 'Botble\\Menu\\Facades\\Menu',
     ),
   ),
   'botble/optimize' => 
@@ -77,6 +88,10 @@
     'providers' => 
     array (
       0 => 'Botble\\Optimize\\Providers\\OptimizeServiceProvider',
+    ),
+    'aliases' => 
+    array (
+      'OptimizerHelper' => 'Botble\\Optimize\\Facades\\OptimizerHelper',
     ),
   ),
   'botble/page' => 
@@ -107,14 +122,21 @@
     ),
     'aliases' => 
     array (
-      'Assets' => 'Botble\\Base\\Facades\\AssetsFacade',
-      'MetaBox' => 'Botble\\Base\\Facades\\MetaBoxFacade',
-      'Action' => 'Botble\\Base\\Facades\\ActionFacade',
-      'Filter' => 'Botble\\Base\\Facades\\FilterFacade',
-      'EmailHandler' => 'Botble\\Base\\Facades\\EmailHandlerFacade',
-      'Breadcrumbs' => 'Botble\\Base\\Facades\\BreadcrumbsFacade',
-      'MacroableModels' => 'Botble\\Base\\Facades\\MacroableModelsFacade',
-      'JsValidator' => 'Botble\\JsValidation\\Facades\\JsValidatorFacade',
+      'Action' => 'Botble\\Base\\Facades\\Action',
+      'Assets' => 'Botble\\Base\\Facades\\Assets',
+      'BaseHelper' => 'Botble\\Base\\Facades\\BaseHelper',
+      'Breadcrumbs' => 'Botble\\Base\\Facades\\Breadcrumbs',
+      'DashboardMenu' => 'Botble\\Base\\Facades\\DashboardMenu',
+      'EmailHandler' => 'Botble\\Base\\Facades\\EmailHandler',
+      'Filter' => 'Botble\\Base\\Facades\\Filter',
+      'Form' => 'Botble\\Base\\Facades\\Form',
+      'Html' => 'Botble\\Base\\Facades\\Html',
+      'MacroableModels' => 'Botble\\Base\\Facades\\MacroableModels',
+      'MetaBox' => 'Botble\\Base\\Facades\\MetaBox',
+      'PageTitle' => 'Botble\\Base\\Facades\\PageTitle',
+      'JsValidator' => 'Botble\\JsValidation\\Facades\\JsValidator',
+      'Setting' => 'Botble\\Setting\\Facades\\Setting',
+      'RvMedia' => 'Botble\\Media\\Facades\\RvMedia',
     ),
   ),
   'botble/plugin-generator' => 
@@ -146,7 +168,7 @@
     ),
     'aliases' => 
     array (
-      'SeoHelper' => 'Botble\\SeoHelper\\Facades\\SeoHelperFacade',
+      'SeoHelper' => 'Botble\\SeoHelper\\Facades\\SeoHelper',
     ),
   ),
   'botble/shortcode' => 
@@ -154,6 +176,10 @@
     'providers' => 
     array (
       0 => 'Botble\\Shortcode\\Providers\\ShortcodeServiceProvider',
+    ),
+    'aliases' => 
+    array (
+      'Shortcode' => 'Botble\\Shortcode\\Facades\\Shortcode',
     ),
   ),
   'botble/sitemap' => 
@@ -171,7 +197,7 @@
     ),
     'aliases' => 
     array (
-      'SlugHelper' => 'Botble\\Slug\\Facades\\SlugHelperFacade',
+      'SlugHelper' => 'Botble\\Slug\\Facades\\SlugHelper',
     ),
   ),
   'botble/theme' => 
@@ -183,11 +209,11 @@
     ),
     'aliases' => 
     array (
-      'Theme' => 'Botble\\Theme\\Facades\\ThemeFacade',
-      'ThemeOption' => 'Botble\\Theme\\Facades\\ThemeOptionFacade',
-      'ThemeManager' => 'Botble\\Theme\\Facades\\ManagerFacade',
-      'AdminBar' => 'Botble\\Theme\\Facades\\AdminBarFacade',
-      'SiteMapManager' => 'Botble\\Theme\\Facades\\SiteMapManagerFacade',
+      'Theme' => 'Botble\\Theme\\Facades\\Theme',
+      'ThemeOption' => 'Botble\\Theme\\Facades\\ThemeOption',
+      'ThemeManager' => 'Botble\\Theme\\Facades\\Manager',
+      'AdminBar' => 'Botble\\Theme\\Facades\\AdminBar',
+      'SiteMapManager' => 'Botble\\Theme\\Facades\\SiteMapManager',
     ),
   ),
   'botble/theme-generator' => 
@@ -205,8 +231,8 @@
     ),
     'aliases' => 
     array (
-      'Widget' => 'Botble\\Widget\\Facades\\WidgetFacade',
-      'WidgetGroup' => 'Botble\\Widget\\Facades\\WidgetGroupFacade',
+      'Widget' => 'Botble\\Widget\\Facades\\Widget',
+      'WidgetGroup' => 'Botble\\Widget\\Facades\\WidgetGroup',
     ),
   ),
   'botble/widget-generator' => 
@@ -245,13 +271,6 @@
       'MacroableModels' => 'Javoscript\\MacroableModels\\Facades\\MacroableModels',
     ),
   ),
-  'knuckleswtf/scribe' => 
-  array (
-    'providers' => 
-    array (
-      0 => 'Knuckles\\Scribe\\ScribeServiceProvider',
-    ),
-  ),
   'kris/laravel-form-builder' => 
   array (
     'providers' => 
@@ -268,13 +287,6 @@
     'providers' => 
     array (
       0 => 'Lab404\\Impersonate\\ImpersonateServiceProvider',
-    ),
-  ),
-  'laravel/passport' => 
-  array (
-    'providers' => 
-    array (
-      0 => 'Laravel\\Passport\\PassportServiceProvider',
     ),
   ),
   'laravel/sail' => 
@@ -382,6 +394,13 @@
       0 => 'Termwind\\Laravel\\TermwindServiceProvider',
     ),
   ),
+  'spatie/laravel-feed' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'Spatie\\Feed\\FeedServiceProvider',
+    ),
+  ),
   'spatie/laravel-ignition' => 
   array (
     'providers' => 
@@ -405,6 +424,17 @@
     'providers' => 
     array (
       0 => 'EloquentFilter\\ServiceProvider',
+    ),
+  ),
+  'unicodeveloper/laravel-paystack' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'Unicodeveloper\\Paystack\\PaystackServiceProvider',
+    ),
+    'aliases' => 
+    array (
+      'Paystack' => 'Unicodeveloper\\Paystack\\Facades\\Paystack',
     ),
   ),
   'yajra/laravel-datatables-buttons' => 

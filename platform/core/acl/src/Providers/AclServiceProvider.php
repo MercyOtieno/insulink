@@ -7,21 +7,22 @@ use Botble\ACL\Http\Middleware\RedirectIfAuthenticated;
 use Botble\ACL\Models\Activation;
 use Botble\ACL\Models\Role;
 use Botble\ACL\Models\User;
-use Botble\ACL\Repositories\Caches\RoleCacheDecorator;
 use Botble\ACL\Repositories\Eloquent\ActivationRepository;
 use Botble\ACL\Repositories\Eloquent\RoleRepository;
 use Botble\ACL\Repositories\Eloquent\UserRepository;
 use Botble\ACL\Repositories\Interfaces\ActivationInterface;
 use Botble\ACL\Repositories\Interfaces\RoleInterface;
 use Botble\ACL\Repositories\Interfaces\UserInterface;
+use Botble\Base\Facades\DashboardMenu;
+use Botble\Base\Facades\EmailHandler;
+use Botble\Base\Supports\ServiceProvider;
 use Botble\Base\Traits\LoadAndPublishDataTrait;
-use EmailHandler;
+use Botble\Media\Facades\RvMedia;
 use Exception;
-use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Routing\Events\RouteMatched;
-use Illuminate\Routing\Router;
 use Illuminate\Support\Arr;
-use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\View;
+use Illuminate\View\View as IlluminateView;
 
 class AclServiceProvider extends ServiceProvider
 {
@@ -38,13 +39,10 @@ class AclServiceProvider extends ServiceProvider
         });
 
         $this->app->bind(RoleInterface::class, function () {
-            return new RoleCacheDecorator(new RoleRepository(new Role()));
+            return new RoleRepository(new Role());
         });
     }
 
-    /**
-     * @throws BindingResolutionException
-     */
     public function boot(): void
     {
         $this->app->register(CommandServiceProvider::class);
@@ -62,7 +60,7 @@ class AclServiceProvider extends ServiceProvider
         $this->garbageCollect();
 
         $this->app['events']->listen(RouteMatched::class, function () {
-            dashboard_menu()
+            DashboardMenu::make()
                 ->registerItem([
                     'id' => 'cms-core-role-permission',
                     'priority' => 2,
@@ -82,9 +80,6 @@ class AclServiceProvider extends ServiceProvider
                     'permissions' => ['users.index'],
                 ]);
 
-            /**
-             * @var Router $router
-             */
             $router = $this->app['router'];
 
             $router->aliasMiddleware('auth', Authenticate::class);
@@ -97,13 +92,42 @@ class AclServiceProvider extends ServiceProvider
             EmailHandler::addTemplateSettings('acl', config('core.acl.email', []), 'core');
 
             $this->app->register(HookServiceProvider::class);
+
+            View::composer('core/acl::auth.master', function (IlluminateView $view) {
+                $view->with('backgroundUrl', $this->getLoginPageBackgroundUrl());
+            });
         });
+    }
+
+    protected function getLoginPageBackgroundUrl(): string
+    {
+        $default = url(Arr::random(config('core.acl.general.backgrounds', [])));
+
+        $images = setting('login_screen_backgrounds', []);
+
+        if (! $images) {
+            return $default;
+        }
+
+        $images = is_array($images) ? $images : json_decode($images, true);
+
+        $images = array_filter($images);
+
+        if (empty($images)) {
+            return $default;
+        }
+
+        $image = Arr::random($images);
+
+        if (! $image) {
+            return $default;
+        }
+
+        return RvMedia::getImageUrl($image);
     }
 
     /**
      * Garbage collect activations and reminders.
-     *
-     * @throws BindingResolutionException
      */
     protected function garbageCollect(): void
     {

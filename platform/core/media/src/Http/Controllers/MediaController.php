@@ -2,6 +2,8 @@
 
 namespace Botble\Media\Http\Controllers;
 
+use Botble\Base\Facades\PageTitle;
+use Botble\Media\Facades\RvMedia;
 use Botble\Media\Http\Resources\FileResource;
 use Botble\Media\Http\Resources\FolderResource;
 use Botble\Media\Models\MediaFile;
@@ -13,16 +15,14 @@ use Botble\Media\Services\ThumbnailService;
 use Botble\Media\Services\UploadsManager;
 use Botble\Media\Supports\Zipper;
 use Carbon\Carbon;
-use Eloquent;
 use Exception;
-use Illuminate\Support\Facades\File;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
-use RvMedia;
-use Storage;
 
 /**
  * @since 19/08/2015 08:05 AM
@@ -39,7 +39,7 @@ class MediaController extends Controller
 
     public function getMedia()
     {
-        page_title()->setTitle(trans('core/media::media.menu_name'));
+        PageTitle::setTitle(trans('core/media::media.menu_name'));
 
         return view('core/media::index');
     }
@@ -75,8 +75,8 @@ class MediaController extends Controller
                 'is_folder' => 'DESC',
             ],
             'paginate' => [
-                'per_page' => (int)$request->input('posts_per_page', 30),
-                'current_paged' => (int)$request->input('paged', 1),
+                'per_page' => $request->integer('posts_per_page', 30),
+                'current_paged' => $request->integer('paged', 1),
             ],
             'selected_file_id' => $request->input('selected_file_id'),
             'is_popup' => $request->input('is_popup'),
@@ -231,7 +231,7 @@ class MediaController extends Controller
         ]);
     }
 
-    protected function transformOrderBy(?string $orderBy): array
+    protected function transformOrderBy(string|null $orderBy): array
     {
         $result = explode('-', $orderBy);
         if (! count($result) == 2) {
@@ -259,14 +259,12 @@ class MediaController extends Controller
             return [];
         }
 
-        if (empty($breadcrumbs)) {
-            $breadcrumbs = [
-                [
-                    'name' => $folder->name,
-                    'id' => $folder->id,
-                ],
-            ];
-        }
+        $breadcrumbs = [
+            [
+                'name' => $folder->name,
+                'id' => $folder->id,
+            ],
+        ];
 
         $child = $this->folderRepository->getBreadcrumbs($folder->parent_id);
         if (! empty($child)) {
@@ -399,7 +397,7 @@ class MediaController extends Controller
 
                             foreach ($child as $sub) {
                                 /**
-                                 * @var Eloquent $sub
+                                 * @var MediaFolder $sub
                                  */
                                 $subFiles = $this->fileRepository->getFilesByFolderId($sub->id, [], false);
 
@@ -457,7 +455,7 @@ class MediaController extends Controller
                     $meta->value = $request->input('selected', []);
                 }
 
-                $this->mediaSettingRepository->createOrUpdate($meta);
+                $meta->save();
 
                 $response = RvMedia::responseSuccess([], trans('core/media::media.favorite_success'));
 
@@ -479,9 +477,10 @@ class MediaController extends Controller
                                 }
                             }
                         }
+
                         $meta->value = $value;
 
-                        $this->mediaSettingRepository->createOrUpdate($meta);
+                        $meta->save();
                     }
                 }
 
@@ -538,7 +537,7 @@ class MediaController extends Controller
 
             case 'rename':
                 foreach ($request->input('selected') as $item) {
-                    if (! $item['id'] || ! $item['name']) {
+                    if (! $item['id'] || empty($item['name'])) {
                         continue;
                     }
 
@@ -548,7 +547,7 @@ class MediaController extends Controller
 
                         if (! empty($file)) {
                             $file->name = $this->fileRepository->createName($item['name'], $file->folder_id);
-                            $this->fileRepository->createOrUpdate($file);
+                            $file->save();
                         }
                     } else {
                         $name = $item['name'];
@@ -556,7 +555,7 @@ class MediaController extends Controller
 
                         if (! empty($folder)) {
                             $folder->name = $this->folderRepository->createName($name, $folder->parent_id);
-                            $this->folderRepository->createOrUpdate($folder);
+                            $folder->save();
                         }
                     }
                 }
@@ -575,7 +574,7 @@ class MediaController extends Controller
 
                     if ($file) {
                         $file->alt = $item['alt'];
-                        $this->fileRepository->createOrUpdate($file);
+                        $file->save();
                     }
                 }
 
@@ -634,7 +633,7 @@ class MediaController extends Controller
         unset($file->slug);
         unset($file->parent_id);
 
-        return $this->fileRepository->createOrUpdate($file);
+        return $file->save();
     }
 
     public function download(Request $request)

@@ -36,6 +36,6 @@ class AuditHistory extends BaseModel
 
     public function prunable(): Builder|BaseQueryBuilder
     {
-        return $this->whereDate('created_at', '>', Carbon::now()->subDays(30)->toDateString());
+        return static::where('created_at', '<=', Carbon::now()->subMonth());
     }
 }

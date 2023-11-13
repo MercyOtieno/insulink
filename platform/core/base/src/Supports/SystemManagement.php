@@ -2,9 +2,13 @@
 
 namespace Botble\Base\Supports;
 
-use BaseHelper;
+use Botble\Base\Facades\BaseHelper;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
-use Request;
+use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\Session;
 
 class SystemManagement
 {
@@ -45,17 +49,17 @@ class SystemManagement
             'version' => app()->version(),
             'timezone' => config('app.timezone'),
             'debug_mode' => app()->hasDebugModeEnabled(),
-            'storage_dir_writable' => File::isWritable(base_path('storage')),
+            'storage_dir_writable' => File::isWritable(storage_path()),
             'cache_dir_writable' => File::isReadable(app()->bootstrapPath('cache')),
-            'app_size' => BaseHelper::humanFilesize(self::folderSize(base_path())),
+            'app_size' => BaseHelper::humanFilesize(self::calculateAppSize(base_path())),
         ];
     }
 
-    protected static function folderSize(string $directory): int
+    protected static function calculateAppSize(string $directory): int
     {
         $size = 0;
         foreach (File::glob(rtrim($directory, '/') . '/*', GLOB_NOSORT) as $each) {
-            $size += File::isFile($each) ? File::size($each) : self::folderSize($each);
+            $size += File::isFile($each) ? File::size($each) : self::calculateAppSize($each);
         }
 
         return $size;
@@ -69,11 +73,12 @@ class SystemManagement
             'max_execution_time' => @ini_get('max_execution_time'),
             'server_software' => Request::server('SERVER_SOFTWARE'),
             'server_os' => function_exists('php_uname') ? php_uname() : 'N/A',
-            'database_connection_name' => config('database.default'),
-            'ssl_installed' => self::checkSslIsInstalled(),
-            'cache_driver' => config('cache.default'),
-            'session_driver' => config('session.driver'),
-            'queue_connection' => config('queue.default'),
+            'database_connection_name' => DB::getDefaultConnection(),
+            'ssl_installed' => request()->isSecure(),
+            'cache_driver' => Cache::getDefaultDriver(),
+            'session_driver' => Session::getDefaultDriver(),
+            'queue_connection' => Queue::getDefaultDriver(),
+            'allow_url_fopen_enabled' => @ini_get('allow_url_fopen'),
             'mbstring' => extension_loaded('mbstring'),
             'openssl' => extension_loaded('openssl'),
             'curl' => extension_loaded('curl'),
@@ -85,10 +90,5 @@ class SystemManagement
             'zip' => extension_loaded('zip'),
             'iconv' => extension_loaded('iconv'),
         ];
-    }
-
-    protected static function checkSslIsInstalled(): bool
-    {
-        return ! empty(Request::server('HTTPS')) && Request::server('HTTPS') != 'off';
     }
 }

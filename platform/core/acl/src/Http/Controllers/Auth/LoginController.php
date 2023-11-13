@@ -2,15 +2,20 @@
 
 namespace Botble\ACL\Http\Controllers\Auth;
 
-use Assets;
-use BaseHelper;
-use Botble\ACL\Repositories\Interfaces\ActivationInterface;
-use Botble\ACL\Repositories\Interfaces\UserInterface;
+use Botble\ACL\Http\Requests\LoginRequest;
+use Botble\ACL\Models\User;
 use Botble\ACL\Traits\AuthenticatesUsers;
+use Botble\Base\Facades\Assets;
+use Botble\Base\Facades\BaseHelper;
+use Botble\Base\Facades\PageTitle;
 use Botble\Base\Http\Controllers\BaseController;
 use Botble\Base\Http\Responses\BaseHttpResponse;
+use Botble\JsValidation\Facades\JsValidator;
 use Carbon\Carbon;
+use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Pipeline\Pipeline;
+use Illuminate\Support\Facades\Auth;
 
 class LoginController extends BaseController
 {
@@ -27,10 +32,9 @@ class LoginController extends BaseController
 
     public function showLoginForm()
     {
-        page_title()->setTitle(trans('core/acl::auth.login_title'));
+        PageTitle::setTitle(trans('core/acl::auth.login_title'));
 
-        Assets::addScripts(['jquery-validation'])
-            ->addScriptsDirectly('vendor/core/core/acl/js/login.js')
+        Assets::addScripts(['jquery-validation', 'form-validation'])
             ->addStylesDirectly('vendor/core/core/acl/css/animate.min.css')
             ->addStylesDirectly('vendor/core/core/acl/css/login.css')
             ->removeStyles([
@@ -47,7 +51,11 @@ class LoginController extends BaseController
                 'cookie',
             ]);
 
-        return view('core/acl::auth.login');
+        $jsValidator = JsValidator::formRequest(LoginRequest::class);
+
+        $model = User::class;
+
+        return view('core/acl::auth.login', compact('jsValidator', 'model'));
     }
 
     public function login(Request $request)
@@ -65,30 +73,39 @@ class LoginController extends BaseController
             $this->sendLockoutResponse($request);
         }
 
-        $user = app(UserInterface::class)->getFirstBy([$this->username() => $request->input($this->username())]);
+        $user = User::query()->where([$this->username() => $request->input($this->username())])->first();
         if (! empty($user)) {
-            if (! app(ActivationInterface::class)->completed($user)) {
+            if (! $user->activated) {
                 return $this->response
                     ->setError()
                     ->setMessage(trans('core/acl::auth.login.not_active'));
             }
         }
 
-        if ($this->attemptLogin($request)) {
-            app(UserInterface::class)->update(['id' => $user->id], ['last_login' => Carbon::now()]);
-            if (! session()->has('url.intended')) {
-                session()->flash('url.intended', url()->current());
-            }
+        return app(Pipeline::class)->send($request)
+            ->through(apply_filters('core_acl_login_pipeline', [
+                function (Request $request, Closure $next) {
+                    if ($this->guard()->attempt(
+                        $this->credentials($request),
+                        $request->filled('remember')
+                    )) {
+                        return $next($request);
+                    }
 
-            return $this->sendLoginResponse($request);
-        }
+                    $this->incrementLoginAttempts($request);
 
-        // If the login attempt was unsuccessful we will increment the number of attempts
-        // to log in and redirect the user back to the login form. Of course, when this
-        // user surpasses their maximum number of attempts they will get locked out.
-        $this->incrementLoginAttempts($request);
+                    return $this->sendFailedLoginResponse();
+                },
+            ]))
+            ->then(function (Request $request) {
+                Auth::user()->update(['last_login' => Carbon::now()]);
 
-        return $this->sendFailedLoginResponse();
+                if (! session()->has('url.intended')) {
+                    session()->flash('url.intended', url()->current());
+                }
+
+                return $this->sendLoginResponse($request);
+            });
     }
 
     public function username()

@@ -2,10 +2,10 @@
 
 namespace Botble\SocialLogin\Providers;
 
+use Botble\Base\Supports\ServiceProvider;
+use Botble\SocialLogin\Facades\SocialService;
+use Botble\Theme\Facades\Theme;
 use Illuminate\Support\Arr;
-use Illuminate\Support\ServiceProvider;
-use SocialService;
-use Theme;
 
 class HookServiceProvider extends ServiceProvider
 {
@@ -16,7 +16,7 @@ class HookServiceProvider extends ServiceProvider
         }
     }
 
-    public function addLoginOptions(?string $html, string $module): ?string
+    public function addLoginOptions(string|null $html, string $module): string|null
     {
         if (! SocialService::isSupportedModule($module)) {
             return $html;
